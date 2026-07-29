@@ -1,0 +1,30 @@
+{
+	"name": "Ubuntu 26.04",
+	"build": {
+		"dockerfile": "Containerfile"
+	},
+	"runArgs": [
+		"--device=/dev/dri"
+	],
+	"mounts": [
+		"source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},type=bind"
+	],
+	"containerEnv": {
+		"XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
+		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}"
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"username": "${localEnv:USER}"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools",
+				"mesonbuild.mesonbuild"
+			]
+		}
+	},
+	"remoteUser": "${localEnv:USER}"
+}
