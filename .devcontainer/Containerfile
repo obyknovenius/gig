@@ -1,15 +1,21 @@
 FROM ubuntu:26.04
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && \
     apt-get -y install \
         build-essential \
         fonts-liberation \
+        fonts-ubuntu \
         libadwaita-1-dev \
         libgtk-4-dev \
         libwebkitgtk-6.0-dev \
-        meson
+        meson \
+        ubuntu-settings
 
 RUN apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
 
 RUN userdel -f -r ubuntu
+
+ENV XDG_CURRENT_DESKTOP=ubuntu:GNOME
