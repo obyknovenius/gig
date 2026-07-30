@@ -15,8 +15,14 @@ peel_codegen = custom_target('peel-codegen',
   },
 )
 
-executable('gig',
+gig_sources = [
+  'GigApplication.cpp',
+  'GigApplicationWindow.cpp',
   'main.cpp',
+]
+
+executable('gig',
+  gig_sources,
   peel_codegen,
   dependencies: [adwaita, peel],
 )
