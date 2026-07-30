@@ -3,8 +3,10 @@ FROM ubuntu:26.04
 RUN apt-get update && \
     apt-get -y install \
         build-essential \
+        fonts-liberation \
         libadwaita-1-dev \
         libgtk-4-dev \
+        libwebkitgtk-6.0-dev \
         meson
 
 RUN apt-get -y clean && \

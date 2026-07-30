@@ -17,10 +17,6 @@ void Application::vfunc_activate()
     parent_vfunc_activate<Application>();
 
     auto* window = Gig::ApplicationWindow::create(this);
-
-    auto child = peel::Gtk::Label::create("Hello world!");
-    window->set_content(std::move(child));
-
     window->present();
 }
 

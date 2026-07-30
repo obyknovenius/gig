@@ -1,5 +1,12 @@
 adwaita = dependency('libadwaita-1')
 peel = dependency('peel')
+webkit = dependency('webkitgtk-6.0')
+
+gig_deps = [
+  adwaita,
+  peel,
+  webkit,
+]
 
 peel_gen = find_program('peel-gen')
 peel_codegen = custom_target('peel-codegen',
@@ -8,6 +15,7 @@ peel_codegen = custom_target('peel-codegen',
     '--recursive',
     '--out-dir', '@OUTDIR@',
     'Adw', '1',
+    'WebKit', '6.0',
   ],
   output: 'peel',
   env: {
@@ -24,5 +32,5 @@ gig_sources = [
 executable('gig',
   gig_sources,
   peel_codegen,
-  dependencies: [adwaita, peel],
+  dependencies: gig_deps,
 )
