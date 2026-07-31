@@ -7,7 +7,8 @@
 		"--device=/dev/dri"
 	],
 	"mounts": [
-		"source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind"
+		"source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind",
+		"source=${localEnv:HOME}/.claude,target=/home/${localEnv:USER}/.claude,type=bind"
 	],
 	"containerEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}",
@@ -23,7 +24,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-vscode.cpptools",
-				"mesonbuild.mesonbuild"
+				"mesonbuild.mesonbuild",
+				"Anthropic.claude-code"
 			]
 		}
 	},
