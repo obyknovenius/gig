@@ -1,3 +1,3 @@
-project('gig', 'cpp')
+project('gig', 'c')
 
 subdir('src')
