@@ -22,8 +22,6 @@ gig_application_window_init (GigApplicationWindow *self)
 
   self->web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
   adw_application_window_set_content (ADW_APPLICATION_WINDOW (self), GTK_WIDGET (self->web_view));
-
-  webkit_web_view_load_uri (self->web_view, "https://www.google.com");
 }
 
 GtkWidget *
@@ -32,4 +30,12 @@ gig_application_window_new (GtkApplication *app)
   return g_object_new (GIG_TYPE_APPLICATION_WINDOW,
                        "application", app,
                        NULL);
+}
+
+WebKitWebView *
+gig_application_window_get_web_view (GigApplicationWindow *self)
+{
+  g_return_val_if_fail (GIG_IS_APPLICATION_WINDOW (self), NULL);
+
+  return self->web_view;
 }

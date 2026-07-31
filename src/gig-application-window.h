@@ -11,4 +11,6 @@ G_DECLARE_FINAL_TYPE (GigApplicationWindow, gig_application_window, GIG, APPLICA
 
 GtkWidget *gig_application_window_new (GtkApplication *app);
 
+WebKitWebView *gig_application_window_get_web_view (GigApplicationWindow *self);
+
 G_END_DECLS

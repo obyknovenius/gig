@@ -13,8 +13,15 @@ static void
 gig_application_activate (GApplication *application)
 {
   GtkWidget *window;
+  WebKitWebView *web_view;
+
+  g_assert (GIG_IS_APPLICATION (application));
 
   window = gig_application_window_new (GTK_APPLICATION (application));
+
+  web_view = gig_application_window_get_web_view (GIG_APPLICATION_WINDOW (window));
+  webkit_web_view_load_uri (web_view, "https://www.google.com");
+
   gtk_window_present (GTK_WINDOW (window));
 }
 
