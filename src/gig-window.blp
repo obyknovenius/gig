@@ -1,0 +1,11 @@
+using Gtk 4.0;
+using Adw 1;
+using WebKit 6.0;
+
+template $GigWindow: Adw.ApplicationWindow {
+    title: "Gig";
+    default-width: 1024;
+    default-height: 768;
+
+    WebKit.WebView web_view {}
+}

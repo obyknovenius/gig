@@ -25,6 +25,7 @@
 			"extensions": [
 				"ms-vscode.cpptools",
 				"mesonbuild.mesonbuild",
+				"bodil.blueprint-gtk",
 				"Anthropic.claude-code"
 			]
 		}
