@@ -3,9 +3,59 @@ using Adw 1;
 using WebKit 6.0;
 
 template $GigWindow: Adw.ApplicationWindow {
-    title: "Gig";
     default-width: 1024;
     default-height: 768;
 
-    WebKit.WebView web_view {}
+    Adw.ToolbarView {
+        top-bar-style: raised;
+
+        [top]
+        Adw.HeaderBar {
+            [start]
+            Gtk.Box {
+                spacing: 6;
+
+                Gtk.Button {
+                    icon-name: "go-previous-symbolic";
+                }
+
+                Gtk.Button {
+                    icon-name: "go-next-symbolic";
+                }
+
+                Gtk.Button {
+                    icon-name: "view-refresh-symbolic";
+                }
+            }
+
+            [title]
+            Adw.Clamp {
+                hexpand: true;
+                maximum-size: 860;
+
+                Gtk.Entry {
+                    placeholder-text: "Search or type a URL";
+                }
+            }
+
+            [end]
+            Gtk.Box {
+                spacing: 6;
+
+                Gtk.Button {
+                    icon-name: "tab-new-symbolic";
+                }
+
+                Gtk.Button {
+                    icon-name: "view-grid-symbolic";
+                }
+
+                Gtk.Button {
+                    icon-name: "open-menu-symbolic";
+                }
+            }
+        }
+
+        WebKit.WebView web_view {}
+    }
 }

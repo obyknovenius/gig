@@ -8,12 +8,11 @@ RUN apt-get update && \
         build-essential \
         clang-format \
         fonts-liberation \
-        fonts-ubuntu \
+        fonts-adwaita \
         libadwaita-1-dev \
         libgtk-4-dev \
         libwebkitgtk-6.0-dev \
-        meson \
-        ubuntu-settings
+        meson
 
 RUN apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
