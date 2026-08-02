@@ -8,7 +8,7 @@ gig_deps = [
 
 gig_sources = [
   'gig-application.c',
-  'gig-application-window.c',
+  'gig-window.c',
   'main.c',
 ]
 
