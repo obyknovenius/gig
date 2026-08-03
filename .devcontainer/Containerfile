@@ -9,10 +9,14 @@ RUN apt-get update && \
         clang-format \
         fonts-liberation \
         fonts-adwaita \
+        fonts-ubuntu \
         libadwaita-1-dev \
         libgtk-4-dev \
         libwebkitgtk-6.0-dev \
-        meson
+        meson \
+        yaru-theme-gtk \
+        yaru-theme-icon \
+        ubuntu-settings
 
 RUN apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
