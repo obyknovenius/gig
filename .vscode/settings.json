@@ -1,5 +1,8 @@
 {
     "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild",
     "C_Cpp.default.compileCommands": "/workspaces/gig/builddir/compile_commands.json",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+        80
+    ],
 }
