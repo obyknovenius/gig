@@ -33,8 +33,9 @@ template $GigWindow: Adw.ApplicationWindow {
                 hexpand: true;
                 maximum-size: 860;
 
-                Gtk.Entry {
+                Gtk.Entry url_entry {
                     placeholder-text: "Search or type a URL";
+                    activate => $on_url_entry_activated() swapped;
                 }
             }
 
@@ -56,6 +57,8 @@ template $GigWindow: Adw.ApplicationWindow {
             }
         }
 
-        WebKit.WebView web_view {}
+        WebKit.WebView web_view {
+            notify::uri => $on_web_view_uri_changed() swapped;
+        }
     }
 }

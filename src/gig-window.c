@@ -4,10 +4,38 @@ struct _GigWindow
 {
   AdwApplicationWindow parent_instance;
 
+  GtkEntry *url_entry;
   WebKitWebView *web_view;
 };
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
+
+static void
+on_url_entry_activated (GigWindow *self,
+                        GtkEntry *entry)
+{
+  const char *uri;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GTK_IS_ENTRY (entry));
+
+  uri = gtk_editable_get_text (GTK_EDITABLE (entry));
+  webkit_web_view_load_uri (self->web_view, uri);
+}
+
+static void
+on_web_view_uri_changed (GigWindow *self,
+                         GParamSpec *pspec,
+                         WebKitWebView *web_view)
+{
+  const char *uri;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  uri = webkit_web_view_get_uri (web_view);
+  gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri);
+}
 
 static void
 gig_window_class_init (GigWindowClass *klass)
@@ -16,7 +44,11 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, url_entry);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, web_view);
+
+  gtk_widget_class_bind_template_callback (widget_class, on_web_view_uri_changed);
+  gtk_widget_class_bind_template_callback (widget_class, on_url_entry_activated);
 
   g_type_ensure (WEBKIT_TYPE_WEB_VIEW);
 }
@@ -28,10 +60,12 @@ gig_window_init (GigWindow *self)
 }
 
 GigWindow *
-gig_window_new (GtkApplication *app)
+gig_window_new (GtkApplication *application)
 {
+  g_return_val_if_fail (G_APPLICATION (application), NULL);
+
   return g_object_new (GIG_TYPE_WINDOW,
-                       "application", app,
+                       "application", application,
                        NULL);
 }
 
