@@ -25,8 +25,9 @@ template $GigWindow: Adw.ApplicationWindow {
                     action-name: "win.go-forward";
                 }
 
-                Gtk.Button {
+                Gtk.Button stop_reload_button {
                     icon-name: "view-refresh-symbolic";
+                    action-name: "win.stop-reload";
                 }
             }
 
@@ -61,6 +62,7 @@ template $GigWindow: Adw.ApplicationWindow {
 
         WebKit.WebView web_view {
             notify::uri => $on_web_view_uri_changed() swapped;
+            notify::is-loading => $on_web_view_is_loading_changed() swapped;
         }
     }
 }
