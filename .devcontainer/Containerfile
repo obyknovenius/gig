@@ -14,13 +14,19 @@ RUN apt-get update && \
         fonts-noto-color-emoji \
         fonts-noto-core \
         fonts-ubuntu \
+        gstreamer1.0-libav \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-vaapi \
         libadwaita-1-dev \
         libgtk-4-dev \
         libwebkitgtk-6.0-dev \
         meson \
+        ubuntu-settings \
         yaru-theme-gtk \
-        yaru-theme-icon \
-        ubuntu-settings
+        yaru-theme-icon
 
 RUN apt-get -y clean && \
     rm -rf /var/lib/apt/lists/*
