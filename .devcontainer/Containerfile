@@ -7,8 +7,12 @@ RUN apt-get update && \
         blueprint-compiler \
         build-essential \
         clang-format \
-        fonts-liberation \
         fonts-adwaita \
+        fonts-dejavu-core \
+        fonts-liberation \
+        fonts-noto-cjk \
+        fonts-noto-color-emoji \
+        fonts-noto-core \
         fonts-ubuntu \
         libadwaita-1-dev \
         libgtk-4-dev \
