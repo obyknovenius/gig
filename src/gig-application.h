@@ -1,6 +1,6 @@
 #pragma once
 
-#include <adwaita.h>
+#include "gig-types.h"
 
 G_BEGIN_DECLS
 

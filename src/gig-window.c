@@ -7,6 +7,7 @@ struct _GigWindow
   GtkButton *stop_reload_button;
   GtkEntry *url_entry;
   AdwTabView *tab_view;
+  WebKitWebView *current_web_view;
 
   GSignalGroup *web_view_signals;
   GSignalGroup *back_forward_list_signals;
@@ -72,15 +73,10 @@ gig_window_go_back (GSimpleAction *action,
                     gpointer user_data)
 {
   GigWindow *self = (GigWindow *)user_data;
-  AdwTabPage *tab_page;
-  WebKitWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = adw_tab_view_get_selected_page (self->tab_view);
-  web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
-
-  webkit_web_view_go_back (web_view);
+  webkit_web_view_go_back (self->current_web_view);
 }
 
 static void
@@ -89,15 +85,10 @@ gig_window_go_forward (GSimpleAction *action,
                        gpointer user_data)
 {
   GigWindow *self = (GigWindow *)user_data;
-  AdwTabPage *tab_page;
-  WebKitWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = adw_tab_view_get_selected_page (self->tab_view);
-  web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
-
-  webkit_web_view_go_forward (web_view);
+  webkit_web_view_go_forward (self->current_web_view);
 }
 
 static void
@@ -106,20 +97,15 @@ gig_window_stop_reload (GSimpleAction *action,
                         gpointer user_data)
 {
   GigWindow *self = (GigWindow *)user_data;
-  AdwTabPage *tab_page;
-  WebKitWebView *web_view;
   g_autoptr (GVariant) state = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = adw_tab_view_get_selected_page (self->tab_view);
-  web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
-
   state = g_action_get_state (G_ACTION (action));
   if (g_variant_get_boolean (state))
-    webkit_web_view_stop_loading (web_view);
+    webkit_web_view_stop_loading (self->current_web_view);
   else
-    webkit_web_view_reload (web_view);
+    webkit_web_view_reload (self->current_web_view);
 }
 
 static void
@@ -145,8 +131,6 @@ static void
 url_entry_activate_cb (GigWindow *self,
                        GtkEntry *entry)
 {
-  AdwTabPage *tab_page;
-  WebKitWebView *web_view;
   const char *uri;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -154,10 +138,7 @@ url_entry_activate_cb (GigWindow *self,
 
   uri = gtk_editable_get_text (GTK_EDITABLE (entry));
 
-  tab_page = adw_tab_view_get_selected_page (self->tab_view);
-  web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
-
-  webkit_web_view_load_uri (web_view, uri);
+  webkit_web_view_load_uri (self->current_web_view, uri);
 }
 
 static void
@@ -172,17 +153,12 @@ web_view_notify_uri_cb (GigWindow *self,
 }
 
 static void
-back_forward_list_changed_cb (GigWindow *self)
+back_forward_list_changed_cb (GigWindow *self,
+                              WebKitBackForwardList *back_forward_list)
 {
-  AdwTabPage *tab_page;
-  WebKitWebView *web_view;
-
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = adw_tab_view_get_selected_page (self->tab_view);
-  web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
-
-  update_back_forward_actions (self, web_view);
+  update_back_forward_actions (self, self->current_web_view);
 }
 
 static void
@@ -191,6 +167,7 @@ web_view_notify_is_loading_cb (GigWindow *self,
                                WebKitWebView *web_view)
 {
   g_assert (GIG_IS_WINDOW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
   update_stop_reload_action (self, web_view);
 }
@@ -218,6 +195,8 @@ tab_view_notify_selected_page_cb (GigWindow *self,
 
   back_forward_list = webkit_web_view_get_back_forward_list (web_view);
   g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
+
+  self->current_web_view = web_view;
 }
 
 static void
@@ -331,11 +310,10 @@ void
 gig_window_add_tab (GigWindow *self,
                     const char *uri)
 {
-  WebKitWebView *web_view;
   AdwTabPage *tab_page;
+  WebKitWebView *web_view;
 
   g_return_if_fail (GIG_IS_WINDOW (self));
-  g_return_if_fail (ADW_IS_TAB_VIEW (self->tab_view));
 
   web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
   tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (web_view));

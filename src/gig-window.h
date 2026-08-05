@@ -1,7 +1,6 @@
 #pragma once
 
-#include <adwaita.h>
-#include <webkit/webkit.h>
+#include "gig-types.h"
 
 G_BEGIN_DECLS
 
