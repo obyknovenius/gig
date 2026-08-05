@@ -1,6 +1,5 @@
 using Gtk 4.0;
 using Adw 1;
-using WebKit 6.0;
 
 template $GigWindow: Adw.ApplicationWindow {
     default-width: 1024;
@@ -38,7 +37,7 @@ template $GigWindow: Adw.ApplicationWindow {
 
                 Gtk.Entry url_entry {
                     placeholder-text: "Search or type a URL";
-                    activate => $on_url_entry_activated() swapped;
+                    activate => $url_entry_activate_cb() swapped;
                 }
             }
 
@@ -48,6 +47,7 @@ template $GigWindow: Adw.ApplicationWindow {
 
                 Gtk.Button {
                     icon-name: "tab-new-symbolic";
+                    action-name: "win.new-tab";
                 }
 
                 Gtk.Button {
@@ -62,18 +62,11 @@ template $GigWindow: Adw.ApplicationWindow {
 
         [top]
         Adw.TabBar {
-            autohide: false;
             view: tab_view;
         }
 
         Adw.TabView tab_view {
-            Adw.TabPage {
-                title: bind web_view.title;
-                child: WebKit.WebView web_view {
-                    notify::uri => $on_web_view_uri_changed() swapped;
-                    notify::is-loading => $on_web_view_is_loading_changed() swapped;
-                };
-            }
+            notify::selected-page => $tab_view_notify_selected_page_cb() swapped;
         }
     }
 }

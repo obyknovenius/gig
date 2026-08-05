@@ -27,15 +27,11 @@ static void
 gig_application_activate (GApplication *application)
 {
   GigWindow *window;
-  WebKitWebView *web_view;
 
   g_assert (GIG_IS_APPLICATION (application));
 
   window = gig_window_new (GTK_APPLICATION (application));
-
-  web_view = gig_window_get_web_view (GIG_WINDOW (window));
-  webkit_web_view_load_uri (web_view, "https://www.google.com");
-
+  gig_window_add_tab (GIG_WINDOW (window), "https://www.google.com");
   gtk_window_present (GTK_WINDOW (window));
 }
 
@@ -46,19 +42,14 @@ gig_application_open (GApplication *application,
                       const gchar *hint)
 {
   GigWindow *window;
-  WebKitWebView *web_view;
 
   g_assert (GIG_IS_APPLICATION (application));
 
   for (gint i = 0; i < n_files; i++)
     {
       g_autofree gchar *uri = g_file_get_uri (files[i]);
-
       window = gig_window_new (GTK_APPLICATION (application));
-
-      web_view = gig_window_get_web_view (GIG_WINDOW (window));
-      webkit_web_view_load_uri (web_view, uri);
-
+      gig_window_add_tab (GIG_WINDOW (window), uri);
       gtk_window_present (GTK_WINDOW (window));
     }
 }

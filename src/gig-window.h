@@ -11,6 +11,6 @@ G_DECLARE_FINAL_TYPE (GigWindow, gig_window, GIG, WINDOW, AdwApplicationWindow)
 
 GigWindow *gig_window_new (GtkApplication *app);
 
-WebKitWebView *gig_window_get_web_view (GigWindow *self);
+void gig_window_add_tab (GigWindow *self, const char *uri);
 
 G_END_DECLS
