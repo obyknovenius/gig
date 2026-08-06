@@ -78,9 +78,18 @@ gig_window_class_init_actions (GigWindowClass *klass)
 }
 
 void
+gig_window_init_actions (GigWindow *self)
+{
+  g_assert (GIG_IS_WINDOW (self));
+
+  gig_window_update_actions (self, NULL);
+}
+
+void
 gig_window_update_actions (GigWindow *self,
                            WebKitWebView *web_view)
 {
+  gboolean can_stop_reload = FALSE;
   gboolean can_go_back = FALSE;
   gboolean can_go_forward = FALSE;
 
@@ -89,10 +98,12 @@ gig_window_update_actions (GigWindow *self,
 
   if (web_view)
     {
+      can_stop_reload = TRUE;
       can_go_back = webkit_web_view_can_go_back (web_view);
       can_go_forward = webkit_web_view_can_go_forward (web_view);
     }
 
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_stop_reload);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
 }

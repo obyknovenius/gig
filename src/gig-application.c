@@ -31,7 +31,6 @@ gig_application_activate (GApplication *application)
   g_assert (GIG_IS_APPLICATION (application));
 
   window = gig_window_new (GTK_APPLICATION (application));
-  gig_window_add_tab (GIG_WINDOW (window), "https://www.google.com");
   gtk_window_present (GTK_WINDOW (window));
 }
 

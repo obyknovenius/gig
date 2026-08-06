@@ -80,7 +80,7 @@ tab_view_notify_selected_page_cb (GigWindow *self,
   WebKitWebView *web_view = NULL;
   gboolean is_loading = FALSE;
   const char *uri = NULL;
-  WebKitBackForwardList *back_forward_list;
+  WebKitBackForwardList *back_forward_list = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
@@ -90,24 +90,27 @@ tab_view_notify_selected_page_cb (GigWindow *self,
 
   g_assert (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
 
-  gig_window_update_actions (self, web_view);
-
   gtk_widget_set_sensitive (GTK_WIDGET (self->url_entry), web_view != NULL);
 
-  uri = web_view ? webkit_web_view_get_uri (web_view) : NULL;
+  if (web_view)
+    {
+      is_loading = webkit_web_view_is_loading (web_view);
+      uri = webkit_web_view_get_uri (web_view);
+      back_forward_list = webkit_web_view_get_back_forward_list (web_view);
+    }
+
   gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
 
-  is_loading = web_view ? webkit_web_view_is_loading (web_view) : FALSE;
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
                             is_loading ? "process-stop-symbolic"
                                        : "view-refresh-symbolic");
 
-  g_signal_group_set_target (self->web_view_signals, web_view);
-
-  back_forward_list = webkit_web_view_get_back_forward_list (web_view);
-  g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
-
   self->current_web_view = web_view;
+
+  gig_window_update_actions (self, web_view);
+
+  g_signal_group_set_target (self->web_view_signals, web_view);
+  g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
 }
 
 static void
@@ -145,8 +148,7 @@ gig_window_class_init (GigWindowClass *klass)
   object_class->dispose = gig_window_dispose;
   object_class->finalize = gig_window_finalize;
 
-  gtk_widget_class_set_template_from_resource (widget_class,
-                                               "/com/github/obyknovenius/Gig/ui/gig-window.ui");
+  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, url_entry);
@@ -186,6 +188,8 @@ gig_window_init (GigWindow *self)
                                  G_CALLBACK (back_forward_list_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
+
+  gig_window_init_actions (self);
 }
 
 GigWindow *

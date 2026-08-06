@@ -38,6 +38,7 @@ template $GigWindow: Adw.ApplicationWindow {
                 Gtk.Entry url_entry {
                     placeholder-text: "Search or type a URL";
                     activate => $url_entry_activate_cb() swapped;
+                    sensitive: false;
                 }
             }
 
@@ -62,6 +63,7 @@ template $GigWindow: Adw.ApplicationWindow {
 
         [top]
         Adw.TabBar {
+            autohide: false;
             view: tab_view;
         }
 
