@@ -1,23 +1,29 @@
-#include "gig-window.h"
-
-struct _GigWindow
-{
-  AdwApplicationWindow parent_instance;
-
-  GtkButton *stop_reload_button;
-  GtkEntry *url_entry;
-  AdwTabView *tab_view;
-  WebKitWebView *current_web_view;
-
-  GSignalGroup *web_view_signals;
-  GSignalGroup *back_forward_list_signals;
-};
+#include "gig-window-private.h"
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void
-update_url_entry (GigWindow *self,
-                  WebKitWebView *web_view)
+url_entry_activate_cb (GigWindow *self,
+                       GtkEntry *entry)
+{
+  WebKitWebView *web_view;
+  const char *uri;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GTK_IS_ENTRY (entry));
+
+  web_view = self->current_web_view;
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  uri = gtk_editable_get_text (GTK_EDITABLE (entry));
+
+  webkit_web_view_load_uri (web_view, uri);
+}
+
+static void
+web_view_notify_uri_cb (GigWindow *self,
+                        GParamSpec *pspec,
+                        WebKitWebView *web_view)
 {
   const char *uri;
 
@@ -29,136 +35,23 @@ update_url_entry (GigWindow *self,
 }
 
 static void
-update_back_forward_actions (GigWindow *self,
-                             WebKitWebView *web_view)
-{
-  GAction *action;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  action = g_action_map_lookup_action (G_ACTION_MAP (self), "go-back");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (action),
-                               webkit_web_view_can_go_back (web_view));
-
-  action = g_action_map_lookup_action (G_ACTION_MAP (self), "go-forward");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (action),
-                               webkit_web_view_can_go_forward (web_view));
-}
-
-static void
-update_stop_reload_action (GigWindow *self,
-                           WebKitWebView *web_view)
-{
-  gboolean is_loading;
-  GAction *action;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  is_loading = webkit_web_view_is_loading (web_view);
-
-  action = g_action_map_lookup_action (G_ACTION_MAP (self), "stop-reload");
-  g_simple_action_set_state (G_SIMPLE_ACTION (action),
-                             g_variant_new_boolean (is_loading));
-
-  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
-                            is_loading ? "process-stop-symbolic"
-                                       : "view-refresh-symbolic");
-}
-
-static void
-gig_window_go_back (GSimpleAction *action,
-                    GVariant *parameter,
-                    gpointer user_data)
-{
-  GigWindow *self = (GigWindow *)user_data;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  webkit_web_view_go_back (self->current_web_view);
-}
-
-static void
-gig_window_go_forward (GSimpleAction *action,
-                       GVariant *parameter,
-                       gpointer user_data)
-{
-  GigWindow *self = (GigWindow *)user_data;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  webkit_web_view_go_forward (self->current_web_view);
-}
-
-static void
-gig_window_stop_reload (GSimpleAction *action,
-                        GVariant *parameter,
-                        gpointer user_data)
-{
-  GigWindow *self = (GigWindow *)user_data;
-  g_autoptr (GVariant) state = NULL;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  state = g_action_get_state (G_ACTION (action));
-  if (g_variant_get_boolean (state))
-    webkit_web_view_stop_loading (self->current_web_view);
-  else
-    webkit_web_view_reload (self->current_web_view);
-}
-
-static void
-gig_window_new_tab (GSimpleAction *action,
-                    GVariant *parameter,
-                    gpointer user_data)
-{
-  GigWindow *self = (GigWindow *)user_data;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  gig_window_add_tab (self, "https://www.google.com");
-}
-
-static const GActionEntry actions[] = {
-  { "go-back", gig_window_go_back },
-  { "go-forward", gig_window_go_forward },
-  { "stop-reload", gig_window_stop_reload, NULL, "false" },
-  { "new-tab", gig_window_new_tab },
-};
-
-static void
-url_entry_activate_cb (GigWindow *self,
-                       GtkEntry *entry)
-{
-  const char *uri;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (GTK_IS_ENTRY (entry));
-
-  uri = gtk_editable_get_text (GTK_EDITABLE (entry));
-
-  webkit_web_view_load_uri (self->current_web_view, uri);
-}
-
-static void
-web_view_notify_uri_cb (GigWindow *self,
-                        GParamSpec *pspec,
-                        WebKitWebView *web_view)
-{
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  update_url_entry (self, web_view);
-}
-
-static void
 back_forward_list_changed_cb (GigWindow *self,
                               WebKitBackForwardList *back_forward_list)
 {
+  WebKitWebView *web_view;
+  gboolean can_go_back;
+  gboolean can_go_forward;
+
   g_assert (GIG_IS_WINDOW (self));
 
-  update_back_forward_actions (self, self->current_web_view);
+  web_view = self->current_web_view;
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  can_go_back = webkit_web_view_can_go_back (web_view);
+  can_go_forward = webkit_web_view_can_go_forward (web_view);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
 }
 
 static void
@@ -166,10 +59,16 @@ web_view_notify_is_loading_cb (GigWindow *self,
                                GParamSpec *pspec,
                                WebKitWebView *web_view)
 {
+  gboolean is_loading;
+
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
-  update_stop_reload_action (self, web_view);
+  is_loading = webkit_web_view_is_loading (web_view);
+
+  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
+                            is_loading ? "process-stop-symbolic"
+                                       : "view-refresh-symbolic");
 }
 
 static void
@@ -178,18 +77,30 @@ tab_view_notify_selected_page_cb (GigWindow *self,
                                   AdwTabView *tab_view)
 {
   AdwTabPage *tab_page;
-  WebKitWebView *web_view;
+  WebKitWebView *web_view = NULL;
+  gboolean is_loading = FALSE;
+  const char *uri = NULL;
   WebKitBackForwardList *back_forward_list;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
-  tab_page = adw_tab_view_get_selected_page (tab_view);
-  web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
+  if ((tab_page = adw_tab_view_get_selected_page (tab_view)))
+    web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
 
-  update_url_entry (self, web_view);
-  update_back_forward_actions (self, web_view);
-  update_stop_reload_action (self, web_view);
+  g_assert (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
+
+  gig_window_update_actions (self, web_view);
+
+  gtk_widget_set_sensitive (GTK_WIDGET (self->url_entry), web_view != NULL);
+
+  uri = web_view ? webkit_web_view_get_uri (web_view) : NULL;
+  gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
+
+  is_loading = web_view ? webkit_web_view_is_loading (web_view) : FALSE;
+  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
+                            is_loading ? "process-stop-symbolic"
+                                       : "view-refresh-symbolic");
 
   g_signal_group_set_target (self->web_view_signals, web_view);
 
@@ -197,26 +108,6 @@ tab_view_notify_selected_page_cb (GigWindow *self,
   g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
 
   self->current_web_view = web_view;
-}
-
-static void
-gig_window_constructed (GObject *object)
-{
-  GigWindow *self = GIG_WINDOW (object);
-  GAction *action;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  G_OBJECT_CLASS (gig_window_parent_class)->constructed (object);
-
-  g_action_map_add_action_entries (G_ACTION_MAP (self), actions,
-                                   G_N_ELEMENTS (actions), self);
-
-  action = g_action_map_lookup_action (G_ACTION_MAP (self), "go-back");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (action), FALSE);
-
-  action = g_action_map_lookup_action (G_ACTION_MAP (self), "go-forward");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (action), FALSE);
 }
 
 static void
@@ -251,7 +142,6 @@ gig_window_class_init (GigWindowClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
-  object_class->constructed = gig_window_constructed;
   object_class->dispose = gig_window_dispose;
   object_class->finalize = gig_window_finalize;
 
@@ -264,6 +154,8 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_bind_template_callback (widget_class, url_entry_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_notify_selected_page_cb);
+
+  gig_window_class_init_actions (klass);
 
   g_type_ensure (WEBKIT_TYPE_WEB_VIEW);
 }

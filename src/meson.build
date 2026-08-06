@@ -1,6 +1,7 @@
 gig_sources = [
   'gig-application.c',
   'gig-window.c',
+  'gig-window-actions.c',
   'main.c',
 ]
 
