@@ -48,7 +48,6 @@ gig_application_open (GApplication *application,
     {
       g_autofree gchar *uri = g_file_get_uri (files[i]);
       window = gig_window_new (GTK_APPLICATION (application));
-      gig_window_add_tab (GIG_WINDOW (window), uri);
       gtk_window_present (GTK_WINDOW (window));
     }
 }

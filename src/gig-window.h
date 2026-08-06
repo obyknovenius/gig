@@ -10,6 +10,6 @@ G_DECLARE_FINAL_TYPE (GigWindow, gig_window, GIG, WINDOW, AdwApplicationWindow)
 
 GigWindow *gig_window_new (GtkApplication *app);
 
-void gig_window_add_tab (GigWindow *self, const char *uri);
+void gig_window_add_tab (GigWindow *self);
 
 G_END_DECLS

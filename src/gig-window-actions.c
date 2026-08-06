@@ -51,7 +51,7 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
 
   g_assert (GIG_IS_WINDOW (self));
 
-  gig_window_add_tab (self, "https://www.google.com");
+  gig_window_add_tab (self);
 }
 
 void

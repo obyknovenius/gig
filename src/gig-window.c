@@ -35,6 +35,24 @@ web_view_notify_uri_cb (GigWindow *self,
 }
 
 static void
+web_view_notify_title_cb (GigWindow *self,
+                          GParamSpec *pspec,
+                          WebKitWebView *web_view)
+{
+  AdwTabPage *tab_page;
+  const char *title;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  tab_page = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (web_view));
+  g_assert (ADW_IS_TAB_PAGE (tab_page));
+
+  title = webkit_web_view_get_title (web_view);
+  adw_tab_page_set_title (tab_page, title ? title : "Untitled");
+}
+
+static void
 back_forward_list_changed_cb (GigWindow *self,
                               WebKitBackForwardList *back_forward_list)
 {
@@ -78,9 +96,9 @@ tab_view_notify_selected_page_cb (GigWindow *self,
 {
   AdwTabPage *tab_page;
   WebKitWebView *web_view = NULL;
-  gboolean is_loading = FALSE;
-  const char *uri = NULL;
   WebKitBackForwardList *back_forward_list = NULL;
+  const char *uri = NULL;
+  gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
@@ -94,9 +112,9 @@ tab_view_notify_selected_page_cb (GigWindow *self,
 
   if (web_view)
     {
-      is_loading = webkit_web_view_is_loading (web_view);
-      uri = webkit_web_view_get_uri (web_view);
       back_forward_list = webkit_web_view_get_back_forward_list (web_view);
+      uri = webkit_web_view_get_uri (web_view);
+      is_loading = webkit_web_view_is_loading (web_view);
     }
 
   gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
@@ -176,6 +194,12 @@ gig_window_init (GigWindow *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
+                                 "notify::title",
+                                 G_CALLBACK (web_view_notify_title_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->web_view_signals,
                                  "notify::is-loading",
                                  G_CALLBACK (web_view_notify_is_loading_cb),
                                  self,
@@ -203,8 +227,7 @@ gig_window_new (GtkApplication *application)
 }
 
 void
-gig_window_add_tab (GigWindow *self,
-                    const char *uri)
+gig_window_add_tab (GigWindow *self)
 {
   AdwTabPage *tab_page;
   WebKitWebView *web_view;
@@ -214,9 +237,7 @@ gig_window_add_tab (GigWindow *self,
   web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
   tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (web_view));
 
-  g_object_bind_property (web_view, "title", tab_page, "title", G_BINDING_SYNC_CREATE);
-
-  webkit_web_view_load_uri (web_view, uri);
+  adw_tab_page_set_title (tab_page, "New Tab");
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }
