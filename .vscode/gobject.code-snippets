@@ -1,0 +1,139 @@
+{
+	// Place your gig workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+	//
+	// You can also restrict snippets to specific files using include/exclude patterns:
+	// "Test snippet": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "test",
+	// 	"body": "test('$1', () => {\n\t$0\n});",
+	// 	"include": ["**/*.test.ts", "*.spec.ts"],
+	// 	"exclude": ["**/temp/*.ts"],
+	// 	"description": "Insert test block"
+	// }
+	"Declare GObject final class": {
+		"scope": "c",
+		"prefix": "gobject_final",
+		"body": [
+			"#pragma once",
+			"",
+			"#include ${4:<glib-object.h>}",
+			"",
+			"G_BEGIN_DECLS",
+			"",
+			"#define ${1/^([A-Z][a-z]*)(.*)$/${1:/upcase}_TYPE_${2:/upcase}/} (${2:${TM_FILENAME_BASE/-/_/g}}_get_type ())",
+			"",
+			"G_DECLARE_FINAL_TYPE (${1:${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/}}, $2, ${1/^([A-Z][a-z]*)(.*)$/${1:/upcase}/}, ${1/^([A-Z][a-z]*)(.*)$/${2:/upcase}/}, ${3:GObject})",
+			"",
+			"$1 *$2_new (void);",
+			"$0",
+			"G_END_DECLS"
+		],
+		"include": [
+			"**/*.h"
+		],
+		"description": "Declare a non-derivable GObject class"
+	},
+	"Define GObject final class": {
+		"scope": "c",
+		"prefix": "gobject_final",
+		"body": [
+			"#include \"${1:$TM_FILENAME_BASE}.h\"",
+			"",
+			"struct _${2:${1/(.*)/${1:/pascalcase}/}}",
+			"{",
+			"  ${4:GObject} parent_instance;",
+			"};",
+			"",
+			"G_DEFINE_FINAL_TYPE ($2, ${3:${1/-/_/g}}, ${4/^([A-Z][a-z]*)(.*)$/${1:/upcase}_TYPE_${2:/upcase}/})",
+			"",
+			"enum",
+			"{",
+			"  PROP_0,",
+			"  N_PROPS",
+			"};",
+			"",
+			"static GParamSpec *properties[N_PROPS];",
+			"",
+			"$2 *",
+			"$3_new (void)",
+			"{",
+			"  return g_object_new (${2/^([A-Z][a-z]*)(.*)$/${1:/upcase}_TYPE_${2:/upcase}/}, NULL);",
+			"}",
+			"",
+			"static void",
+			"$3_finalize (GObject *object)",
+			"{",
+			"  $2 *self = ${3/(.*)/${1:/upcase}/} (object);",
+			"",
+			"  G_OBJECT_CLASS ($3_parent_class)->finalize (object);",
+			"}",
+			"",
+			"static void",
+			"$3_get_property (GObject *object,",
+			"${3/./ /g}               guint prop_id,",
+			"${3/./ /g}               GValue *value,",
+			"${3/./ /g}               GParamSpec *pspec)",
+			"{",
+			"  $2 *self = ${3/(.*)/${1:/upcase}/}  (object);",
+			"",
+			"  switch (prop_id)",
+			"    {",
+			"    default:",
+			"      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);",
+			"    }",
+			"}",
+			"",
+			"static void",
+			"$3_set_property (GObject *object,",
+			"${3/./ /g}               guint prop_id,",
+			"${3/./ /g}               const GValue *value,",
+			"${3/./ /g}               GParamSpec *pspec)",
+			"{",
+			"  $2 *self = ${3/(.*)/${1:/upcase}/} (object);",
+			"",
+			"  switch (prop_id)",
+			"    {",
+			"    default:",
+			"      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);",
+			"    }",
+			"}",
+			"",
+			"static void",
+			"$3_class_init ($2Class *klass)",
+			"{",
+			"  GObjectClass *object_class = G_OBJECT_CLASS (klass);",
+			"",
+			"  object_class->finalize = $3_finalize;",
+			"  object_class->get_property = $3_get_property;",
+			"  object_class->set_property = $3_set_property;",
+			"",
+			"  g_object_class_install_properties (object_class, N_PROPS, properties);",
+			"}",
+			"",
+			"static void",
+			"$3_init ($2 *self)",
+			"{",
+			"  $0",
+			"}",
+		],
+		"include": [
+			"**/*.c"
+		],
+		"description": "Define a non-derivable GObject class"
+	}
+}
