@@ -1,6 +1,36 @@
 #include "gig-window-private.h"
 
 static void
+gig_window_actions_new_tab_cb (GtkWidget *widget,
+                               const char *action_name,
+                               GVariant *param)
+{
+  GigWindow *self = (GigWindow *)widget;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  gig_window_add_tab (self);
+}
+
+static void
+gig_window_actions_stop_reload_cb (GtkWidget *widget,
+                                   const char *action_name,
+                                   GVariant *param)
+{
+  GigWindow *self = (GigWindow *)widget;
+  gboolean is_loading;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  is_loading = webkit_web_view_is_loading (self->current_web_view);
+
+  if (is_loading)
+    webkit_web_view_stop_loading (self->current_web_view);
+  else
+    webkit_web_view_reload (self->current_web_view);
+}
+
+static void
 gig_window_actions_go_back_cb (GtkWidget *widget,
                                const char *action_name,
                                GVariant *param)
@@ -24,57 +54,22 @@ gig_window_actions_go_forward_cb (GtkWidget *widget,
   webkit_web_view_go_forward (self->current_web_view);
 }
 
-static void
-gig_window_actions_stop_reload_cb (GtkWidget *widget,
-                                   const char *action_name,
-                                   GVariant *param)
-{
-  GigWindow *self = (GigWindow *)widget;
-  gboolean is_loading;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  is_loading = webkit_web_view_is_loading (self->current_web_view);
-
-  if (is_loading)
-    webkit_web_view_stop_loading (self->current_web_view);
-  else
-    webkit_web_view_reload (self->current_web_view);
-}
-
-static void
-gig_window_actions_new_tab_cb (GtkWidget *widget,
-                               const char *action_name,
-                               GVariant *param)
-{
-  GigWindow *self = (GigWindow *)widget;
-
-  g_assert (GIG_IS_WINDOW (self));
-
-  gig_window_add_tab (self);
-}
-
 void
 gig_window_class_init_actions (GigWindowClass *klass)
 {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
-  gtk_widget_class_install_action (widget_class,
-                                   "win.go-back",
-                                   NULL,
-                                   gig_window_actions_go_back_cb);
-  gtk_widget_class_install_action (widget_class,
-                                   "win.go-forward",
-                                   NULL,
-                                   gig_window_actions_go_forward_cb);
-  gtk_widget_class_install_action (widget_class,
-                                   "win.stop-reload",
-                                   NULL,
-                                   gig_window_actions_stop_reload_cb);
-  gtk_widget_class_install_action (widget_class,
-                                   "win.new-tab",
-                                   NULL,
+  gtk_widget_class_install_action (widget_class, "win.new-tab", NULL,
                                    gig_window_actions_new_tab_cb);
+
+  gtk_widget_class_install_action (widget_class, "win.stop-reload", NULL,
+                                   gig_window_actions_stop_reload_cb);
+
+  gtk_widget_class_install_action (widget_class, "win.go-back", NULL,
+                                   gig_window_actions_go_back_cb);
+
+  gtk_widget_class_install_action (widget_class, "win.go-forward", NULL,
+                                   gig_window_actions_go_forward_cb);
 }
 
 void

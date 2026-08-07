@@ -53,6 +53,23 @@ web_view_notify_title_cb (GigWindow *self,
 }
 
 static void
+web_view_notify_is_loading_cb (GigWindow *self,
+                               GParamSpec *pspec,
+                               WebKitWebView *web_view)
+{
+  gboolean is_loading;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  is_loading = webkit_web_view_is_loading (web_view);
+
+  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
+                            is_loading ? "process-stop-symbolic"
+                                       : "view-refresh-symbolic");
+}
+
+static void
 back_forward_list_changed_cb (GigWindow *self,
                               WebKitBackForwardList *back_forward_list)
 {
@@ -70,23 +87,6 @@ back_forward_list_changed_cb (GigWindow *self,
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
-}
-
-static void
-web_view_notify_is_loading_cb (GigWindow *self,
-                               GParamSpec *pspec,
-                               WebKitWebView *web_view)
-{
-  gboolean is_loading;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  is_loading = webkit_web_view_is_loading (web_view);
-
-  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
-                            is_loading ? "process-stop-symbolic"
-                                       : "view-refresh-symbolic");
 }
 
 static void
@@ -168,8 +168,8 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
-  gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, url_entry);
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
   gtk_widget_class_bind_template_callback (widget_class, url_entry_activate_cb);
