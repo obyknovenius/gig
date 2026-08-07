@@ -11,7 +11,8 @@ struct _GigWindow
   GtkButton *stop_reload_button;
   GtkEntry *url_entry;
   AdwTabView *tab_view;
-  WebKitWebView *current_web_view;
+
+  GigPage *selected_page;
 
   GSignalGroup *web_view_signals;
   GSignalGroup *back_forward_list_signals;

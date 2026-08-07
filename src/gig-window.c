@@ -1,5 +1,7 @@
 #include "gig-window-private.h"
 
+#include "gig-page.h"
+
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void
@@ -11,13 +13,52 @@ url_entry_activate_cb (GigWindow *self,
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GTK_IS_ENTRY (entry));
+  g_assert (GIG_IS_PAGE (self->selected_page));
 
-  web_view = self->current_web_view;
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  web_view = gig_page_get_web_view (self->selected_page);
 
   uri = gtk_editable_get_text (GTK_EDITABLE (entry));
 
   webkit_web_view_load_uri (web_view, uri);
+}
+
+static void
+set_selected_page (GigWindow *self,
+                   GigPage *page)
+{
+  WebKitWebView *web_view = NULL;
+  WebKitBackForwardList *back_forward_list = NULL;
+  const char *uri = NULL;
+  bool is_loading = FALSE;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (!page || GIG_IS_PAGE (page));
+
+  if (self->selected_page == page)
+    return;
+
+  gtk_widget_set_sensitive (GTK_WIDGET (self->url_entry), page != NULL);
+
+  if (page)
+    {
+      web_view = gig_page_get_web_view (page);
+      back_forward_list = webkit_web_view_get_back_forward_list (web_view);
+      uri = webkit_web_view_get_uri (web_view);
+      is_loading = webkit_web_view_is_loading (web_view);
+    }
+
+  gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
+
+  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
+                            is_loading ? "process-stop-symbolic"
+                                       : "view-refresh-symbolic");
+
+  g_signal_group_set_target (self->web_view_signals, web_view);
+  g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
+
+  gig_window_update_actions (self, web_view);
+
+  self->selected_page = page;
 }
 
 static void
@@ -26,30 +67,16 @@ web_view_notify_uri_cb (GigWindow *self,
                         WebKitWebView *web_view)
 {
   const char *uri;
+  gboolean can_stop_reload;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
   uri = webkit_web_view_get_uri (web_view);
   gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
-}
 
-static void
-web_view_notify_title_cb (GigWindow *self,
-                          GParamSpec *pspec,
-                          WebKitWebView *web_view)
-{
-  AdwTabPage *tab_page;
-  const char *title;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  tab_page = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (web_view));
-  g_assert (ADW_IS_TAB_PAGE (tab_page));
-
-  title = webkit_web_view_get_title (web_view);
-  adw_tab_page_set_title (tab_page, title ? title : "Untitled");
+  can_stop_reload = uri != NULL;
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_stop_reload);
 }
 
 static void
@@ -78,9 +105,12 @@ back_forward_list_changed_cb (GigWindow *self,
   gboolean can_go_forward;
 
   g_assert (GIG_IS_WINDOW (self));
+  g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
+  g_assert (GIG_IS_PAGE (self->selected_page));
 
-  web_view = self->current_web_view;
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  web_view = gig_page_get_web_view (self->selected_page);
+
+  g_assert (webkit_web_view_get_back_forward_list (web_view) == back_forward_list);
 
   can_go_back = webkit_web_view_can_go_back (web_view);
   can_go_forward = webkit_web_view_can_go_forward (web_view);
@@ -95,40 +125,15 @@ tab_view_notify_selected_page_cb (GigWindow *self,
                                   AdwTabView *tab_view)
 {
   AdwTabPage *tab_page;
-  WebKitWebView *web_view = NULL;
-  WebKitBackForwardList *back_forward_list = NULL;
-  const char *uri = NULL;
-  gboolean is_loading = FALSE;
+  GigPage *page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
   if ((tab_page = adw_tab_view_get_selected_page (tab_view)))
-    web_view = WEBKIT_WEB_VIEW (adw_tab_page_get_child (tab_page));
+    page = GIG_PAGE (adw_tab_page_get_child (tab_page));
 
-  g_assert (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
-
-  gtk_widget_set_sensitive (GTK_WIDGET (self->url_entry), web_view != NULL);
-
-  if (web_view)
-    {
-      back_forward_list = webkit_web_view_get_back_forward_list (web_view);
-      uri = webkit_web_view_get_uri (web_view);
-      is_loading = webkit_web_view_is_loading (web_view);
-    }
-
-  gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
-
-  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
-                            is_loading ? "process-stop-symbolic"
-                                       : "view-refresh-symbolic");
-
-  self->current_web_view = web_view;
-
-  gig_window_update_actions (self, web_view);
-
-  g_signal_group_set_target (self->web_view_signals, web_view);
-  g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
+  set_selected_page (self, page);
 }
 
 static void
@@ -176,8 +181,6 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, tab_view_notify_selected_page_cb);
 
   gig_window_class_init_actions (klass);
-
-  g_type_ensure (WEBKIT_TYPE_WEB_VIEW);
 }
 
 static void
@@ -190,12 +193,6 @@ gig_window_init (GigWindow *self)
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::uri",
                                  G_CALLBACK (web_view_notify_uri_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::title",
-                                 G_CALLBACK (web_view_notify_title_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
@@ -227,17 +224,16 @@ gig_window_new (GtkApplication *application)
 }
 
 void
-gig_window_add_tab (GigWindow *self)
+gig_window_add_page (GigWindow *self,
+                     GigPage *page)
 {
   AdwTabPage *tab_page;
-  WebKitWebView *web_view;
 
   g_return_if_fail (GIG_IS_WINDOW (self));
 
-  web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
-  tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (web_view));
+  tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (page));
 
-  adw_tab_page_set_title (tab_page, "New Tab");
+  g_object_bind_property (page, "title", tab_page, "title", G_BINDING_SYNC_CREATE);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }

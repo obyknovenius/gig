@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/com/github/obyknovenius/Gig/ui">
     <file preprocess="xml-stripblanks">gig-window.ui</file>
+    <file preprocess="xml-stripblanks">gig-page.ui</file>
   </gresource>
 </gresources>
