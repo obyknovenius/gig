@@ -134,11 +134,11 @@ gig_page_get_web_view (GigPage *self)
   return self->web_view;
 }
 
-const char *
+const gchar *
 gig_page_get_title (GigPage *self)
 {
   WebKitWebView *web_view;
-  const char *title;
+  const gchar *title;
 
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 

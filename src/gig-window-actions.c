@@ -4,7 +4,7 @@
 
 static void
 gig_window_actions_new_tab_cb (GtkWidget *widget,
-                               const char *action_name,
+                               const gchar *action_name,
                                GVariant *param)
 {
   GigWindow *self = (GigWindow *)widget;
@@ -19,7 +19,7 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
 
 static void
 gig_window_actions_stop_reload_cb (GtkWidget *widget,
-                                   const char *action_name,
+                                   const gchar *action_name,
                                    GVariant *param)
 {
   GigWindow *self = (GigWindow *)widget;
@@ -40,7 +40,7 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
 
 static void
 gig_window_actions_go_back_cb (GtkWidget *widget,
-                               const char *action_name,
+                               const gchar *action_name,
                                GVariant *param)
 {
   GigWindow *self = (GigWindow *)widget;
@@ -56,7 +56,7 @@ gig_window_actions_go_back_cb (GtkWidget *widget,
 
 static void
 gig_window_actions_go_forward_cb (GtkWidget *widget,
-                                  const char *action_name,
+                                  const gchar *action_name,
                                   GVariant *param)
 {
   GigWindow *self = (GigWindow *)widget;

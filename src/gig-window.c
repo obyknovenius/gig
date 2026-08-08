@@ -1,6 +1,7 @@
 #include "gig-window-private.h"
 
 #include "gig-page.h"
+#include "gig-utils.h"
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
@@ -9,16 +10,22 @@ url_entry_activate_cb (GigWindow *self,
                        GtkEntry *entry)
 {
   WebKitWebView *web_view;
-  const char *uri;
+  const gchar *text;
+  g_autofree gchar *uri = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GTK_IS_ENTRY (entry));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
+  text = gtk_editable_get_text (GTK_EDITABLE (entry));
+  if (!text || text[0] == '\0')
+    return;
+
+  uri = gig_utils_fixup_uri (text);
+  if (!uri)
+    uri = gig_utils_build_search_uri (text);
+
   web_view = gig_page_get_web_view (self->selected_page);
-
-  uri = gtk_editable_get_text (GTK_EDITABLE (entry));
-
   webkit_web_view_load_uri (web_view, uri);
 }
 
@@ -28,7 +35,7 @@ set_selected_page (GigWindow *self,
 {
   WebKitWebView *web_view = NULL;
   WebKitBackForwardList *back_forward_list = NULL;
-  const char *uri = NULL;
+  const gchar *uri = NULL;
   bool is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -66,7 +73,7 @@ web_view_notify_uri_cb (GigWindow *self,
                         GParamSpec *pspec,
                         WebKitWebView *web_view)
 {
-  const char *uri;
+  const gchar *uri;
   gboolean can_stop_reload;
 
   g_assert (GIG_IS_WINDOW (self));

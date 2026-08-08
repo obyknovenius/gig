@@ -1,6 +1,7 @@
 gig_sources = [
   'gig-application.c',
   'gig-page.c',
+  'gig-utils.c',
   'gig-window-actions.c',
   'gig-window.c',
   'main.c',
@@ -29,10 +30,12 @@ gig_sources += gnome.compile_resources(
 )
 
 adwaita_dep = dependency('libadwaita-1')
+soup_dep = dependency('libsoup-3.0')
 webkit_dep = dependency('webkitgtk-6.0')
 
 gig_deps = [
   adwaita_dep,
+  soup_dep,
   webkit_dep,
 ]
 
