@@ -98,6 +98,8 @@ web_view_notify_is_loading_cb (GigWindow *self,
 
 static void
 back_forward_list_changed_cb (GigWindow *self,
+                              WebKitBackForwardListItem *item_added,
+                              gpointer items_removed,
                               WebKitBackForwardList *back_forward_list)
 {
   WebKitWebView *web_view;
@@ -228,12 +230,17 @@ gig_window_add_page (GigWindow *self,
                      GigPage *page)
 {
   AdwTabPage *tab_page;
+  WebKitWebView *web_view;
 
   g_return_if_fail (GIG_IS_WINDOW (self));
+  g_return_if_fail (GIG_IS_PAGE (page));
+
+  web_view = gig_page_get_web_view (page);
 
   tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (page));
 
   g_object_bind_property (page, "title", tab_page, "title", G_BINDING_SYNC_CREATE);
+  g_object_bind_property (web_view, "is-loading", tab_page, "loading", G_BINDING_SYNC_CREATE);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }
