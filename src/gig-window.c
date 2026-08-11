@@ -123,20 +123,14 @@ back_forward_list_changed_cb (GigWindow *self,
                               gpointer items_removed,
                               WebKitBackForwardList *back_forward_list)
 {
-  WebKitWebView *web_view;
   gboolean can_go_back;
   gboolean can_go_forward;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
-  g_assert (GIG_IS_PAGE (self->selected_page));
 
-  web_view = gig_page_get_web_view (self->selected_page);
-
-  g_assert (webkit_web_view_get_back_forward_list (web_view) == back_forward_list);
-
-  can_go_back = webkit_web_view_can_go_back (web_view);
-  can_go_forward = webkit_web_view_can_go_forward (web_view);
+  can_go_back = webkit_back_forward_list_get_back_item (back_forward_list) != NULL;
+  can_go_forward = webkit_back_forward_list_get_forward_item (back_forward_list) != NULL;
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
