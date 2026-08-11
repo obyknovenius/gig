@@ -5,6 +5,20 @@
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
+static AdwTabPage *
+tab_overview_create_tab_cb (GigWindow *self,
+                            AdwTabOverview *tab_overview)
+{
+  GigPage *page;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
+
+  page = gig_page_new ();
+
+  return gig_window_add_page (self, page);
+}
+
 static void
 url_entry_activate_cb (GigWindow *self,
                        GtkEntry *entry)
@@ -186,6 +200,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
+  gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, url_entry_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_notify_selected_page_cb);
 
@@ -232,15 +247,15 @@ gig_window_new (GtkApplication *application)
                        NULL);
 }
 
-void
+AdwTabPage *
 gig_window_add_page (GigWindow *self,
                      GigPage *page)
 {
   AdwTabPage *tab_page;
   WebKitWebView *web_view;
 
-  g_return_if_fail (GIG_IS_WINDOW (self));
-  g_return_if_fail (GIG_IS_PAGE (page));
+  g_return_val_if_fail (GIG_IS_WINDOW (self), NULL);
+  g_return_val_if_fail (GIG_IS_PAGE (page), NULL);
 
   web_view = gig_page_get_web_view (page);
 
@@ -250,4 +265,6 @@ gig_window_add_page (GigWindow *self,
   g_object_bind_property (web_view, "is-loading", tab_page, "loading", G_BINDING_SYNC_CREATE);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
+
+  return tab_page;
 }

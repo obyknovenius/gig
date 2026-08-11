@@ -5,70 +5,77 @@ template $GigWindow: Adw.ApplicationWindow {
     default-width: 1024;
     default-height: 768;
 
-    Adw.ToolbarView {
-        top-bar-style: raised;
+    Adw.TabOverview {
+        view: tab_view;
+        enable-new-tab: true;
+        create-tab => $tab_overview_create_tab_cb() swapped;
 
-        [top]
-        Adw.HeaderBar {
-            [start]
-            Gtk.Box {
-                spacing: 6;
+        child: Adw.ToolbarView {
+            top-bar-style: raised;
 
-                Gtk.Button {
-                    icon-name: "go-previous-symbolic";
-                    action-name: "win.go-back";
+            [top]
+            Adw.HeaderBar {
+                [start]
+                Gtk.Box {
+                    spacing: 6;
+
+                    Gtk.Button {
+                        icon-name: "go-previous-symbolic";
+                        action-name: "win.go-back";
+                    }
+
+                    Gtk.Button {
+                        icon-name: "go-next-symbolic";
+                        action-name: "win.go-forward";
+                    }
+
+                    Gtk.Button stop_reload_button {
+                        icon-name: "view-refresh-symbolic";
+                        action-name: "win.stop-reload";
+                    }
                 }
 
-                Gtk.Button {
-                    icon-name: "go-next-symbolic";
-                    action-name: "win.go-forward";
+                [title]
+                Adw.Clamp {
+                    hexpand: true;
+                    maximum-size: 860;
+
+                    Gtk.Entry url_entry {
+                        placeholder-text: "Search or type a URL";
+                        activate => $url_entry_activate_cb() swapped;
+                        sensitive: false;
+                    }
                 }
 
-                Gtk.Button stop_reload_button {
-                    icon-name: "view-refresh-symbolic";
-                    action-name: "win.stop-reload";
+                [end]
+                Gtk.Box {
+                    spacing: 6;
+
+                    Gtk.Button {
+                        icon-name: "tab-new-symbolic";
+                        action-name: "win.new-tab";
+                    }
+
+                    Gtk.Button {
+                        icon-name: "view-grid-symbolic";
+                        action-name: "overview.open";
+                    }
+
+                    Gtk.Button {
+                        icon-name: "open-menu-symbolic";
+                    }
                 }
             }
 
-            [title]
-            Adw.Clamp {
-                hexpand: true;
-                maximum-size: 860;
-
-                Gtk.Entry url_entry {
-                    placeholder-text: "Search or type a URL";
-                    activate => $url_entry_activate_cb() swapped;
-                    sensitive: false;
-                }
+            [top]
+            Adw.TabBar {
+                autohide: false;
+                view: tab_view;
             }
 
-            [end]
-            Gtk.Box {
-                spacing: 6;
-
-                Gtk.Button {
-                    icon-name: "tab-new-symbolic";
-                    action-name: "win.new-tab";
-                }
-
-                Gtk.Button {
-                    icon-name: "view-grid-symbolic";
-                }
-
-                Gtk.Button {
-                    icon-name: "open-menu-symbolic";
-                }
+            Adw.TabView tab_view {
+                notify::selected-page => $tab_view_notify_selected_page_cb() swapped;
             }
-        }
-
-        [top]
-        Adw.TabBar {
-            autohide: false;
-            view: tab_view;
-        }
-
-        Adw.TabView tab_view {
-            notify::selected-page => $tab_view_notify_selected_page_cb() swapped;
-        }
+        };
     }
 }
