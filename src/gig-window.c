@@ -256,7 +256,7 @@ gig_window_add_page (GigWindow *self,
   tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (page));
 
   g_object_bind_property (page, "title", tab_page, "title", G_BINDING_SYNC_CREATE);
-  g_object_bind_property (web_view, "is-loading", tab_page, "loading", G_BINDING_SYNC_CREATE);
+  g_object_bind_property (page, "is-loading", tab_page, "loading", G_BINDING_SYNC_CREATE);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 

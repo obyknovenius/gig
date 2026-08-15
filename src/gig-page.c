@@ -13,6 +13,7 @@ enum
 {
   PROP_0,
   PROP_TITLE,
+  PROP_IS_LOADING,
   N_PROPS
 };
 
@@ -26,6 +27,16 @@ web_view_notify_title_cb (GigPage *self,
   g_assert (GIG_IS_PAGE (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
+}
+
+static void
+web_view_notify_is_loading_cb (GigPage *self,
+                               GParamSpec *pspec,
+                               WebKitWebView *web_view)
+{
+  g_assert (GIG_IS_PAGE (self));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
 }
 
 static void
@@ -58,6 +69,10 @@ gig_page_get_property (GObject *object,
     {
     case PROP_TITLE:
       g_value_set_string (value, gig_page_get_title (self));
+      break;
+
+    case PROP_IS_LOADING:
+      g_value_set_boolean (value, gig_page_get_is_loading (self));
       break;
 
     default:
@@ -97,6 +112,12 @@ gig_page_class_init (GigPageClass *klass)
                                                 NULL,
                                                 (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
+  properties[PROP_IS_LOADING] = g_param_spec_boolean ("is-loading",
+                                                      "Is Loading",
+                                                      "Whether the page is loading",
+                                                      FALSE,
+                                                      (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
@@ -116,6 +137,12 @@ gig_page_init (GigPage *self)
   g_signal_connect_object (self->web_view,
                            "notify::title",
                            G_CALLBACK (web_view_notify_title_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "notify::is-loading",
+                           G_CALLBACK (web_view_notify_is_loading_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
@@ -148,4 +175,12 @@ gig_page_get_title (GigPage *self)
     return title;
 
   return "Untitled";
+}
+
+gboolean
+gig_page_get_is_loading (GigPage *self)
+{
+  g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
+
+  return webkit_web_view_is_loading (self->web_view);
 }
