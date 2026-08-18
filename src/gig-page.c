@@ -5,6 +5,8 @@ struct _GigPage
   GtkWidget parent_instance;
 
   WebKitWebView *web_view;
+
+  gchar *title;
 };
 
 G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
@@ -20,13 +22,42 @@ enum
 static GParamSpec *properties[N_PROPS];
 
 static void
+update_title (GigPage *self)
+{
+  const gchar *title = NULL;
+
+  g_assert (GIG_IS_PAGE (self));
+
+  title = webkit_web_view_get_title (self->web_view);
+
+  if (!title || title[0] == '\0')
+    title = webkit_web_view_get_uri (self->web_view);
+
+  if (!title || title[0] == '\0')
+    title = "Untitled";
+
+  if (g_set_str (&self->title, title))
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
+}
+
+static void
+web_view_notify_uri_cb (GigPage *self,
+                        GParamSpec *pspec,
+                        WebKitWebView *web_view)
+{
+  g_assert (GIG_IS_PAGE (self));
+
+  update_title (self);
+}
+
+static void
 web_view_notify_title_cb (GigPage *self,
                           GParamSpec *pspec,
                           WebKitWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
+  update_title (self);
 }
 
 static void
@@ -44,6 +75,8 @@ gig_page_dispose (GObject *object)
 {
   GigPage *self = GIG_PAGE (object);
 
+  g_signal_handlers_disconnect_by_data (self->web_view, self);
+
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_PAGE);
 
   G_OBJECT_CLASS (gig_page_parent_class)->dispose (object);
@@ -53,6 +86,8 @@ static void
 gig_page_finalize (GObject *object)
 {
   GigPage *self = GIG_PAGE (object);
+
+  g_clear_pointer (&self->title, g_free);
 
   G_OBJECT_CLASS (gig_page_parent_class)->finalize (object);
 }
@@ -132,7 +167,15 @@ gig_page_class_init (GigPageClass *klass)
 static void
 gig_page_init (GigPage *self)
 {
+  self->title = g_strdup ("Untitled");
+
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  g_signal_connect_object (self->web_view,
+                           "notify::uri",
+                           G_CALLBACK (web_view_notify_uri_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::title",
@@ -164,17 +207,9 @@ gig_page_get_web_view (GigPage *self)
 const gchar *
 gig_page_get_title (GigPage *self)
 {
-  WebKitWebView *web_view;
-  const gchar *title;
-
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 
-  web_view = self->web_view;
-
-  if ((title = webkit_web_view_get_title (web_view)))
-    return title;
-
-  return "Untitled";
+  return self->title;
 }
 
 gboolean
