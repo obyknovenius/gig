@@ -246,16 +246,14 @@ gig_window_add_page (GigWindow *self,
                      GigPage *page)
 {
   AdwTabPage *tab_page;
-  WebKitWebView *web_view;
 
   g_return_val_if_fail (GIG_IS_WINDOW (self), NULL);
   g_return_val_if_fail (GIG_IS_PAGE (page), NULL);
 
-  web_view = gig_page_get_web_view (page);
-
   tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (page));
 
   g_object_bind_property (page, "title", tab_page, "title", G_BINDING_SYNC_CREATE);
+  g_object_bind_property (page, "icon", tab_page, "icon", G_BINDING_SYNC_CREATE);
   g_object_bind_property (page, "is-loading", tab_page, "loading", G_BINDING_SYNC_CREATE);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);

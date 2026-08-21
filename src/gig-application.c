@@ -13,12 +13,18 @@ static void
 gig_application_constructed (GObject *object)
 {
   GigApplication *self = GIG_APPLICATION (object);
+  WebKitNetworkSession *network_session;
+  WebKitWebsiteDataManager *data_manager;
 
   g_assert (GIG_IS_APPLICATION (self));
 
   g_application_set_application_id (G_APPLICATION (self), "com.github.obyknovenius.Gig");
   g_application_set_flags (G_APPLICATION (self), G_APPLICATION_HANDLES_OPEN);
   g_application_set_option_context_parameter_string (G_APPLICATION (self), "[FILES…]");
+
+  network_session = webkit_network_session_get_default ();
+  data_manager = webkit_network_session_get_website_data_manager (network_session);
+  webkit_website_data_manager_set_favicons_enabled (data_manager, TRUE);
 
   G_OBJECT_CLASS (gig_application_parent_class)->constructed (object);
 }

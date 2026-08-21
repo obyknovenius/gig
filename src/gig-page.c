@@ -15,6 +15,7 @@ enum
 {
   PROP_0,
   PROP_TITLE,
+  PROP_ICON,
   PROP_IS_LOADING,
   N_PROPS
 };
@@ -58,6 +59,16 @@ web_view_notify_title_cb (GigPage *self,
   g_assert (GIG_IS_PAGE (self));
 
   update_title (self);
+}
+
+static void
+web_view_notify_favicon_cb (GigPage *self,
+                            GParamSpec *pspec,
+                            WebKitWebView *web_view)
+{
+  g_assert (GIG_IS_PAGE (self));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
 }
 
 static void
@@ -106,6 +117,10 @@ gig_page_get_property (GObject *object,
       g_value_set_string (value, gig_page_get_title (self));
       break;
 
+    case PROP_ICON:
+      g_value_set_object (value, gig_page_get_icon (self));
+      break;
+
     case PROP_IS_LOADING:
       g_value_set_boolean (value, gig_page_get_is_loading (self));
       break;
@@ -142,14 +157,17 @@ gig_page_class_init (GigPageClass *klass)
   object_class->set_property = gig_page_set_property;
 
   properties[PROP_TITLE] = g_param_spec_string ("title",
-                                                "Title",
-                                                "The title of the page",
+                                                NULL, NULL,
                                                 NULL,
                                                 (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
+  properties[PROP_ICON] = g_param_spec_object ("icon",
+                                               NULL, NULL,
+                                               GDK_TYPE_TEXTURE,
+                                               (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
   properties[PROP_IS_LOADING] = g_param_spec_boolean ("is-loading",
-                                                      "Is Loading",
-                                                      "Whether the page is loading",
+                                                      NULL, NULL,
                                                       FALSE,
                                                       (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
@@ -184,6 +202,12 @@ gig_page_init (GigPage *self)
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
+                           "notify::favicon",
+                           G_CALLBACK (web_view_notify_favicon_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
                            "notify::is-loading",
                            G_CALLBACK (web_view_notify_is_loading_cb),
                            self,
@@ -210,6 +234,14 @@ gig_page_get_title (GigPage *self)
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 
   return self->title;
+}
+
+GdkTexture *
+gig_page_get_icon (GigPage *self)
+{
+  g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
+
+  return webkit_web_view_get_favicon (self->web_view);
 }
 
 gboolean
