@@ -42,9 +42,9 @@ update_title (GigPage *self)
 }
 
 static void
-web_view_notify_uri_cb (GigPage *self,
-                        GParamSpec *pspec,
-                        WebKitWebView *web_view)
+web_view_uri_changed_cb (GigPage *self,
+                         GParamSpec *pspec,
+                         WebKitWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
@@ -52,9 +52,9 @@ web_view_notify_uri_cb (GigPage *self,
 }
 
 static void
-web_view_notify_title_cb (GigPage *self,
-                          GParamSpec *pspec,
-                          WebKitWebView *web_view)
+web_view_title_changed_cb (GigPage *self,
+                           GParamSpec *pspec,
+                           WebKitWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
@@ -62,9 +62,9 @@ web_view_notify_title_cb (GigPage *self,
 }
 
 static void
-web_view_notify_favicon_cb (GigPage *self,
-                            GParamSpec *pspec,
-                            WebKitWebView *web_view)
+web_view_favicon_changed_cb (GigPage *self,
+                             GParamSpec *pspec,
+                             WebKitWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
@@ -72,9 +72,9 @@ web_view_notify_favicon_cb (GigPage *self,
 }
 
 static void
-web_view_notify_is_loading_cb (GigPage *self,
-                               GParamSpec *pspec,
-                               WebKitWebView *web_view)
+web_view_is_loading_changed_cb (GigPage *self,
+                                GParamSpec *pspec,
+                                WebKitWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
@@ -191,25 +191,25 @@ gig_page_init (GigPage *self)
 
   g_signal_connect_object (self->web_view,
                            "notify::uri",
-                           G_CALLBACK (web_view_notify_uri_cb),
+                           G_CALLBACK (web_view_uri_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::title",
-                           G_CALLBACK (web_view_notify_title_cb),
+                           G_CALLBACK (web_view_title_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::favicon",
-                           G_CALLBACK (web_view_notify_favicon_cb),
+                           G_CALLBACK (web_view_favicon_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::is-loading",
-                           G_CALLBACK (web_view_notify_is_loading_cb),
+                           G_CALLBACK (web_view_is_loading_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }

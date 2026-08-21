@@ -83,9 +83,9 @@ set_selected_page (GigWindow *self,
 }
 
 static void
-web_view_notify_uri_cb (GigWindow *self,
-                        GParamSpec *pspec,
-                        WebKitWebView *web_view)
+web_view_uri_changed_cb (GigWindow *self,
+                         GParamSpec *pspec,
+                         WebKitWebView *web_view)
 {
   const gchar *uri;
   gboolean can_stop_reload;
@@ -101,9 +101,9 @@ web_view_notify_uri_cb (GigWindow *self,
 }
 
 static void
-web_view_notify_is_loading_cb (GigWindow *self,
-                               GParamSpec *pspec,
-                               WebKitWebView *web_view)
+web_view_is_loading_changed_cb (GigWindow *self,
+                                GParamSpec *pspec,
+                                WebKitWebView *web_view)
 {
   gboolean is_loading;
 
@@ -137,9 +137,9 @@ back_forward_list_changed_cb (GigWindow *self,
 }
 
 static void
-tab_view_notify_selected_page_cb (GigWindow *self,
-                                  GParamSpec *pspec,
-                                  AdwTabView *tab_view)
+tab_view_selected_page_changed_cb (GigWindow *self,
+                                   GParamSpec *pspec,
+                                   AdwTabView *tab_view)
 {
   AdwTabPage *tab_page;
   GigPage *page = NULL;
@@ -196,7 +196,7 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, url_entry_activate_cb);
-  gtk_widget_class_bind_template_callback (widget_class, tab_view_notify_selected_page_cb);
+  gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
   gig_window_class_init_actions (klass);
 }
@@ -210,13 +210,13 @@ gig_window_init (GigWindow *self)
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::uri",
-                                 G_CALLBACK (web_view_notify_uri_cb),
+                                 G_CALLBACK (web_view_uri_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::is-loading",
-                                 G_CALLBACK (web_view_notify_is_loading_cb),
+                                 G_CALLBACK (web_view_is_loading_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
