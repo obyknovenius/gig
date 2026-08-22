@@ -48,7 +48,6 @@ set_selected_page (GigWindow *self,
                    GigPage *page)
 {
   WebKitWebView *web_view = NULL;
-  WebKitBackForwardList *back_forward_list = NULL;
   const gchar *uri = NULL;
   bool is_loading = FALSE;
 
@@ -63,7 +62,6 @@ set_selected_page (GigWindow *self,
   if (page)
     {
       web_view = gig_page_get_web_view (page);
-      back_forward_list = webkit_web_view_get_back_forward_list (web_view);
       uri = webkit_web_view_get_uri (web_view);
       is_loading = webkit_web_view_is_loading (web_view);
     }
@@ -75,7 +73,7 @@ set_selected_page (GigWindow *self,
                                        : "view-refresh-symbolic");
 
   g_signal_group_set_target (self->web_view_signals, web_view);
-  g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
+  g_signal_group_set_target (self->page_signals, page);
 
   gig_window_update_actions (self, web_view);
 
@@ -118,21 +116,32 @@ web_view_is_loading_changed_cb (GigWindow *self,
 }
 
 static void
-back_forward_list_changed_cb (GigWindow *self,
-                              WebKitBackForwardListItem *item_added,
-                              gpointer items_removed,
-                              WebKitBackForwardList *back_forward_list)
+page_can_go_back_changed_cb (GigWindow *self,
+                             GParamSpec *pspec,
+                             GigPage *page)
 {
   gboolean can_go_back;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_PAGE (page));
+
+  can_go_back = gig_page_can_go_back (page);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
+}
+
+static void
+page_can_go_forward_changed_cb (GigWindow *self,
+                                GParamSpec *pspec,
+                                GigPage *page)
+{
   gboolean can_go_forward;
 
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
+  g_assert (GIG_IS_PAGE (page));
 
-  can_go_back = webkit_back_forward_list_get_back_item (back_forward_list) != NULL;
-  can_go_forward = webkit_back_forward_list_get_forward_item (back_forward_list) != NULL;
+  can_go_forward = gig_page_can_go_forward (page);
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
 }
 
@@ -161,7 +170,7 @@ gig_window_dispose (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_signal_group_set_target (self->web_view_signals, NULL);
-  g_signal_group_set_target (self->back_forward_list_signals, NULL);
+  g_signal_group_set_target (self->page_signals, NULL);
 
   G_OBJECT_CLASS (gig_window_parent_class)->dispose (object);
 }
@@ -174,7 +183,7 @@ gig_window_finalize (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_clear_object (&self->web_view_signals);
-  g_clear_object (&self->back_forward_list_signals);
+  g_clear_object (&self->page_signals);
 
   G_OBJECT_CLASS (gig_window_parent_class)->finalize (object);
 }
@@ -220,11 +229,17 @@ gig_window_init (GigWindow *self)
                                  self,
                                  G_CONNECT_SWAPPED);
 
-  self->back_forward_list_signals = g_signal_group_new (WEBKIT_TYPE_BACK_FORWARD_LIST);
+  self->page_signals = g_signal_group_new (GIG_TYPE_PAGE);
 
-  g_signal_group_connect_object (self->back_forward_list_signals,
-                                 "changed",
-                                 G_CALLBACK (back_forward_list_changed_cb),
+  g_signal_group_connect_object (self->page_signals,
+                                 "notify::can-go-back",
+                                 G_CALLBACK (page_can_go_back_changed_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->page_signals,
+                                 "notify::can-go-forward",
+                                 G_CALLBACK (page_can_go_forward_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
@@ -252,9 +267,17 @@ gig_window_add_page (GigWindow *self,
 
   tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (page));
 
-  g_object_bind_property (page, "title", tab_page, "title", G_BINDING_SYNC_CREATE);
-  g_object_bind_property (page, "icon", tab_page, "icon", G_BINDING_SYNC_CREATE);
-  g_object_bind_property (page, "is-loading", tab_page, "loading", G_BINDING_SYNC_CREATE);
+  g_object_bind_property (page, "title",
+                          tab_page, "title",
+                          G_BINDING_SYNC_CREATE);
+
+  g_object_bind_property (page, "icon",
+                          tab_page, "icon",
+                          G_BINDING_SYNC_CREATE);
+
+  g_object_bind_property (page, "is-loading",
+                          tab_page, "loading",
+                          G_BINDING_SYNC_CREATE);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 

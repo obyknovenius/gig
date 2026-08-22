@@ -97,6 +97,30 @@ gig_window_init_actions (GigWindow *self)
 }
 
 void
+gig_window_update_back_action (GigWindow *self,
+                               GigPage *page)
+{
+  gboolean can_go_back = FALSE;
+
+  if (page)
+    can_go_back = gig_page_can_go_back (page);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
+}
+
+void
+gig_window_update_forward_action (GigWindow *self,
+                                  GigPage *page)
+{
+  gboolean can_go_forward = FALSE;
+
+  if (page)
+    can_go_forward = gig_page_can_go_forward (page);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
+}
+
+void
 gig_window_update_actions (GigWindow *self,
                            WebKitWebView *web_view)
 {
