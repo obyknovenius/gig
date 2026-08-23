@@ -75,7 +75,7 @@ set_selected_page (GigWindow *self,
   g_signal_group_set_target (self->web_view_signals, web_view);
   g_signal_group_set_target (self->page_signals, page);
 
-  gig_window_update_actions (self, web_view);
+  gig_window_update_actions (self, page);
 
   self->selected_page = page;
 }

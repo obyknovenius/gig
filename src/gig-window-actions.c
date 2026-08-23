@@ -97,45 +97,23 @@ gig_window_init_actions (GigWindow *self)
 }
 
 void
-gig_window_update_back_action (GigWindow *self,
-                               GigPage *page)
-{
-  gboolean can_go_back = FALSE;
-
-  if (page)
-    can_go_back = gig_page_can_go_back (page);
-
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
-}
-
-void
-gig_window_update_forward_action (GigWindow *self,
-                                  GigPage *page)
-{
-  gboolean can_go_forward = FALSE;
-
-  if (page)
-    can_go_forward = gig_page_can_go_forward (page);
-
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
-}
-
-void
 gig_window_update_actions (GigWindow *self,
-                           WebKitWebView *web_view)
+                           GigPage *page)
 {
+  WebKitWebView *web_view = NULL;
   gboolean can_stop_reload = FALSE;
   gboolean can_go_back = FALSE;
   gboolean can_go_forward = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (!page || GIG_IS_PAGE (page));
 
-  if (web_view)
+  if (page)
     {
+      web_view = gig_page_get_web_view (page);
       can_stop_reload = webkit_web_view_get_uri (web_view) != NULL;
-      can_go_back = webkit_web_view_can_go_back (web_view);
-      can_go_forward = webkit_web_view_can_go_forward (web_view);
+      can_go_back = gig_page_can_go_back (page);
+      can_go_forward = gig_page_can_go_forward (page);
     }
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_stop_reload);

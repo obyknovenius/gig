@@ -259,6 +259,14 @@ gig_page_get_web_view (GigPage *self)
 }
 
 const gchar *
+gig_page_get_uri (GigPage *self)
+{
+  g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
+
+  return webkit_web_view_get_uri (self->web_view);
+}
+
+const gchar *
 gig_page_get_title (GigPage *self)
 {
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
