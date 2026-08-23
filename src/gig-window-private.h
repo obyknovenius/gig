@@ -14,7 +14,6 @@ struct _GigWindow
 
   GigPage *selected_page;
 
-  GSignalGroup *web_view_signals;
   GSignalGroup *page_signals;
 };
 

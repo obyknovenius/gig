@@ -72,7 +72,6 @@ set_selected_page (GigWindow *self,
                             is_loading ? "process-stop-symbolic"
                                        : "view-refresh-symbolic");
 
-  g_signal_group_set_target (self->web_view_signals, web_view);
   g_signal_group_set_target (self->page_signals, page);
 
   gig_window_update_actions (self, page);
@@ -81,17 +80,17 @@ set_selected_page (GigWindow *self,
 }
 
 static void
-web_view_uri_changed_cb (GigWindow *self,
-                         GParamSpec *pspec,
-                         WebKitWebView *web_view)
+page_uri_changed_cb (GigWindow *self,
+                     GParamSpec *pspec,
+                     GigPage *page)
 {
   const gchar *uri;
   gboolean can_stop_reload;
 
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (GIG_IS_PAGE (page));
 
-  uri = webkit_web_view_get_uri (web_view);
+  uri = gig_page_get_uri (page);
   gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
 
   can_stop_reload = uri != NULL;
@@ -99,16 +98,16 @@ web_view_uri_changed_cb (GigWindow *self,
 }
 
 static void
-web_view_is_loading_changed_cb (GigWindow *self,
-                                GParamSpec *pspec,
-                                WebKitWebView *web_view)
+page_is_loading_changed_cb (GigWindow *self,
+                            GParamSpec *pspec,
+                            GigPage *page)
 {
   gboolean is_loading;
 
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (GIG_IS_PAGE (page));
 
-  is_loading = webkit_web_view_is_loading (web_view);
+  is_loading = gig_page_get_is_loading (page);
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
                             is_loading ? "process-stop-symbolic"
@@ -169,7 +168,6 @@ gig_window_dispose (GObject *object)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  g_signal_group_set_target (self->web_view_signals, NULL);
   g_signal_group_set_target (self->page_signals, NULL);
 
   G_OBJECT_CLASS (gig_window_parent_class)->dispose (object);
@@ -182,7 +180,6 @@ gig_window_finalize (GObject *object)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  g_clear_object (&self->web_view_signals);
   g_clear_object (&self->page_signals);
 
   G_OBJECT_CLASS (gig_window_parent_class)->finalize (object);
@@ -215,21 +212,19 @@ gig_window_init (GigWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  self->web_view_signals = g_signal_group_new (WEBKIT_TYPE_WEB_VIEW);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::uri",
-                                 G_CALLBACK (web_view_uri_changed_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::is-loading",
-                                 G_CALLBACK (web_view_is_loading_changed_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
   self->page_signals = g_signal_group_new (GIG_TYPE_PAGE);
+
+  g_signal_group_connect_object (self->page_signals,
+                                 "notify::uri",
+                                 G_CALLBACK (page_uri_changed_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->page_signals,
+                                 "notify::is-loading",
+                                 G_CALLBACK (page_is_loading_changed_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->page_signals,
                                  "notify::can-go-back",

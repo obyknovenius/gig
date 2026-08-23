@@ -100,7 +100,6 @@ void
 gig_window_update_actions (GigWindow *self,
                            GigPage *page)
 {
-  WebKitWebView *web_view = NULL;
   gboolean can_stop_reload = FALSE;
   gboolean can_go_back = FALSE;
   gboolean can_go_forward = FALSE;
@@ -110,8 +109,7 @@ gig_window_update_actions (GigWindow *self,
 
   if (page)
     {
-      web_view = gig_page_get_web_view (page);
-      can_stop_reload = webkit_web_view_get_uri (web_view) != NULL;
+      can_stop_reload = gig_page_get_uri (page) != NULL;
       can_go_back = gig_page_can_go_back (page);
       can_go_forward = gig_page_can_go_forward (page);
     }

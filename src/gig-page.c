@@ -14,6 +14,7 @@ G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
 enum
 {
   PROP_0,
+  PROP_URI,
   PROP_TITLE,
   PROP_ICON,
   PROP_IS_LOADING,
@@ -51,6 +52,8 @@ web_view_uri_changed_cb (GigPage *self,
   g_assert (GIG_IS_PAGE (self));
 
   update_title (self);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_URI]);
 }
 
 static void
@@ -131,6 +134,10 @@ gig_page_get_property (GObject *object,
 
   switch (prop_id)
     {
+    case PROP_URI:
+      g_value_set_string (value, gig_page_get_uri (self));
+      break;
+
     case PROP_TITLE:
       g_value_set_string (value, gig_page_get_title (self));
       break;
@@ -165,6 +172,11 @@ gig_page_class_init (GigPageClass *klass)
   object_class->dispose = gig_page_dispose;
   object_class->finalize = gig_page_finalize;
   object_class->get_property = gig_page_get_property;
+
+  properties[PROP_URI] = g_param_spec_string ("uri",
+                                              NULL, NULL,
+                                              NULL,
+                                              (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
   properties[PROP_TITLE] = g_param_spec_string ("title",
                                                 NULL, NULL,
