@@ -176,7 +176,7 @@ gig_window_dispose (GObject *object)
 static void
 gig_window_finalize (GObject *object)
 {
-  GigWindow *self = (GigWindow *)object;
+  GigWindow *self = (GigWindow *) object;
 
   g_assert (GIG_IS_WINDOW (self));
 

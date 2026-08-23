@@ -7,7 +7,7 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
                                const gchar *action_name,
                                GVariant *param)
 {
-  GigWindow *self = (GigWindow *)widget;
+  GigWindow *self = (GigWindow *) widget;
   GigPage *page;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -22,7 +22,7 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
                                    const gchar *action_name,
                                    GVariant *param)
 {
-  GigWindow *self = (GigWindow *)widget;
+  GigWindow *self = (GigWindow *) widget;
   WebKitWebView *web_view;
   gboolean is_loading;
 
@@ -43,7 +43,7 @@ gig_window_actions_go_back_cb (GtkWidget *widget,
                                const gchar *action_name,
                                GVariant *param)
 {
-  GigWindow *self = (GigWindow *)widget;
+  GigWindow *self = (GigWindow *) widget;
   WebKitWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -59,7 +59,7 @@ gig_window_actions_go_forward_cb (GtkWidget *widget,
                                   const gchar *action_name,
                                   GVariant *param)
 {
-  GigWindow *self = (GigWindow *)widget;
+  GigWindow *self = (GigWindow *) widget;
   WebKitWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
