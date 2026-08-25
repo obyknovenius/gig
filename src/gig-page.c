@@ -133,6 +133,17 @@ gig_page_get_property (GObject *object,
     }
 }
 
+static gboolean
+gig_page_grab_focus (GtkWidget *widget)
+{
+  GigPage *self = GIG_PAGE (widget);
+
+  if (webkit_web_view_get_uri (self->web_view) == NULL)
+    return FALSE;
+
+  return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
+}
+
 static void
 gig_page_class_init (GigPageClass *klass)
 {
@@ -141,6 +152,7 @@ gig_page_class_init (GigPageClass *klass)
 
   object_class->dispose = gig_page_dispose;
   object_class->get_property = gig_page_get_property;
+  widget_class->grab_focus = gig_page_grab_focus;
 
   properties[PROP_URI] = g_param_spec_string ("uri",
                                               NULL, NULL,

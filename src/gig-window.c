@@ -39,40 +39,8 @@ url_entry_activate_cb (GigWindow *self,
     uri = gig_utils_build_search_uri (text);
 
   gig_page_load_uri (self->selected_page, uri);
-}
 
-static void
-set_selected_page (GigWindow *self,
-                   GigPage *page)
-{
-  const gchar *uri = NULL;
-  bool is_loading = FALSE;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (!page || GIG_IS_PAGE (page));
-
-  if (self->selected_page == page)
-    return;
-
-  gtk_widget_set_sensitive (GTK_WIDGET (self->url_entry), page != NULL);
-
-  if (page)
-    {
-      uri = gig_page_get_uri (page);
-      is_loading = gig_page_get_is_loading (page);
-    }
-
-  gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
-
-  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
-                            is_loading ? "process-stop-symbolic"
-                                       : "view-refresh-symbolic");
-
-  g_signal_group_set_target (self->page_signals, page);
-
-  gig_window_update_actions (self, page);
-
-  self->selected_page = page;
+  gtk_widget_grab_focus (GTK_WIDGET (self->selected_page));
 }
 
 static void
@@ -145,16 +113,59 @@ tab_view_selected_page_changed_cb (GigWindow *self,
                                    GParamSpec *pspec,
                                    AdwTabView *tab_view)
 {
+  GtkEntry *url_entry;
   AdwTabPage *tab_page;
   GigPage *page = NULL;
+  const gchar *uri = NULL;
+  bool is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
+  url_entry = self->url_entry;
+
   if ((tab_page = adw_tab_view_get_selected_page (tab_view)))
     page = GIG_PAGE (adw_tab_page_get_child (tab_page));
 
-  set_selected_page (self, page);
+  if (self->selected_page == page)
+    return;
+
+  if (page)
+    {
+      uri = gig_page_get_uri (page);
+      is_loading = gig_page_get_is_loading (page);
+
+      gtk_widget_set_sensitive (GTK_WIDGET (url_entry), TRUE);
+      if (uri)
+        {
+          gtk_editable_set_text (GTK_EDITABLE (url_entry), uri);
+          gtk_widget_grab_focus (GTK_WIDGET (page));
+        }
+      else
+        {
+          gtk_editable_set_text (GTK_EDITABLE (url_entry), "");
+          gtk_widget_grab_focus (GTK_WIDGET (url_entry));
+        }
+    }
+  else
+    {
+      gtk_editable_set_text (GTK_EDITABLE (url_entry), "");
+
+      if (gtk_widget_has_focus (GTK_WIDGET (url_entry)))
+        gtk_root_set_focus (GTK_ROOT (self), NULL);
+
+      gtk_widget_set_sensitive (GTK_WIDGET (url_entry), FALSE);
+    }
+
+  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
+                            is_loading ? "process-stop-symbolic"
+                                       : "view-refresh-symbolic");
+
+  gig_window_update_actions (self, page);
+
+  g_signal_group_set_target (self->page_signals, page);
+
+  self->selected_page = page;
 }
 
 static void
