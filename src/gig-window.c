@@ -23,7 +23,6 @@ static void
 url_entry_activate_cb (GigWindow *self,
                        GtkEntry *entry)
 {
-  WebKitWebView *web_view;
   const gchar *text;
   g_autofree gchar *uri = NULL;
 
@@ -39,15 +38,13 @@ url_entry_activate_cb (GigWindow *self,
   if (!uri)
     uri = gig_utils_build_search_uri (text);
 
-  web_view = gig_page_get_web_view (self->selected_page);
-  webkit_web_view_load_uri (web_view, uri);
+  gig_page_load_uri (self->selected_page, uri);
 }
 
 static void
 set_selected_page (GigWindow *self,
                    GigPage *page)
 {
-  WebKitWebView *web_view = NULL;
   const gchar *uri = NULL;
   bool is_loading = FALSE;
 
@@ -61,9 +58,8 @@ set_selected_page (GigWindow *self,
 
   if (page)
     {
-      web_view = gig_page_get_web_view (page);
-      uri = webkit_web_view_get_uri (web_view);
-      is_loading = webkit_web_view_is_loading (web_view);
+      uri = gig_page_get_uri (page);
+      is_loading = gig_page_get_is_loading (page);
     }
 
   gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");

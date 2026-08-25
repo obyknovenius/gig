@@ -1,5 +1,7 @@
 #include "gig-page.h"
 
+#include <webkit/webkit.h>
+
 struct _GigPage
 {
   GtkWidget parent_instance;
@@ -225,6 +227,48 @@ GigPage *
 gig_page_new (void)
 {
   return g_object_new (GIG_TYPE_PAGE, NULL);
+}
+
+void
+gig_page_load_uri (GigPage *self,
+                   const gchar *uri)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+  g_return_if_fail (uri != NULL);
+
+  webkit_web_view_load_uri (self->web_view, uri);
+}
+
+void
+gig_page_reload (GigPage *self)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+
+  webkit_web_view_reload (self->web_view);
+}
+
+void
+gig_page_stop_loading (GigPage *self)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+
+  webkit_web_view_stop_loading (self->web_view);
+}
+
+void
+gig_page_go_back (GigPage *self)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+
+  webkit_web_view_go_back (self->web_view);
+}
+
+void
+gig_page_go_forward (GigPage *self)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+
+  webkit_web_view_go_forward (self->web_view);
 }
 
 WebKitWebView *

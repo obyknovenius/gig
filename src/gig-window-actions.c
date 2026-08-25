@@ -23,19 +23,17 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
                                    GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  WebKitWebView *web_view;
   gboolean is_loading;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
-  web_view = gig_page_get_web_view (self->selected_page);
-  is_loading = webkit_web_view_is_loading (web_view);
+  is_loading = gig_page_get_is_loading (self->selected_page);
 
   if (is_loading)
-    webkit_web_view_stop_loading (web_view);
+    gig_page_stop_loading (self->selected_page);
   else
-    webkit_web_view_reload (web_view);
+    gig_page_reload (self->selected_page);
 }
 
 static void
@@ -44,14 +42,11 @@ gig_window_actions_go_back_cb (GtkWidget *widget,
                                GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  WebKitWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
-  web_view = gig_page_get_web_view (self->selected_page);
-
-  webkit_web_view_go_back (web_view);
+  gig_page_go_back (self->selected_page);
 }
 
 static void
@@ -60,14 +55,11 @@ gig_window_actions_go_forward_cb (GtkWidget *widget,
                                   GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  WebKitWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
-  web_view = gig_page_get_web_view (self->selected_page);
-
-  webkit_web_view_go_forward (web_view);
+  gig_page_go_forward (self->selected_page);
 }
 
 void

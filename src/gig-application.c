@@ -1,6 +1,7 @@
 #include "gig-application.h"
 
 #include "gig-window.h"
+#include <webkit/webkit.h>
 
 struct _GigApplication
 {
