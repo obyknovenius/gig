@@ -5,8 +5,6 @@ struct _GigPage
   GtkWidget parent_instance;
 
   WebKitWebView *web_view;
-
-  gchar *title;
 };
 
 G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
@@ -26,34 +24,14 @@ enum
 static GParamSpec *properties[N_PROPS];
 
 static void
-update_title (GigPage *self)
-{
-  const gchar *title = NULL;
-
-  g_assert (GIG_IS_PAGE (self));
-
-  title = webkit_web_view_get_title (self->web_view);
-
-  if (!title || title[0] == '\0')
-    title = webkit_web_view_get_uri (self->web_view);
-
-  if (!title || title[0] == '\0')
-    title = "Untitled";
-
-  if (g_set_str (&self->title, title))
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
-}
-
-static void
 web_view_uri_changed_cb (GigPage *self,
                          GParamSpec *pspec,
                          WebKitWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
-  update_title (self);
-
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_URI]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
 }
 
 static void
@@ -63,7 +41,7 @@ web_view_title_changed_cb (GigPage *self,
 {
   g_assert (GIG_IS_PAGE (self));
 
-  update_title (self);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
 }
 
 static void
@@ -115,16 +93,6 @@ gig_page_dispose (GObject *object)
 }
 
 static void
-gig_page_finalize (GObject *object)
-{
-  GigPage *self = GIG_PAGE (object);
-
-  g_clear_pointer (&self->title, g_free);
-
-  G_OBJECT_CLASS (gig_page_parent_class)->finalize (object);
-}
-
-static void
 gig_page_get_property (GObject *object,
                        guint prop_id,
                        GValue *value,
@@ -170,7 +138,6 @@ gig_page_class_init (GigPageClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   object_class->dispose = gig_page_dispose;
-  object_class->finalize = gig_page_finalize;
   object_class->get_property = gig_page_get_property;
 
   properties[PROP_URI] = g_param_spec_string ("uri",
@@ -218,8 +185,6 @@ static void
 gig_page_init (GigPage *self)
 {
   WebKitBackForwardList *back_forward_list;
-
-  self->title = g_strdup ("Untitled");
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
@@ -281,9 +246,19 @@ gig_page_get_uri (GigPage *self)
 const gchar *
 gig_page_get_title (GigPage *self)
 {
+  const gchar *title = NULL;
+
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 
-  return self->title;
+  title = webkit_web_view_get_title (self->web_view);
+  if (title && title[0] != '\0')
+    return title;
+
+  title = webkit_web_view_get_uri (self->web_view);
+  if (title && title[0] != '\0')
+    return title;
+
+  return "New Tab";
 }
 
 GdkTexture *
