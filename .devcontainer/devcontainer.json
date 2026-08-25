@@ -6,6 +6,14 @@
 	"runArgs": [
 		"--device=/dev/dri"
 	],
+	"capAdd": [
+		"SYS_ADMIN"
+	],
+	"securityOpt": [
+		"seccomp=unconfined",
+		"label=disable",
+		"systempaths=unconfined"
+	],
 	"mounts": [
 		"source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind",
 		"source=${localEnv:HOME}/.claude,target=/home/${localEnv:USER}/.claude,type=bind"
