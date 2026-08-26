@@ -33,7 +33,12 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
   if (is_loading)
     gig_page_stop_loading (self->selected_page);
   else
-    gig_page_reload (self->selected_page);
+    {
+      const gchar *uri = gig_page_get_uri (self->selected_page);
+      gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri);
+
+      gig_page_reload (self->selected_page);
+    }
 }
 
 static void
