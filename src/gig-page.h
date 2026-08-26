@@ -20,6 +20,7 @@ const gchar *gig_page_get_uri (GigPage *self);
 const gchar *gig_page_get_title (GigPage *self);
 GdkTexture *gig_page_get_icon (GigPage *self);
 gboolean gig_page_get_is_loading (GigPage *self);
+gdouble gig_page_get_estimated_load_progress (GigPage *self);
 gboolean gig_page_can_go_back (GigPage *self);
 gboolean gig_page_can_go_forward (GigPage *self);
 

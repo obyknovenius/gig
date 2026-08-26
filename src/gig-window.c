@@ -76,6 +76,27 @@ page_is_loading_changed_cb (GigWindow *self,
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
                             is_loading ? "process-stop-symbolic"
                                        : "view-refresh-symbolic");
+
+  if (!is_loading)
+    gtk_entry_set_progress_fraction (self->url_entry, 0.0);
+}
+
+static void
+page_estimated_load_progress_changed_cb (GigWindow *self,
+                                         GParamSpec *pspec,
+                                         GigPage *page)
+{
+  gboolean is_loading;
+  gdouble progress;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_PAGE (page));
+
+  is_loading = gig_page_get_is_loading (page);
+  progress = gig_page_get_estimated_load_progress (page);
+
+  if (is_loading)
+    gtk_entry_set_progress_fraction (self->url_entry, progress);
 }
 
 static void
@@ -117,7 +138,8 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   AdwTabPage *tab_page;
   GigPage *page = NULL;
   const gchar *uri = NULL;
-  bool is_loading = FALSE;
+  gboolean is_loading = FALSE;
+  gdouble progress = 0.0;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
@@ -134,6 +156,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
     {
       uri = gig_page_get_uri (page);
       is_loading = gig_page_get_is_loading (page);
+      progress = gig_page_get_estimated_load_progress (page);
 
       gtk_widget_set_sensitive (GTK_WIDGET (url_entry), TRUE);
       if (uri)
@@ -156,6 +179,9 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 
       gtk_widget_set_sensitive (GTK_WIDGET (url_entry), FALSE);
     }
+
+  if (is_loading)
+    gtk_entry_set_progress_fraction (self->url_entry, progress);
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
                             is_loading ? "process-stop-symbolic"
@@ -230,6 +256,12 @@ gig_window_init (GigWindow *self)
   g_signal_group_connect_object (self->page_signals,
                                  "notify::is-loading",
                                  G_CALLBACK (page_is_loading_changed_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->page_signals,
+                                 "notify::estimated-load-progress",
+                                 G_CALLBACK (page_estimated_load_progress_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 

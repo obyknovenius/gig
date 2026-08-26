@@ -18,6 +18,7 @@ enum
   PROP_TITLE,
   PROP_ICON,
   PROP_IS_LOADING,
+  PROP_ESTIMATED_LOAD_PROGRESS,
   PROP_CAN_GO_BACK,
   PROP_CAN_GO_FORWARD,
   N_PROPS
@@ -64,6 +65,16 @@ web_view_is_loading_changed_cb (GigPage *self,
   g_assert (GIG_IS_PAGE (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
+}
+
+static void
+web_view_estimated_load_progress_changed_cb (GigPage *self,
+                                             GParamSpec *pspec,
+                                             WebKitWebView *web_view)
+{
+  g_assert (GIG_IS_PAGE (self));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ESTIMATED_LOAD_PROGRESS]);
 }
 
 static void
@@ -120,6 +131,10 @@ gig_page_get_property (GObject *object,
       g_value_set_boolean (value, gig_page_get_is_loading (self));
       break;
 
+    case PROP_ESTIMATED_LOAD_PROGRESS:
+      g_value_set_double (value, gig_page_get_estimated_load_progress (self));
+      break;
+
     case PROP_CAN_GO_BACK:
       g_value_set_boolean (value, gig_page_can_go_back (self));
       break;
@@ -174,6 +189,11 @@ gig_page_class_init (GigPageClass *klass)
                                                       FALSE,
                                                       (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
+  properties[PROP_ESTIMATED_LOAD_PROGRESS] = g_param_spec_double ("estimated-load-progress",
+                                                                  NULL, NULL,
+                                                                  0.0, 1.0, 0.0,
+                                                                  (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
   properties[PROP_CAN_GO_BACK] = g_param_spec_boolean ("can-go-back",
                                                        NULL, NULL,
                                                        FALSE,
@@ -223,6 +243,12 @@ gig_page_init (GigPage *self)
   g_signal_connect_object (self->web_view,
                            "notify::is-loading",
                            G_CALLBACK (web_view_is_loading_changed_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "notify::estimated-load-progress",
+                           G_CALLBACK (web_view_estimated_load_progress_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -331,6 +357,14 @@ gig_page_get_is_loading (GigPage *self)
   g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
 
   return webkit_web_view_is_loading (self->web_view);
+}
+
+gdouble
+gig_page_get_estimated_load_progress (GigPage *self)
+{
+  g_return_val_if_fail (GIG_IS_PAGE (self), 0.0);
+
+  return webkit_web_view_get_estimated_load_progress (self->web_view);
 }
 
 gboolean
