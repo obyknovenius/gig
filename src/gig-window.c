@@ -20,6 +20,19 @@ tab_overview_create_tab_cb (GigWindow *self,
 }
 
 static void
+url_entry_changed_cb (GigWindow *self,
+                      GtkEntry *entry)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GTK_IS_ENTRY (entry));
+
+  gtk_entry_set_icon_from_icon_name (entry, GTK_ENTRY_ICON_PRIMARY,
+                                     "system-search-symbolic");
+
+  gtk_entry_set_icon_from_icon_name (entry, GTK_ENTRY_ICON_SECONDARY, NULL);
+}
+
+static void
 url_entry_activate_cb (GigWindow *self,
                        GtkEntry *entry)
 {
@@ -49,7 +62,6 @@ page_uri_changed_cb (GigWindow *self,
                      GigPage *page)
 {
   const gchar *uri;
-  gboolean can_stop_reload;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (page));
@@ -57,8 +69,18 @@ page_uri_changed_cb (GigWindow *self,
   uri = gig_page_get_uri (page);
   gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
 
-  can_stop_reload = uri != NULL;
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_stop_reload);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "win.stop-reload",
+                                 uri != NULL);
+
+  gtk_entry_set_icon_from_icon_name (GTK_ENTRY (self->url_entry),
+                                     GTK_ENTRY_ICON_PRIMARY,
+                                     uri ? "info-outline-symbolic"
+                                         : "system-search-symbolic");
+
+  gtk_entry_set_icon_from_icon_name (GTK_ENTRY (self->url_entry),
+                                     GTK_ENTRY_ICON_SECONDARY,
+                                     uri ? "user-bookmarks-symbolic" : NULL);
 }
 
 static void
@@ -180,6 +202,15 @@ tab_view_selected_page_changed_cb (GigWindow *self,
       gtk_widget_set_sensitive (GTK_WIDGET (url_entry), FALSE);
     }
 
+  gtk_entry_set_icon_from_icon_name (url_entry,
+                                     GTK_ENTRY_ICON_PRIMARY,
+                                     uri ? "info-outline-symbolic"
+                                         : "system-search-symbolic");
+
+  gtk_entry_set_icon_from_icon_name (url_entry,
+                                     GTK_ENTRY_ICON_SECONDARY,
+                                     uri ? "user-bookmarks-symbolic" : NULL);
+
   if (is_loading)
     gtk_entry_set_progress_fraction (self->url_entry, progress);
 
@@ -234,6 +265,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
+  gtk_widget_class_bind_template_callback (widget_class, url_entry_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, url_entry_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 

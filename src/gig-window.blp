@@ -42,6 +42,8 @@ template $GigWindow: Adw.ApplicationWindow {
 
                     Gtk.Entry url_entry {
                         placeholder-text: "Search or enter website address";
+                        primary-icon-name: "system-search-symbolic";
+                        changed => $url_entry_changed_cb() swapped;
                         activate => $url_entry_activate_cb() swapped;
                         sensitive: false;
                     }
