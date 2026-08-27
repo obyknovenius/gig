@@ -42,5 +42,6 @@ gig_deps = [
 executable(
   'gig',
   gig_sources,
+  include_directories: include_directories('..'),
   dependencies: gig_deps,
 )

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "gig-application.h"
 
 #include "gig-window.h"
@@ -16,16 +18,29 @@ gig_application_constructed (GObject *object)
   GigApplication *self = GIG_APPLICATION (object);
   WebKitNetworkSession *network_session;
   WebKitWebsiteDataManager *data_manager;
+  WebKitCookieManager *cookie_manager;
+  g_autofree gchar *data_dir;
+  g_autofree gchar *cookies_path;
 
   g_assert (GIG_IS_APPLICATION (self));
 
-  g_application_set_application_id (G_APPLICATION (self), "com.github.obyknovenius.Gig");
+  g_application_set_application_id (G_APPLICATION (self), APP_ID);
   g_application_set_flags (G_APPLICATION (self), G_APPLICATION_HANDLES_OPEN);
   g_application_set_option_context_parameter_string (G_APPLICATION (self), "[FILES…]");
 
   network_session = webkit_network_session_get_default ();
+
   data_manager = webkit_network_session_get_website_data_manager (network_session);
   webkit_website_data_manager_set_favicons_enabled (data_manager, TRUE);
+
+  data_dir = g_build_filename (g_get_user_data_dir (), APP_ID, NULL);
+  g_mkdir_with_parents (data_dir, 0700);
+
+  cookies_path = g_build_filename (data_dir, "cookies.sqlite", NULL);
+
+  cookie_manager = webkit_network_session_get_cookie_manager (network_session);
+  webkit_cookie_manager_set_persistent_storage (cookie_manager, cookies_path,
+                                                WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE);
 
   G_OBJECT_CLASS (gig_application_parent_class)->constructed (object);
 }
