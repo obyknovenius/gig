@@ -211,8 +211,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
                                      GTK_ENTRY_ICON_SECONDARY,
                                      uri ? "user-bookmarks-symbolic" : NULL);
 
-  if (is_loading)
-    gtk_entry_set_progress_fraction (self->url_entry, progress);
+  gtk_entry_set_progress_fraction (self->url_entry, is_loading ? progress : 0.0);
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
                             is_loading ? "process-stop-symbolic"
