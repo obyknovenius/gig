@@ -9,7 +9,7 @@ struct _GigWindow
   AdwApplicationWindow parent_instance;
 
   GtkButton *stop_reload_button;
-  GtkEntry *url_entry;
+  GigUrlEntry *url_entry;
   AdwTabView *tab_view;
 
   GigPage *selected_page;

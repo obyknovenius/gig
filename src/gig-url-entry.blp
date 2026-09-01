@@ -1,0 +1,16 @@
+using Gtk 4.0;
+
+template $GigUrlEntry: Gtk.Widget {
+    Gtk.Entry entry {
+        placeholder-text: "Search or enter website address";
+        primary-icon-name: "system-search-symbolic";
+        sensitive: false;
+        changed => $entry_changed_cb() swapped;
+        activate => $entry_activate_cb() swapped;
+
+        Gtk.EventControllerFocus {
+            enter => $entry_focus_enter_cb() swapped;
+            leave => $entry_focus_leave_cb() swapped;
+        }
+    }
+}

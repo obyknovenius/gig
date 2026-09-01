@@ -33,22 +33,7 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
   if (is_loading)
     gig_page_stop_loading (self->selected_page);
   else
-    {
-      const gchar *uri = gig_page_get_uri (self->selected_page);
-
-      gtk_editable_set_text (GTK_EDITABLE (self->url_entry), uri ? uri : "");
-
-      gtk_entry_set_icon_from_icon_name (GTK_ENTRY (self->url_entry),
-                                         GTK_ENTRY_ICON_PRIMARY,
-                                         uri ? "info-outline-symbolic"
-                                             : "system-search-symbolic");
-
-      gtk_entry_set_icon_from_icon_name (GTK_ENTRY (self->url_entry),
-                                         GTK_ENTRY_ICON_SECONDARY,
-                                         uri ? "user-bookmarks-symbolic" : NULL);
-
-      gig_page_reload (self->selected_page);
-    }
+    gig_page_reload (self->selected_page);
 }
 
 static void

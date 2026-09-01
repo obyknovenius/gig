@@ -36,17 +36,11 @@ template $GigWindow: Adw.ApplicationWindow {
                 }
 
                 [title]
-                Adw.Clamp {
+                Adw.Clamp clamp {
                     hexpand: true;
                     maximum-size: 860;
 
-                    Gtk.Entry url_entry {
-                        placeholder-text: "Search or enter website address";
-                        primary-icon-name: "system-search-symbolic";
-                        changed => $url_entry_changed_cb() swapped;
-                        activate => $url_entry_activate_cb() swapped;
-                        sensitive: false;
-                    }
+                    $GigUrlEntry url_entry {}
                 }
 
                 [end]
