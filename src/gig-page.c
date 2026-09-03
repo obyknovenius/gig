@@ -14,13 +14,9 @@ G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
 enum
 {
   PROP_0,
-  PROP_URI,
   PROP_TITLE,
   PROP_ICON,
   PROP_IS_LOADING,
-  PROP_ESTIMATED_LOAD_PROGRESS,
-  PROP_CAN_GO_BACK,
-  PROP_CAN_GO_FORWARD,
   N_PROPS
 };
 
@@ -33,7 +29,6 @@ web_view_uri_changed_cb (GigPage *self,
 {
   g_assert (GIG_IS_PAGE (self));
 
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_URI]);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
 }
 
@@ -68,35 +63,9 @@ web_view_is_loading_changed_cb (GigPage *self,
 }
 
 static void
-web_view_estimated_load_progress_changed_cb (GigPage *self,
-                                             GParamSpec *pspec,
-                                             WebKitWebView *web_view)
-{
-  g_assert (GIG_IS_PAGE (self));
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ESTIMATED_LOAD_PROGRESS]);
-}
-
-static void
-back_forward_list_changed_cb (GigPage *self,
-                              WebKitBackForwardListItem *item_added,
-                              gpointer items_removed,
-                              WebKitBackForwardList *back_forward_list)
-{
-  g_assert (GIG_IS_PAGE (self));
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_BACK]);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_FORWARD]);
-}
-
-static void
 gig_page_dispose (GObject *object)
 {
   GigPage *self = GIG_PAGE (object);
-  WebKitBackForwardList *back_forward_list;
-
-  back_forward_list = webkit_web_view_get_back_forward_list (self->web_view);
-  g_signal_handlers_disconnect_by_data (back_forward_list, self);
 
   g_signal_handlers_disconnect_by_data (self->web_view, self);
 
@@ -115,10 +84,6 @@ gig_page_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_URI:
-      g_value_set_string (value, gig_page_get_uri (self));
-      break;
-
     case PROP_TITLE:
       g_value_set_string (value, gig_page_get_title (self));
       break;
@@ -129,18 +94,6 @@ gig_page_get_property (GObject *object,
 
     case PROP_IS_LOADING:
       g_value_set_boolean (value, gig_page_get_is_loading (self));
-      break;
-
-    case PROP_ESTIMATED_LOAD_PROGRESS:
-      g_value_set_double (value, gig_page_get_estimated_load_progress (self));
-      break;
-
-    case PROP_CAN_GO_BACK:
-      g_value_set_boolean (value, gig_page_can_go_back (self));
-      break;
-
-    case PROP_CAN_GO_FORWARD:
-      g_value_set_boolean (value, gig_page_can_go_forward (self));
       break;
 
     default:
@@ -169,40 +122,22 @@ gig_page_class_init (GigPageClass *klass)
   object_class->get_property = gig_page_get_property;
   widget_class->grab_focus = gig_page_grab_focus;
 
-  properties[PROP_URI] = g_param_spec_string ("uri",
-                                              NULL, NULL,
-                                              NULL,
-                                              (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+  properties[PROP_TITLE] =
+      g_param_spec_string ("title", NULL, NULL,
+                           NULL,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
-  properties[PROP_TITLE] = g_param_spec_string ("title",
-                                                NULL, NULL,
-                                                NULL,
-                                                (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+  properties[PROP_ICON] =
+      g_param_spec_object ("icon",
+                           NULL, NULL,
+                           GDK_TYPE_TEXTURE,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
-  properties[PROP_ICON] = g_param_spec_object ("icon",
-                                               NULL, NULL,
-                                               GDK_TYPE_TEXTURE,
-                                               (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-
-  properties[PROP_IS_LOADING] = g_param_spec_boolean ("is-loading",
-                                                      NULL, NULL,
-                                                      FALSE,
-                                                      (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-
-  properties[PROP_ESTIMATED_LOAD_PROGRESS] = g_param_spec_double ("estimated-load-progress",
-                                                                  NULL, NULL,
-                                                                  0.0, 1.0, 0.0,
-                                                                  (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-
-  properties[PROP_CAN_GO_BACK] = g_param_spec_boolean ("can-go-back",
-                                                       NULL, NULL,
-                                                       FALSE,
-                                                       (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
-
-  properties[PROP_CAN_GO_FORWARD] = g_param_spec_boolean ("can-go-forward",
-                                                          NULL, NULL,
-                                                          FALSE,
-                                                          (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+  properties[PROP_IS_LOADING] =
+      g_param_spec_boolean ("is-loading",
+                            NULL, NULL,
+                            FALSE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
@@ -218,8 +153,6 @@ gig_page_class_init (GigPageClass *klass)
 static void
 gig_page_init (GigPage *self)
 {
-  WebKitBackForwardList *back_forward_list;
-
   gtk_widget_init_template (GTK_WIDGET (self));
 
   g_signal_connect_object (self->web_view,
@@ -245,20 +178,6 @@ gig_page_init (GigPage *self)
                            G_CALLBACK (web_view_is_loading_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
-
-  g_signal_connect_object (self->web_view,
-                           "notify::estimated-load-progress",
-                           G_CALLBACK (web_view_estimated_load_progress_changed_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  back_forward_list = webkit_web_view_get_back_forward_list (self->web_view);
-
-  g_signal_connect_object (back_forward_list,
-                           "changed",
-                           G_CALLBACK (back_forward_list_changed_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
 }
 
 GigPage *
@@ -267,62 +186,12 @@ gig_page_new (void)
   return g_object_new (GIG_TYPE_PAGE, NULL);
 }
 
-void
-gig_page_load_uri (GigPage *self,
-                   const gchar *uri)
-{
-  g_return_if_fail (GIG_IS_PAGE (self));
-  g_return_if_fail (uri != NULL);
-
-  webkit_web_view_load_uri (self->web_view, uri);
-}
-
-void
-gig_page_reload (GigPage *self)
-{
-  g_return_if_fail (GIG_IS_PAGE (self));
-
-  webkit_web_view_reload (self->web_view);
-}
-
-void
-gig_page_stop_loading (GigPage *self)
-{
-  g_return_if_fail (GIG_IS_PAGE (self));
-
-  webkit_web_view_stop_loading (self->web_view);
-}
-
-void
-gig_page_go_back (GigPage *self)
-{
-  g_return_if_fail (GIG_IS_PAGE (self));
-
-  webkit_web_view_go_back (self->web_view);
-}
-
-void
-gig_page_go_forward (GigPage *self)
-{
-  g_return_if_fail (GIG_IS_PAGE (self));
-
-  webkit_web_view_go_forward (self->web_view);
-}
-
 WebKitWebView *
 gig_page_get_web_view (GigPage *self)
 {
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 
   return self->web_view;
-}
-
-const gchar *
-gig_page_get_uri (GigPage *self)
-{
-  g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
-
-  return webkit_web_view_get_uri (self->web_view);
 }
 
 const gchar *
@@ -357,28 +226,4 @@ gig_page_get_is_loading (GigPage *self)
   g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
 
   return webkit_web_view_is_loading (self->web_view);
-}
-
-gdouble
-gig_page_get_estimated_load_progress (GigPage *self)
-{
-  g_return_val_if_fail (GIG_IS_PAGE (self), 0.0);
-
-  return webkit_web_view_get_estimated_load_progress (self->web_view);
-}
-
-gboolean
-gig_page_can_go_back (GigPage *self)
-{
-  g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
-
-  return webkit_web_view_can_go_back (self->web_view);
-}
-
-gboolean
-gig_page_can_go_forward (GigPage *self)
-{
-  g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
-
-  return webkit_web_view_can_go_forward (self->web_view);
 }

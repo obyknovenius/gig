@@ -10,6 +10,6 @@ G_DECLARE_FINAL_TYPE (GigUrlEntry, gig_url_entry, GIG, URL_ENTRY, GtkWidget)
 
 GigUrlEntry *gig_url_entry_new (void);
 
-void gig_url_entry_set_page (GigUrlEntry *self, GigPage *page);
+void gig_url_entry_set_web_view (GigUrlEntry *self, WebKitWebView *view);
 
 G_END_DECLS

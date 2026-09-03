@@ -14,11 +14,12 @@ struct _GigWindow
 
   GigPage *selected_page;
 
-  GSignalGroup *page_signals;
+  GSignalGroup *web_view_signals;
+  GSignalGroup *back_forward_list_signals;
 };
 
 void gig_window_class_init_actions (GigWindowClass *klass);
 void gig_window_init_actions (GigWindow *self);
-void gig_window_update_actions (GigWindow *self, GigPage *page);
+void gig_window_update_actions (GigWindow *self, WebKitWebView *web_view);
 
 G_END_DECLS

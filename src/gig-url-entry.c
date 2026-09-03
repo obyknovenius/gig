@@ -14,9 +14,9 @@ struct _GigUrlEntry
   const gchar *primary_icon_name;
   gdouble progress_fraction;
 
-  GigPage *page;
+  WebKitWebView *web_view;
 
-  GSignalGroup *page_signals;
+  GSignalGroup *web_view_signals;
 };
 
 G_DEFINE_FINAL_TYPE (GigUrlEntry, gig_url_entry, GTK_TYPE_WIDGET)
@@ -59,8 +59,8 @@ update_primary_icon (GigUrlEntry *self)
 
   g_assert (GIG_IS_URL_ENTRY (self));
 
-  if (self->page)
-    uri = gig_page_get_uri (self->page);
+  if (self->web_view)
+    uri = webkit_web_view_get_uri (self->web_view);
 
   if (self->is_editing || !uri || uri[0] == '\0')
     icon_name = "system-search-symbolic";
@@ -81,12 +81,12 @@ update_progress_fraction (GigUrlEntry *self)
 
   g_assert (GIG_IS_URL_ENTRY (self));
   g_assert (GTK_IS_ENTRY (self->entry));
-  g_assert (GIG_IS_PAGE (self->page));
 
-  is_loading = gig_page_get_is_loading (self->page);
+  if (self->web_view)
+    is_loading = webkit_web_view_is_loading (self->web_view);
 
   if (!self->is_focused && is_loading)
-    progress_fraction = gig_page_get_estimated_load_progress (self->page);
+    progress_fraction = webkit_web_view_get_estimated_load_progress (self->web_view);
 
   if (self->progress_fraction == progress_fraction)
     return;
@@ -149,12 +149,12 @@ entry_focus_leave_cb (GigUrlEntry *self,
   const gchar *uri = NULL;
 
   g_assert (GIG_IS_URL_ENTRY (self));
-  g_assert (GIG_IS_PAGE (self->page));
+  g_assert (WEBKIT_IS_WEB_VIEW (self->web_view));
 
   set_is_editing (self, FALSE);
   set_is_focused (self, FALSE);
 
-  uri = gig_page_get_uri (self->page);
+  uri = webkit_web_view_get_uri (self->web_view);
   set_text (self, uri);
 }
 
@@ -167,7 +167,7 @@ entry_activate_cb (GigUrlEntry *self,
 
   g_assert (GIG_IS_URL_ENTRY (self));
   g_assert (GTK_IS_ENTRY (entry));
-  g_assert (GIG_IS_PAGE (self->page));
+  g_assert (WEBKIT_IS_WEB_VIEW (self->web_view));
 
   text = gtk_editable_get_text (GTK_EDITABLE (entry));
   if (!text || text[0] == '\0')
@@ -177,44 +177,43 @@ entry_activate_cb (GigUrlEntry *self,
   if (!uri)
     uri = gig_utils_build_search_uri (text);
 
-  gig_page_load_uri (self->page, uri);
+  webkit_web_view_load_uri (self->web_view, uri);
 
-  gtk_widget_grab_focus (GTK_WIDGET (self->page));
+  gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
 }
 
 static void
-page_uri_changed_cb (GigUrlEntry *self,
-                     GParamSpec *pspec,
-                     GigPage *page)
+web_view_uri_changed_cb (GigUrlEntry *self,
+                         GParamSpec *pspec,
+                         WebKitWebView *web_view)
 {
   const gchar *uri;
 
   g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
-  uri = gig_page_get_uri (page);
+  uri = webkit_web_view_get_uri (web_view);
   set_text (self, uri);
 
   update_primary_icon (self);
 }
 
 static void
-page_is_loading_changed_cb (GigUrlEntry *self,
-                            GParamSpec *pspec,
-                            GigPage *page)
+web_view_is_loading_changed_cb (GigUrlEntry *self,
+                                GParamSpec *pspec,
+                                WebKitWebView *web_view)
 {
   g_assert (GIG_IS_URL_ENTRY (self));
-  g_assert (GIG_IS_PAGE (page));
 
   update_progress_fraction (self);
 }
 
 static void
-page_estimated_load_progress_changed_cb (GigUrlEntry *self,
-                                         GParamSpec *pspec,
-                                         GigPage *page)
+web_view_estimated_load_progress_changed_cb (GigUrlEntry *self,
+                                             GParamSpec *pspec,
+                                             WebKitWebView *web_view)
 {
   g_assert (GIG_IS_URL_ENTRY (self));
-  g_assert (GIG_IS_PAGE (page));
 
   update_progress_fraction (self);
 }
@@ -224,9 +223,9 @@ gig_url_entry_dispose (GObject *object)
 {
   GigUrlEntry *self = GIG_URL_ENTRY (object);
 
-  g_clear_object (&self->page);
+  g_clear_object (&self->web_view);
 
-  g_signal_group_set_target (self->page_signals, NULL);
+  g_signal_group_set_target (self->web_view_signals, NULL);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_URL_ENTRY);
 
@@ -238,7 +237,7 @@ gig_url_entry_finalize (GObject *object)
 {
   GigUrlEntry *self = GIG_URL_ENTRY (object);
 
-  g_clear_object (&self->page_signals);
+  g_clear_object (&self->web_view_signals);
 
   G_OBJECT_CLASS (gig_url_entry_parent_class)->finalize (object);
 }
@@ -313,23 +312,23 @@ gig_url_entry_init (GigUrlEntry *self)
                           self->entry, "progress-fraction",
                           G_BINDING_SYNC_CREATE);
 
-  self->page_signals = g_signal_group_new (GIG_TYPE_PAGE);
+  self->web_view_signals = g_signal_group_new (WEBKIT_TYPE_WEB_VIEW);
 
-  g_signal_group_connect_object (self->page_signals,
+  g_signal_group_connect_object (self->web_view_signals,
                                  "notify::uri",
-                                 G_CALLBACK (page_uri_changed_cb),
+                                 G_CALLBACK (web_view_uri_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
-  g_signal_group_connect_object (self->page_signals,
+  g_signal_group_connect_object (self->web_view_signals,
                                  "notify::is-loading",
-                                 G_CALLBACK (page_is_loading_changed_cb),
+                                 G_CALLBACK (web_view_is_loading_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
-  g_signal_group_connect_object (self->page_signals,
+  g_signal_group_connect_object (self->web_view_signals,
                                  "notify::estimated-load-progress",
-                                 G_CALLBACK (page_estimated_load_progress_changed_cb),
+                                 G_CALLBACK (web_view_estimated_load_progress_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 }
@@ -341,28 +340,28 @@ gig_url_entry_new (void)
 }
 
 void
-gig_url_entry_set_page (GigUrlEntry *self,
-                        GigPage *page)
+gig_url_entry_set_web_view (GigUrlEntry *self,
+                            WebKitWebView *web_view)
 {
   const gchar *uri = NULL;
 
   g_return_if_fail (GIG_IS_URL_ENTRY (self));
-  g_return_if_fail (!page || GIG_IS_PAGE (page));
+  g_return_if_fail (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
 
-  gtk_widget_set_sensitive (GTK_WIDGET (self->entry), page != NULL);
+  gtk_widget_set_sensitive (GTK_WIDGET (self->entry), web_view != NULL);
 
-  if (page)
-    uri = gig_page_get_uri (page);
+  if (web_view)
+    uri = webkit_web_view_get_uri (web_view);
 
   set_text (self, uri);
 
-  g_set_object (&self->page, page);
+  g_set_object (&self->web_view, web_view);
 
-  g_signal_group_set_target (self->page_signals, page);
+  g_signal_group_set_target (self->web_view_signals, web_view);
 
   update_primary_icon (self);
   update_progress_fraction (self);
 
-  if (page && !uri)
+  if (web_view && !uri)
     gtk_widget_grab_focus (GTK_WIDGET (self->entry));
 }
