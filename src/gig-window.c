@@ -127,6 +127,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   GigPage *page = NULL;
   WebKitWebView *web_view = NULL;
   WebKitBackForwardList *back_forward_list = NULL;
+  const gchar *uri = NULL;
   gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -144,6 +145,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
       g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
       back_forward_list = webkit_web_view_get_back_forward_list (web_view);
+      uri = webkit_web_view_get_uri (web_view);
       is_loading = webkit_web_view_is_loading (web_view);
     }
 
@@ -159,6 +161,11 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
 
   self->selected_page = page;
+
+  if (web_view && !uri)
+    gtk_widget_grab_focus (GTK_WIDGET (self->url_entry));
+  else
+    gtk_widget_grab_focus (GTK_WIDGET (self->tab_view));
 }
 
 static void

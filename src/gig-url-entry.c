@@ -265,6 +265,16 @@ gig_url_entry_get_property (GObject *object,
     }
 }
 
+static gboolean
+gig_url_entry_grab_focus (GtkWidget *widget)
+{
+  GigUrlEntry *self = GIG_URL_ENTRY (widget);
+
+  g_assert (GIG_IS_URL_ENTRY (self));
+
+  return gtk_widget_grab_focus (GTK_WIDGET (self->entry));
+}
+
 static void
 gig_url_entry_class_init (GigUrlEntryClass *klass)
 {
@@ -274,6 +284,7 @@ gig_url_entry_class_init (GigUrlEntryClass *klass)
   object_class->dispose = gig_url_entry_dispose;
   object_class->finalize = gig_url_entry_finalize;
   object_class->get_property = gig_url_entry_get_property;
+  widget_class->grab_focus = gig_url_entry_grab_focus;
 
   properties[PROP_PRIMARY_ICON_NAME] =
       g_param_spec_string ("primary-icon-name", NULL, NULL,
@@ -361,7 +372,4 @@ gig_url_entry_set_web_view (GigUrlEntry *self,
 
   update_primary_icon (self);
   update_progress_fraction (self);
-
-  if (web_view && !uri)
-    gtk_widget_grab_focus (GTK_WIDGET (self->entry));
 }
