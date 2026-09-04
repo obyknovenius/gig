@@ -11,7 +11,6 @@ gig_sources = [
 blueprints = custom_target(
   'blueprints',
   input: files(
-    'gig-page.blp',
     'gig-url-entry.blp',
     'gig-window.blp',
   ),
