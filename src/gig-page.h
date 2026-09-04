@@ -9,6 +9,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GigPage, gig_page, GIG, PAGE, GtkWidget)
 
 GigPage *gig_page_new (void);
+GigPage *gig_page_new_with_related_web_view (WebKitWebView *related_web_view);
 WebKitWebView *gig_page_get_web_view (GigPage *self);
 const gchar *gig_page_get_title (GigPage *self);
 GdkTexture *gig_page_get_icon (GigPage *self);

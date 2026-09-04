@@ -9,12 +9,14 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
 {
   GigWindow *self = (GigWindow *) widget;
   GigPage *page = NULL;
+  AdwTabPage *tab_page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
 
   page = gig_page_new ();
+  tab_page = gig_window_add_page (self, page);
 
-  gig_window_add_page (self, page);
+  adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }
 
 static void

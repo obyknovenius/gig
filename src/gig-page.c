@@ -228,7 +228,22 @@ gig_page_init (GigPage *self)
 GigPage *
 gig_page_new (void)
 {
-  GtkWidget *web_view = webkit_web_view_new ();
+  WebKitWebView *web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW,
+                                          NULL);
+
+  return g_object_new (GIG_TYPE_PAGE,
+                       "web-view", web_view,
+                       NULL);
+}
+
+GigPage *
+gig_page_new_with_related_web_view (WebKitWebView *related_web_view)
+{
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (related_web_view), NULL);
+
+  WebKitWebView *web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW,
+                                          "related-view", related_web_view,
+                                          NULL);
 
   return g_object_new (GIG_TYPE_PAGE,
                        "web-view", web_view,
