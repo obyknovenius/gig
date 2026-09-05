@@ -13,7 +13,7 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
 
   g_assert (GIG_IS_WINDOW (self));
 
-  page = gig_page_new ();
+  page = gig_page_new (NULL, NULL);
   tab_page = gig_window_add_page (self, page);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);

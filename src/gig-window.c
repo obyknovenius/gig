@@ -14,7 +14,7 @@ tab_overview_create_tab_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
 
-  page = gig_page_new ();
+  page = gig_page_new (NULL, NULL);
 
   return gig_window_add_page (self, page);
 }
@@ -24,6 +24,7 @@ web_view_ready_to_show_cb (GigWindow *self,
                            WebKitWebView *web_view)
 {
   GigPage *page = NULL;
+  AdwTabPage *tab_page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
@@ -33,7 +34,9 @@ web_view_ready_to_show_cb (GigWindow *self,
   page = GIG_PAGE (gtk_widget_get_ancestor (GTK_WIDGET (web_view), GIG_TYPE_PAGE));
   g_assert (GIG_IS_PAGE (page));
 
-  gig_window_add_page (self, page);
+  tab_page = gig_window_add_page (self, page);
+
+  adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }
 
 static WebKitWebView *
@@ -42,14 +45,19 @@ web_view_create_cb (GigWindow *self,
                     WebKitWebView *related_web_view)
 {
   GigPage *page = NULL;
+  WebKitURIRequest *request = NULL;
+  const gchar *uri = NULL;
   WebKitWebView *web_view = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
 
-  page = gig_page_new_with_related_web_view (related_web_view);
-  web_view = gig_page_get_web_view (page);
+  request = webkit_navigation_action_get_request (navigation_action);
+  uri = webkit_uri_request_get_uri (request);
 
+  page = gig_page_new (uri, related_web_view);
+
+  web_view = gig_page_get_web_view (page);
   g_signal_connect_object (web_view,
                            "ready-to-show",
                            G_CALLBACK (web_view_ready_to_show_cb),
@@ -162,7 +170,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 
   self->selected_page = page;
 
-  if (web_view && !uri)
+  if (gig_page_is_blank (page))
     gtk_widget_grab_focus (GTK_WIDGET (self->url_entry));
   else
     gtk_widget_grab_focus (GTK_WIDGET (self->tab_view));
