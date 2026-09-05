@@ -1,6 +1,6 @@
 #include "gig-window-private.h"
 
-#include "gig-page.h"
+#include "gig-page-private.h"
 #include "gig-url-entry.h"
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
@@ -9,12 +9,14 @@ static AdwTabPage *
 tab_overview_create_tab_cb (GigWindow *self,
                             AdwTabOverview *tab_overview)
 {
+  WebKitWebView *web_view = NULL;
   GigPage *page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
 
-  page = gig_page_new (NULL, NULL);
+  web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW, NULL);
+  page = gig_page_new (web_view);
 
   return gig_window_add_page (self, page);
 }
@@ -44,20 +46,23 @@ web_view_create_cb (GigWindow *self,
                     WebKitNavigationAction *navigation_action,
                     WebKitWebView *related_web_view)
 {
+  WebKitWebView *web_view = NULL;
   GigPage *page = NULL;
   WebKitURIRequest *request = NULL;
   const gchar *uri = NULL;
-  WebKitWebView *web_view = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
 
+  web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW,
+                           "related-view", related_web_view,
+                           NULL);
+  page = gig_page_new (web_view);
+
   request = webkit_navigation_action_get_request (navigation_action);
   uri = webkit_uri_request_get_uri (request);
+  gig_page_set_uri (page, uri);
 
-  page = gig_page_new (uri, related_web_view);
-
-  web_view = gig_page_get_web_view (page);
   g_signal_connect_object (web_view,
                            "ready-to-show",
                            G_CALLBACK (web_view_ready_to_show_cb),
@@ -135,7 +140,6 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   GigPage *page = NULL;
   WebKitWebView *web_view = NULL;
   WebKitBackForwardList *back_forward_list = NULL;
-  const gchar *uri = NULL;
   gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -150,10 +154,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   if (page)
     {
       web_view = gig_page_get_web_view (page);
-      g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
       back_forward_list = webkit_web_view_get_back_forward_list (web_view);
-      uri = webkit_web_view_get_uri (web_view);
       is_loading = webkit_web_view_is_loading (web_view);
     }
 

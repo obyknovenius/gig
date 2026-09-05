@@ -1,4 +1,4 @@
-#include "gig-page.h"
+#include "gig-page-private.h"
 
 #include <webkit/webkit.h>
 
@@ -6,11 +6,8 @@ struct _GigPage
 {
   GtkWidget parent_instance;
 
-  gchar *uri;
   WebKitWebView *web_view;
-  gchar *title;
-  GdkTexture *icon;
-  gboolean is_loading;
+  gchar *uri;
 };
 
 G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
@@ -18,8 +15,8 @@ G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
 enum
 {
   PROP_0,
-  PROP_URI,
   PROP_WEB_VIEW,
+  PROP_URI,
   PROP_TITLE,
   PROP_ICON,
   PROP_IS_LOADING,
@@ -28,15 +25,7 @@ enum
 
 static GParamSpec *properties[N_PROPS];
 
-static void gig_page_set_uri (GigPage *self, const gchar *uri);
-
 static void gig_page_set_web_view (GigPage *self, WebKitWebView *web_view);
-
-static void gig_page_set_title (GigPage *self, const gchar *title);
-
-static void gig_page_set_icon (GigPage *self, GdkTexture *icon);
-
-static void gig_page_set_is_loading (GigPage *self, gboolean is_loading);
 
 static void
 web_view_uri_changed_cb (GigPage *self,
@@ -50,7 +39,6 @@ web_view_uri_changed_cb (GigPage *self,
   uri = webkit_web_view_get_uri (web_view);
 
   gig_page_set_uri (self, uri);
-  gig_page_set_title (self, uri);
 }
 
 static void
@@ -60,7 +48,7 @@ web_view_title_changed_cb (GigPage *self,
 {
   g_assert (GIG_IS_PAGE (self));
 
-  gig_page_set_title (self, webkit_web_view_get_title (web_view));
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
 }
 
 static void
@@ -70,7 +58,7 @@ web_view_favicon_changed_cb (GigPage *self,
 {
   g_assert (GIG_IS_PAGE (self));
 
-  gig_page_set_icon (self, webkit_web_view_get_favicon (web_view));
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
 }
 
 static void
@@ -80,7 +68,7 @@ web_view_is_loading_changed_cb (GigPage *self,
 {
   g_assert (GIG_IS_PAGE (self));
 
-  gig_page_set_is_loading (self, webkit_web_view_is_loading (web_view));
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
 }
 
 static void
@@ -89,8 +77,6 @@ gig_page_constructed (GObject *object)
   GigPage *self = GIG_PAGE (object);
 
   G_OBJECT_CLASS (gig_page_parent_class)->constructed (object);
-
-  gig_page_set_title (self, self->uri);
 
   g_assert (self->web_view != NULL);
 
@@ -135,8 +121,6 @@ gig_page_dispose (GObject *object)
       g_clear_pointer ((GtkWidget **) &self->web_view, gtk_widget_unparent);
     }
 
-  g_clear_object (&self->icon);
-
   G_OBJECT_CLASS (gig_page_parent_class)->dispose (object);
 }
 
@@ -146,7 +130,6 @@ gig_page_finalize (GObject *object)
   GigPage *self = GIG_PAGE (object);
 
   g_clear_pointer (&self->uri, g_free);
-  g_clear_pointer (&self->title, g_free);
 
   G_OBJECT_CLASS (gig_page_parent_class)->finalize (object);
 }
@@ -188,12 +171,12 @@ gig_page_get_property (GObject *object,
       g_value_set_string (value, gig_page_get_uri (self));
       break;
 
-    case PROP_TITLE:
-      g_value_set_string (value, gig_page_get_title (self));
-      break;
-
     case PROP_WEB_VIEW:
       g_value_set_object (value, gig_page_get_web_view (self));
+      break;
+
+    case PROP_TITLE:
+      g_value_set_string (value, gig_page_get_title (self));
       break;
 
     case PROP_ICON:
@@ -236,7 +219,7 @@ gig_page_class_init (GigPageClass *klass)
   properties[PROP_URI] =
       g_param_spec_string ("uri", NULL, NULL,
                            NULL,
-                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_WEB_VIEW] =
       g_param_spec_object ("web-view",
@@ -272,34 +255,11 @@ gig_page_init (GigPage *self)
 }
 
 GigPage *
-gig_page_new (const gchar *uri, WebKitWebView *related_web_view)
+gig_page_new (WebKitWebView *web_view)
 {
-  WebKitWebView *web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW,
-                                          "related-view", related_web_view,
-                                          NULL);
-
   return g_object_new (GIG_TYPE_PAGE,
-                       "uri", uri,
                        "web-view", web_view,
                        NULL);
-}
-
-const gchar *
-gig_page_get_uri (GigPage *self)
-{
-  g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
-
-  return self->uri;
-}
-
-static void
-gig_page_set_uri (GigPage *self,
-                  const gchar *uri)
-{
-  g_assert (GIG_IS_PAGE (self));
-
-  if (g_set_str (&self->uri, uri))
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_URI]);
 }
 
 WebKitWebView *
@@ -324,27 +284,41 @@ gig_page_set_web_view (GigPage *self,
 }
 
 const gchar *
-gig_page_get_title (GigPage *self)
+gig_page_get_uri (GigPage *self)
 {
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 
-  return self->title;
+  return self->uri;
 }
 
-static void
-gig_page_set_title (GigPage *self,
-                    const gchar *title)
+void
+gig_page_set_uri (GigPage *self,
+                  const gchar *uri)
 {
   g_assert (GIG_IS_PAGE (self));
 
-  if (title == NULL || title[0] == '\0')
-    title = self->uri;
+  if (g_set_str (&self->uri, uri))
+    {
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_URI]);
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
+    }
+}
 
-  if (title == NULL || title[0] == '\0')
-    title = "New Tab";
+const gchar *
+gig_page_get_title (GigPage *self)
+{
+  const gchar *title = NULL;
 
-  if (g_set_str (&self->title, title))
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
+  g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
+
+  title = webkit_web_view_get_title (self->web_view);
+  if (title && title[0] != '\0')
+    return title;
+
+  if (self->uri && self->uri[0] != '\0')
+    return self->uri;
+
+  return "New Tab";
 }
 
 GdkTexture *
@@ -352,17 +326,7 @@ gig_page_get_icon (GigPage *self)
 {
   g_return_val_if_fail (GIG_IS_PAGE (self), NULL);
 
-  return self->icon;
-}
-
-static void
-gig_page_set_icon (GigPage *self,
-                   GdkTexture *icon)
-{
-  g_assert (GIG_IS_PAGE (self));
-
-  if (g_set_object (&self->icon, icon))
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
+  return webkit_web_view_get_favicon (self->web_view);
 }
 
 gboolean
@@ -370,21 +334,7 @@ gig_page_get_is_loading (GigPage *self)
 {
   g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
 
-  return self->is_loading;
-}
-
-static void
-gig_page_set_is_loading (GigPage *self,
-                         gboolean is_loading)
-{
-  g_assert (GIG_IS_PAGE (self));
-
-  if (self->is_loading == is_loading)
-    return;
-
-  self->is_loading = is_loading;
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
+  return webkit_web_view_is_loading (self->web_view);
 }
 
 gboolean

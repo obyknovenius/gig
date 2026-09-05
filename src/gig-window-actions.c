@@ -7,13 +7,15 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
                                const gchar *action_name,
                                GVariant *param)
 {
+  WebKitWebView *web_view = NULL;
   GigWindow *self = (GigWindow *) widget;
   GigPage *page = NULL;
   AdwTabPage *tab_page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  page = gig_page_new (NULL, NULL);
+  web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW, NULL);
+  page = gig_page_new (web_view);
   tab_page = gig_window_add_page (self, page);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);

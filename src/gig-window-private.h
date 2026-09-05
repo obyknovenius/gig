@@ -19,7 +19,9 @@ struct _GigWindow
 };
 
 void gig_window_class_init_actions (GigWindowClass *klass);
+
 void gig_window_init_actions (GigWindow *self);
+
 void gig_window_update_actions (GigWindow *self, WebKitWebView *web_view);
 
 G_END_DECLS
