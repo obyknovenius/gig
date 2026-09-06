@@ -1,4 +1,4 @@
-#include "gig-url-entry.h"
+#include "gig-url-entry-private.h"
 
 #include "gig-page.h"
 #include "gig-utils.h"
@@ -10,7 +10,7 @@ struct _GigUrlEntry
   GtkEntry *entry;
 
   gboolean is_focused;
-  gboolean is_editing;
+  gboolean editing;
   const gchar *primary_icon_name;
   gdouble progress_fraction;
 
@@ -35,23 +35,6 @@ static void
 entry_changed_cb (GigUrlEntry *self, GtkEntry *entry);
 
 static void
-set_text (GigUrlEntry *self,
-          const gchar *text)
-{
-  g_assert (GIG_IS_URL_ENTRY (self));
-
-  g_signal_handlers_block_by_func (self->entry,
-                                   G_CALLBACK (entry_changed_cb),
-                                   self);
-
-  gtk_editable_set_text (GTK_EDITABLE (self->entry), text ? text : "");
-
-  g_signal_handlers_unblock_by_func (self->entry,
-                                     G_CALLBACK (entry_changed_cb),
-                                     self);
-}
-
-static void
 update_primary_icon (GigUrlEntry *self)
 {
   const gchar *uri = NULL;
@@ -62,7 +45,7 @@ update_primary_icon (GigUrlEntry *self)
   if (self->web_view)
     uri = webkit_web_view_get_uri (self->web_view);
 
-  if (self->is_editing || !uri || uri[0] == '\0')
+  if (self->editing || !uri || uri[0] == '\0')
     icon_name = "system-search-symbolic";
 
   if (g_strcmp0 (self->primary_icon_name, icon_name) == 0)
@@ -111,26 +94,12 @@ set_is_focused (GigUrlEntry *self,
 }
 
 static void
-set_is_editing (GigUrlEntry *self,
-                gboolean is_editing)
-{
-  g_assert (GIG_IS_URL_ENTRY (self));
-
-  if (self->is_editing == is_editing)
-    return;
-
-  self->is_editing = is_editing;
-
-  update_primary_icon (self);
-}
-
-static void
 entry_changed_cb (GigUrlEntry *self,
                   GtkEntry *entry)
 {
   g_assert (GIG_IS_URL_ENTRY (self));
 
-  set_is_editing (self, TRUE);
+  gig_url_entry_set_editing (self, TRUE);
 }
 
 static void
@@ -146,16 +115,10 @@ static void
 entry_focus_leave_cb (GigUrlEntry *self,
                       GtkEventControllerFocus *controller)
 {
-  const gchar *uri = NULL;
-
   g_assert (GIG_IS_URL_ENTRY (self));
   g_assert (WEBKIT_IS_WEB_VIEW (self->web_view));
 
-  set_is_editing (self, FALSE);
   set_is_focused (self, FALSE);
-
-  uri = webkit_web_view_get_uri (self->web_view);
-  set_text (self, uri);
 }
 
 static void
@@ -173,6 +136,8 @@ entry_activate_cb (GigUrlEntry *self,
   if (!text || text[0] == '\0')
     return;
 
+  gig_url_entry_set_editing (self, FALSE);
+
   uri = gig_utils_fixup_uri (text);
   if (!uri)
     uri = gig_utils_build_search_uri (text);
@@ -180,6 +145,28 @@ entry_activate_cb (GigUrlEntry *self,
   webkit_web_view_load_uri (self->web_view, uri);
 
   gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
+}
+
+static gboolean
+web_view_decide_policy_cb (GigUrlEntry *self,
+                           WebKitPolicyDecision *decision,
+                           WebKitPolicyDecisionType decision_type,
+                           WebKitWebView *web_view)
+{
+  WebKitNavigationAction *navigation_action;
+
+  g_assert (GIG_IS_URL_ENTRY (self));
+
+  if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
+    return FALSE;
+
+  navigation_action =
+      webkit_navigation_policy_decision_get_navigation_action (WEBKIT_NAVIGATION_POLICY_DECISION (decision));
+
+  if (webkit_navigation_action_is_user_gesture (navigation_action))
+    gig_url_entry_set_editing (self, FALSE);
+
+  return FALSE;
 }
 
 static void
@@ -192,8 +179,11 @@ web_view_uri_changed_cb (GigUrlEntry *self,
   g_assert (GIG_IS_URL_ENTRY (self));
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
+  if (self->editing)
+    return;
+
   uri = webkit_web_view_get_uri (web_view);
-  set_text (self, uri);
+  gig_url_entry_set_text (self, uri);
 
   update_primary_icon (self);
 }
@@ -326,6 +316,12 @@ gig_url_entry_init (GigUrlEntry *self)
   self->web_view_signals = g_signal_group_new (WEBKIT_TYPE_WEB_VIEW);
 
   g_signal_group_connect_object (self->web_view_signals,
+                                 "decide-policy",
+                                 G_CALLBACK (web_view_decide_policy_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->web_view_signals,
                                  "notify::uri",
                                  G_CALLBACK (web_view_uri_changed_cb),
                                  self,
@@ -351,6 +347,37 @@ gig_url_entry_new (void)
 }
 
 void
+gig_url_entry_set_text (GigUrlEntry *self,
+                        const gchar *text)
+{
+  g_assert (GIG_IS_URL_ENTRY (self));
+
+  g_signal_handlers_block_by_func (self->entry,
+                                   G_CALLBACK (entry_changed_cb),
+                                   self);
+
+  gtk_editable_set_text (GTK_EDITABLE (self->entry), text ? text : "");
+
+  g_signal_handlers_unblock_by_func (self->entry,
+                                     G_CALLBACK (entry_changed_cb),
+                                     self);
+}
+
+void
+gig_url_entry_set_editing (GigUrlEntry *self,
+                           gboolean editing)
+{
+  g_return_if_fail (GIG_IS_URL_ENTRY (self));
+
+  if (self->editing == editing)
+    return;
+
+  self->editing = editing;
+
+  update_primary_icon (self);
+}
+
+void
 gig_url_entry_set_web_view (GigUrlEntry *self,
                             WebKitWebView *web_view)
 {
@@ -364,7 +391,8 @@ gig_url_entry_set_web_view (GigUrlEntry *self,
   if (web_view)
     uri = webkit_web_view_get_uri (web_view);
 
-  set_text (self, uri);
+  gig_url_entry_set_text (self, uri);
+  gig_url_entry_set_editing (self, FALSE);
 
   g_set_object (&self->web_view, web_view);
 

@@ -1,6 +1,7 @@
 #include "gig-window-private.h"
 
 #include "gig-page.h"
+#include "gig-url-entry-private.h"
 
 static void
 gig_window_actions_new_tab_cb (GtkWidget *widget,
@@ -28,7 +29,6 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
 {
   GigWindow *self = (GigWindow *) widget;
   WebKitWebView *web_view = NULL;
-  gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
@@ -36,12 +36,15 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
   web_view = gig_page_get_web_view (self->selected_page);
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
-  is_loading = gig_page_get_is_loading (self->selected_page);
-
-  if (is_loading)
+  if (gig_page_get_is_loading (self->selected_page))
     webkit_web_view_stop_loading (web_view);
   else
-    webkit_web_view_reload (web_view);
+    {
+      const gchar *uri = webkit_web_view_get_uri (web_view);
+      gig_url_entry_set_text (self->url_entry, uri);
+      gig_url_entry_set_editing (self->url_entry, FALSE);
+      webkit_web_view_reload (web_view);
+    }
 }
 
 static void
