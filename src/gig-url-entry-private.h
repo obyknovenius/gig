@@ -4,10 +4,6 @@
 
 G_BEGIN_DECLS
 
-void gig_url_entry_set_text (GigUrlEntry *self,
-                             const gchar *text);
-
-void gig_url_entry_set_editing (GigUrlEntry *self,
-                                gboolean editing);
+void gig_url_entry_reset (GigUrlEntry *self);
 
 G_END_DECLS

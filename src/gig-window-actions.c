@@ -40,9 +40,7 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
     webkit_web_view_stop_loading (web_view);
   else
     {
-      const gchar *uri = webkit_web_view_get_uri (web_view);
-      gig_url_entry_set_text (self->url_entry, uri);
-      gig_url_entry_set_editing (self->url_entry, FALSE);
+      gig_url_entry_reset (self->url_entry);
       webkit_web_view_reload (web_view);
     }
 }
