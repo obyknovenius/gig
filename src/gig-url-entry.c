@@ -116,7 +116,7 @@ web_view_decide_policy_cb (GigUrlEntry *self,
       webkit_navigation_policy_decision_get_navigation_action (WEBKIT_NAVIGATION_POLICY_DECISION (decision));
 
   if (webkit_navigation_action_is_user_gesture (navigation_action))
-    gig_url_entry_set_editing (self, FALSE);
+    gig_url_entry_reset (self);
 
   return FALSE;
 }
