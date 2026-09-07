@@ -1,7 +1,7 @@
 #include "gig-url-entry-private.h"
 
 #include "gig-page.h"
-#include "gig-utils.h"
+#include "gig-web-view.h"
 
 struct _GigUrlEntry
 {
@@ -12,7 +12,7 @@ struct _GigUrlEntry
   gboolean focused;
   gboolean editing;
 
-  WebKitWebView *web_view;
+  GigWebView *web_view;
 
   GSignalGroup *web_view_signals;
 };
@@ -68,7 +68,7 @@ entry_focus_leave_cb (GigUrlEntry *self,
                       GtkEventControllerFocus *controller)
 {
   g_assert (GIG_IS_URL_ENTRY (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (self->web_view));
+  g_assert (GIG_IS_WEB_VIEW (self->web_view));
 
   gig_url_entry_set_focused (self, FALSE);
 }
@@ -78,11 +78,10 @@ entry_activate_cb (GigUrlEntry *self,
                    GtkEntry *entry)
 {
   const gchar *text;
-  g_autofree gchar *uri = NULL;
 
   g_assert (GIG_IS_URL_ENTRY (self));
   g_assert (GTK_IS_ENTRY (entry));
-  g_assert (WEBKIT_IS_WEB_VIEW (self->web_view));
+  g_assert (GIG_IS_WEB_VIEW (self->web_view));
 
   text = gtk_editable_get_text (GTK_EDITABLE (entry));
   if (!text || text[0] == '\0')
@@ -90,11 +89,7 @@ entry_activate_cb (GigUrlEntry *self,
 
   gig_url_entry_set_editing (self, FALSE);
 
-  uri = gig_utils_fixup_uri (text);
-  if (!uri)
-    uri = gig_utils_build_search_uri (text);
-
-  webkit_web_view_load_uri (self->web_view, uri);
+  gig_web_view_load_address (self->web_view, text);
 
   gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
 }
@@ -103,7 +98,7 @@ static gboolean
 web_view_decide_policy_cb (GigUrlEntry *self,
                            WebKitPolicyDecision *decision,
                            WebKitPolicyDecisionType decision_type,
-                           WebKitWebView *web_view)
+                           GigWebView *web_view)
 {
   WebKitNavigationAction *navigation_action;
 
@@ -122,20 +117,20 @@ web_view_decide_policy_cb (GigUrlEntry *self,
 }
 
 static void
-web_view_uri_changed_cb (GigUrlEntry *self,
-                         GParamSpec *pspec,
-                         WebKitWebView *web_view)
+web_view_address_changed_cb (GigUrlEntry *self,
+                             GParamSpec *pspec,
+                             GigWebView *web_view)
 {
-  const gchar *uri;
+  const gchar *address;
 
   g_assert (GIG_IS_URL_ENTRY (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   if (self->editing)
     return;
 
-  uri = webkit_web_view_get_uri (web_view);
-  gig_url_entry_set_text (self, uri);
+  address = gig_web_view_get_address (web_view);
+  gig_url_entry_set_text (self, address);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRIMARY_ICON_NAME]);
 }
@@ -143,7 +138,7 @@ web_view_uri_changed_cb (GigUrlEntry *self,
 static void
 web_view_is_loading_changed_cb (GigUrlEntry *self,
                                 GParamSpec *pspec,
-                                WebKitWebView *web_view)
+                                GigWebView *web_view)
 {
   g_assert (GIG_IS_URL_ENTRY (self));
 
@@ -153,7 +148,7 @@ web_view_is_loading_changed_cb (GigUrlEntry *self,
 static void
 web_view_estimated_load_progress_changed_cb (GigUrlEntry *self,
                                              GParamSpec *pspec,
-                                             WebKitWebView *web_view)
+                                             GigWebView *web_view)
 {
   g_assert (GIG_IS_URL_ENTRY (self));
 
@@ -265,7 +260,7 @@ gig_url_entry_init (GigUrlEntry *self)
                           self->entry, "progress-fraction",
                           G_BINDING_SYNC_CREATE);
 
-  self->web_view_signals = g_signal_group_new (WEBKIT_TYPE_WEB_VIEW);
+  self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "decide-policy",
@@ -274,8 +269,8 @@ gig_url_entry_init (GigUrlEntry *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::uri",
-                                 G_CALLBACK (web_view_uri_changed_cb),
+                                 "notify::address",
+                                 G_CALLBACK (web_view_address_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
@@ -346,7 +341,7 @@ gig_url_entry_set_editing (GigUrlEntry *self,
 static const gchar *
 gig_url_entry_get_primary_icon_name (GigUrlEntry *self)
 {
-  const gchar *uri = NULL;
+  const gchar *address = NULL;
 
   g_assert (GIG_IS_URL_ENTRY (self));
 
@@ -354,9 +349,9 @@ gig_url_entry_get_primary_icon_name (GigUrlEntry *self)
     return "system-search-symbolic";
 
   if (self->web_view)
-    uri = webkit_web_view_get_uri (self->web_view);
+    address = gig_web_view_get_address (self->web_view);
 
-  if (!uri || uri[0] == '\0')
+  if (!address || address[0] == '\0')
     return "system-search-symbolic";
 
   return NULL;
@@ -371,18 +366,18 @@ gig_url_entry_get_progress_fraction (GigUrlEntry *self)
   if (self->focused)
     return 0.0;
 
-  if (self->web_view && webkit_web_view_is_loading (self->web_view))
-    return webkit_web_view_get_estimated_load_progress (self->web_view);
+  if (self->web_view && webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view)))
+    return webkit_web_view_get_estimated_load_progress (WEBKIT_WEB_VIEW (self->web_view));
 
   return 0.0;
 }
 
 void
 gig_url_entry_set_web_view (GigUrlEntry *self,
-                            WebKitWebView *web_view)
+                            GigWebView *web_view)
 {
   g_return_if_fail (GIG_IS_URL_ENTRY (self));
-  g_return_if_fail (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
+  g_return_if_fail (!web_view || GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_set_sensitive (GTK_WIDGET (self->entry), web_view != NULL);
 
@@ -399,13 +394,13 @@ gig_url_entry_set_web_view (GigUrlEntry *self,
 void
 gig_url_entry_reset (GigUrlEntry *self)
 {
-  const gchar *uri = NULL;
+  const gchar *address = NULL;
 
   g_return_if_fail (GIG_IS_URL_ENTRY (self));
 
   if (self->web_view)
-    uri = webkit_web_view_get_uri (self->web_view);
+    address = gig_web_view_get_address (self->web_view);
 
-  gig_url_entry_set_text (self, uri);
+  gig_url_entry_set_text (self, address);
   gig_url_entry_set_editing (self, FALSE);
 }

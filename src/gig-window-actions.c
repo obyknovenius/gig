@@ -2,20 +2,21 @@
 
 #include "gig-page.h"
 #include "gig-url-entry-private.h"
+#include "gig-web-view.h"
 
 static void
 gig_window_actions_new_tab_cb (GtkWidget *widget,
                                const gchar *action_name,
                                GVariant *param)
 {
-  WebKitWebView *web_view = NULL;
+  GigWebView *web_view = NULL;
   GigWindow *self = (GigWindow *) widget;
   GigPage *page = NULL;
   AdwTabPage *tab_page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW, NULL);
+  web_view = GIG_WEB_VIEW (gig_web_view_new ());
   page = gig_page_new (web_view);
   tab_page = gig_window_add_page (self, page);
 
@@ -28,20 +29,20 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
                                    GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  WebKitWebView *web_view = NULL;
+  GigWebView *web_view = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
   web_view = gig_page_get_web_view (self->selected_page);
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   if (gig_page_get_is_loading (self->selected_page))
-    webkit_web_view_stop_loading (web_view);
+    webkit_web_view_stop_loading (WEBKIT_WEB_VIEW (web_view));
   else
     {
       gig_url_entry_reset (self->url_entry);
-      webkit_web_view_reload (web_view);
+      webkit_web_view_reload (WEBKIT_WEB_VIEW (web_view));
     }
 }
 
@@ -51,15 +52,15 @@ gig_window_actions_go_back_cb (GtkWidget *widget,
                                GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  WebKitWebView *web_view = NULL;
+  GigWebView *web_view = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
   web_view = gig_page_get_web_view (self->selected_page);
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  webkit_web_view_go_back (web_view);
+  webkit_web_view_go_back (WEBKIT_WEB_VIEW (web_view));
 }
 
 static void
@@ -68,15 +69,15 @@ gig_window_actions_go_forward_cb (GtkWidget *widget,
                                   GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  WebKitWebView *web_view = NULL;
+  GigWebView *web_view = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
   web_view = gig_page_get_web_view (self->selected_page);
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  webkit_web_view_go_forward (web_view);
+  webkit_web_view_go_forward (WEBKIT_WEB_VIEW (web_view));
 }
 
 void
@@ -107,20 +108,20 @@ gig_window_init_actions (GigWindow *self)
 
 void
 gig_window_update_actions (GigWindow *self,
-                           WebKitWebView *web_view)
+                           GigWebView *web_view)
 {
   gboolean can_stop_reload = FALSE;
   gboolean can_go_back = FALSE;
   gboolean can_go_forward = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (!web_view || WEBKIT_IS_WEB_VIEW (web_view));
+  g_assert (!web_view || GIG_IS_WEB_VIEW (web_view));
 
   if (web_view)
     {
-      can_stop_reload = webkit_web_view_get_uri (web_view) != NULL;
-      can_go_back = webkit_web_view_can_go_back (web_view);
-      can_go_forward = webkit_web_view_can_go_forward (web_view);
+      can_stop_reload = !gig_web_view_is_blank (web_view);
+      can_go_back = webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view));
+      can_go_forward = webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view));
     }
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_stop_reload);

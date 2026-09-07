@@ -1,7 +1,8 @@
 #include "gig-window-private.h"
 
-#include "gig-page-private.h"
+#include "gig-page.h"
 #include "gig-url-entry.h"
+#include "gig-web-view.h"
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
@@ -9,13 +10,13 @@ static AdwTabPage *
 tab_overview_create_tab_cb (GigWindow *self,
                             AdwTabOverview *tab_overview)
 {
-  WebKitWebView *web_view = NULL;
+  GigWebView *web_view = NULL;
   GigPage *page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
 
-  web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW, NULL);
+  web_view = GIG_WEB_VIEW (gig_web_view_new ());
   page = gig_page_new (web_view);
 
   return gig_window_add_page (self, page);
@@ -26,7 +27,7 @@ web_view_create_cb (GigWindow *self,
                     WebKitNavigationAction *navigation_action,
                     WebKitWebView *related_web_view)
 {
-  WebKitWebView *web_view = NULL;
+  GigWebView *web_view = NULL;
   GigPage *page = NULL;
   WebKitURIRequest *request = NULL;
   const gchar *uri = NULL;
@@ -35,78 +36,69 @@ web_view_create_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
 
-  web_view = g_object_new (WEBKIT_TYPE_WEB_VIEW,
-                           "related-view", related_web_view,
-                           NULL);
-  page = gig_page_new (web_view);
+  web_view = GIG_WEB_VIEW (gig_web_view_new_with_related_view (related_web_view));
 
   request = webkit_navigation_action_get_request (navigation_action);
   uri = webkit_uri_request_get_uri (request);
-  gig_page_set_uri (page, uri);
+  gig_web_view_set_initial_address (web_view, uri);
 
+  page = gig_page_new (web_view);
   tab_page = gig_window_add_page (self, page);
+
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 
-  return web_view;
+  return WEBKIT_WEB_VIEW (web_view);
 }
 
 static void
-web_view_uri_changed_cb (GigWindow *self,
-                         GParamSpec *pspec,
-                         WebKitWebView *web_view)
+web_view_address_changed_cb (GigWindow *self,
+                             GParamSpec *pspec,
+                             GigWebView *web_view)
 {
-  const gchar *uri = NULL;
-
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  uri = webkit_web_view_get_uri (web_view);
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self),
                                  "win.stop-reload",
-                                 uri != NULL);
+                                 !gig_web_view_is_blank (web_view));
 }
 
 static void
 web_view_is_loading_changed_cb (GigWindow *self,
                                 GParamSpec *pspec,
-                                WebKitWebView *web_view)
+                                GigWebView *web_view)
 {
-  gboolean is_loading = FALSE;
-
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  is_loading = webkit_web_view_is_loading (web_view);
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
-                            is_loading ? "process-stop-symbolic"
-                                       : "view-refresh-symbolic");
+                            webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view))
+                                ? "process-stop-symbolic"
+                                : "view-refresh-symbolic");
 }
 
 static void
-back_forward_list_changed_cb (GigWindow *self,
-                              WebKitBackForwardListItem *item_added,
-                              gpointer items_removed,
-                              WebKitBackForwardList *back_forward_list)
+web_view_can_go_back_changed_cb (GigWindow *self,
+                                 GParamSpec *pspec,
+                                 GigWebView *web_view)
 {
-  GList *back_list = NULL;
-  GList *forward_list = NULL;
-
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
-
-  back_list = webkit_back_forward_list_get_back_list (back_forward_list);
-  forward_list = webkit_back_forward_list_get_forward_list (back_forward_list);
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back",
-                                 back_list != NULL);
+                                 webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view)));
+}
+
+static void
+web_view_can_go_forward_changed_cb (GigWindow *self,
+                                    GParamSpec *pspec,
+                                    GigWebView *web_view)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward",
-                                 forward_list != NULL);
-
-  g_list_free (back_list);
-  g_list_free (forward_list);
+                                 webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)));
 }
 
 static void
@@ -116,8 +108,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 {
   AdwTabPage *tab_page = NULL;
   GigPage *page = NULL;
-  WebKitWebView *web_view = NULL;
-  WebKitBackForwardList *back_forward_list = NULL;
+  GigWebView *web_view = NULL;
   gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -132,8 +123,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   if (page)
     {
       web_view = gig_page_get_web_view (page);
-      back_forward_list = webkit_web_view_get_back_forward_list (web_view);
-      is_loading = webkit_web_view_is_loading (web_view);
+      is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
     }
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
@@ -145,11 +135,10 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   gig_window_update_actions (self, web_view);
 
   g_signal_group_set_target (self->web_view_signals, web_view);
-  g_signal_group_set_target (self->back_forward_list_signals, back_forward_list);
 
   self->selected_page = page;
 
-  if (!page || gig_page_is_blank (page))
+  if (!web_view || gig_web_view_is_blank (web_view))
     gtk_widget_grab_focus (GTK_WIDGET (self->url_entry));
   else
     gtk_widget_grab_focus (GTK_WIDGET (self->tab_view));
@@ -163,7 +152,6 @@ gig_window_dispose (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_signal_group_set_target (self->web_view_signals, NULL);
-  g_signal_group_set_target (self->back_forward_list_signals, NULL);
 
   G_OBJECT_CLASS (gig_window_parent_class)->dispose (object);
 }
@@ -176,7 +164,6 @@ gig_window_finalize (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_clear_object (&self->web_view_signals);
-  g_clear_object (&self->back_forward_list_signals);
 
   G_OBJECT_CLASS (gig_window_parent_class)->finalize (object);
 }
@@ -209,7 +196,7 @@ gig_window_init (GigWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  self->web_view_signals = g_signal_group_new (WEBKIT_TYPE_WEB_VIEW);
+  self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "create",
@@ -218,8 +205,8 @@ gig_window_init (GigWindow *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::uri",
-                                 G_CALLBACK (web_view_uri_changed_cb),
+                                 "notify::address",
+                                 G_CALLBACK (web_view_address_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
@@ -229,11 +216,15 @@ gig_window_init (GigWindow *self)
                                  self,
                                  G_CONNECT_SWAPPED);
 
-  self->back_forward_list_signals = g_signal_group_new (WEBKIT_TYPE_BACK_FORWARD_LIST);
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "notify::can-go-back",
+                                 G_CALLBACK (web_view_can_go_back_changed_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
 
-  g_signal_group_connect_object (self->back_forward_list_signals,
-                                 "changed",
-                                 G_CALLBACK (back_forward_list_changed_cb),
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "notify::can-go-forward",
+                                 G_CALLBACK (web_view_can_go_forward_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 

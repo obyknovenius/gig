@@ -5,6 +5,7 @@ gig_sources = [
   'gig-utils.c',
   'gig-window-actions.c',
   'gig-window.c',
+  'gig-web-view.c',
   'main.c',
 ]
 
