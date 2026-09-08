@@ -1,7 +1,15 @@
 FROM fedora:45
 
-RUN dnf -y update && \
-    dnf -y install \
+# Install Free and Nonfree RPM Fusion Repositories
+RUN dnf -y install \
+        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-45.noarch.rpm \
+        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-45.noarch.rpm
+
+# Install additional codec
+RUN dnf -y install \
+        @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
+
+RUN dnf -y install \
         clang-tools-extra \
         blueprint-compiler \
         gtk4-devel \
