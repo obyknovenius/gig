@@ -30,17 +30,16 @@ web_view_create_cb (GigWindow *self,
   GigWebView *web_view = NULL;
   GigPage *page = NULL;
   WebKitURIRequest *request = NULL;
-  const gchar *uri = NULL;
+  const gchar *pending_uri = NULL;
   AdwTabPage *tab_page = NULL, *parent = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
 
-  web_view = GIG_WEB_VIEW (gig_web_view_new_with_related_view (related_web_view));
-
   request = webkit_navigation_action_get_request (navigation_action);
-  uri = webkit_uri_request_get_uri (request);
-  gig_web_view_set_initial_address (web_view, uri);
+  pending_uri = webkit_uri_request_get_uri (request);
+  web_view = GIG_WEB_VIEW (gig_web_view_new_with_related_view (related_web_view,
+                                                               pending_uri));
 
   page = gig_page_new (web_view);
   parent = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (self->selected_page));
