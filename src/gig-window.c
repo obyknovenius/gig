@@ -138,10 +138,10 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 
   self->selected_page = page;
 
-  if (!web_view || gig_web_view_is_blank (web_view))
-    gtk_widget_grab_focus (GTK_WIDGET (self->url_entry));
+  if (web_view && !gig_web_view_is_blank (web_view))
+    gtk_widget_grab_focus (GTK_WIDGET (page));
   else
-    gtk_widget_grab_focus (GTK_WIDGET (self->tab_view));
+    gtk_widget_grab_focus (GTK_WIDGET (self->url_entry));
 }
 
 static void
