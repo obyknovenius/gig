@@ -18,7 +18,7 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
 
   web_view = GIG_WEB_VIEW (gig_web_view_new ());
   page = gig_page_new (web_view);
-  tab_page = gig_window_add_page (self, page);
+  tab_page = gig_window_add_tab_page (self, page, NULL);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }

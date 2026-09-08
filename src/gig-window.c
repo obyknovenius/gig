@@ -19,7 +19,7 @@ tab_overview_create_tab_cb (GigWindow *self,
   web_view = GIG_WEB_VIEW (gig_web_view_new ());
   page = gig_page_new (web_view);
 
-  return gig_window_add_page (self, page);
+  return gig_window_add_tab_page (self, page, NULL);
 }
 
 static WebKitWebView *
@@ -31,7 +31,7 @@ web_view_create_cb (GigWindow *self,
   GigPage *page = NULL;
   WebKitURIRequest *request = NULL;
   const gchar *uri = NULL;
-  AdwTabPage *tab_page = NULL;
+  AdwTabPage *tab_page = NULL, *parent = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
@@ -43,7 +43,8 @@ web_view_create_cb (GigWindow *self,
   gig_web_view_set_initial_address (web_view, uri);
 
   page = gig_page_new (web_view);
-  tab_page = gig_window_add_page (self, page);
+  parent = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (self->selected_page));
+  tab_page = gig_window_add_tab_page (self, page, parent);
 
   adw_tab_view_set_selected_page (self->tab_view, tab_page);
 
@@ -242,15 +243,19 @@ gig_window_new (GtkApplication *application)
 }
 
 AdwTabPage *
-gig_window_add_page (GigWindow *self,
-                     GigPage *page)
+gig_window_add_tab_page (GigWindow *self,
+                         GigPage *page,
+                         AdwTabPage *parent)
 {
   AdwTabPage *tab_page;
 
   g_return_val_if_fail (GIG_IS_WINDOW (self), NULL);
   g_return_val_if_fail (GIG_IS_PAGE (page), NULL);
+  g_return_val_if_fail (!parent || ADW_IS_TAB_PAGE (parent), NULL);
 
-  tab_page = adw_tab_view_append (self->tab_view, GTK_WIDGET (page));
+  tab_page = adw_tab_view_add_page (self->tab_view,
+                                    GTK_WIDGET (page),
+                                    parent);
 
   g_object_bind_property (page, "title",
                           tab_page, "title",
