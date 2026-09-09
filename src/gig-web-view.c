@@ -14,7 +14,6 @@ G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
 enum
 {
   PROP_0,
-  PROP_PENDING_ADDRESS,
   PROP_ADDRESS,
   PROP_CAN_GO_BACK,
   PROP_CAN_GO_FORWARD,
@@ -22,9 +21,6 @@ enum
 };
 
 static GParamSpec *properties[N_PROPS];
-
-static void gig_web_view_set_pending_address (GigWebView *web_view,
-                                              const gchar *address);
 
 static void
 web_view_uri_changed_cb (GigWebView *self,
@@ -121,39 +117,13 @@ gig_web_view_get_property (GObject *object,
 }
 
 static void
-gig_web_view_set_property (GObject *object,
-                           guint prop_id,
-                           const GValue *value,
-                           GParamSpec *pspec)
-{
-  GigWebView *self = GIG_WEB_VIEW (object);
-
-  switch (prop_id)
-    {
-    case PROP_PENDING_ADDRESS:
-      gig_web_view_set_pending_address (self, g_value_get_string (value));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
 gig_web_view_class_init (GigWebViewClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->constructed = gig_web_view_constructed;
-  object_class->set_property = gig_web_view_set_property;
   object_class->get_property = gig_web_view_get_property;
   object_class->finalize = gig_web_view_finalize;
-
-  properties[PROP_PENDING_ADDRESS] =
-      g_param_spec_string ("pending-address",
-                           NULL, NULL,
-                           NULL,
-                           G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_ADDRESS] =
       g_param_spec_string ("address",
@@ -188,22 +158,11 @@ gig_web_view_new (void)
 }
 
 GtkWidget *
-gig_web_view_new_with_related_view (WebKitWebView *related_view,
-                                    const gchar *pending_address)
+gig_web_view_new_with_related_view (WebKitWebView *related_view)
 {
   return g_object_new (GIG_TYPE_WEB_VIEW,
                        "related-view", related_view,
-                       "pending-address", pending_address,
                        NULL);
-}
-
-static void
-gig_web_view_set_pending_address (GigWebView *self,
-                                  const gchar *pending_address)
-{
-  g_return_if_fail (GIG_IS_WEB_VIEW (self));
-
-  g_set_str (&self->pending_address, pending_address);
 }
 
 void
@@ -220,6 +179,16 @@ gig_web_view_load_address (GigWebView *web_view,
     uri = gig_utils_build_search_uri (address);
 
   webkit_web_view_load_uri (WEBKIT_WEB_VIEW (web_view), uri);
+}
+
+void
+gig_web_view_set_pending_address (GigWebView *web_view,
+                                  const gchar *pending_address)
+{
+  g_return_if_fail (GIG_IS_WEB_VIEW (web_view));
+
+  if (g_set_str (&web_view->pending_address, pending_address))
+    g_object_notify_by_pspec (G_OBJECT (web_view), properties[PROP_ADDRESS]);
 }
 
 const gchar *
