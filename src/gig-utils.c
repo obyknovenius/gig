@@ -23,7 +23,7 @@ gig_utils_fixup_uri (const gchar *uri)
   const gchar *scheme;
   g_autofree gchar *uri_with_scheme = NULL;
   g_autoptr (GUri) parsed_uri = NULL;
-  const gchar *host;
+  const gchar *host = NULL;
 
   g_return_val_if_fail (uri != NULL && uri[0] != '\0', NULL);
 
@@ -54,4 +54,23 @@ gig_utils_build_search_uri (const gchar *query)
   escaped_query = g_uri_escape_string (query, NULL, FALSE);
 
   return g_strconcat ("https://duckduckgo.com/?q=", escaped_query, NULL);
+}
+
+gchar *
+gig_utils_get_base_domain (const gchar *uri)
+{
+  g_autoptr (GUri) parsed_uri = NULL;
+  const gchar *host = NULL;
+
+  g_return_val_if_fail (uri != NULL && uri[0] != '\0', NULL);
+
+  parsed_uri = g_uri_parse (uri, G_URI_FLAGS_NONE, NULL);
+  if (!parsed_uri)
+    return NULL;
+
+  host = g_uri_get_host (parsed_uri);
+  if (!host)
+    return NULL;
+
+  return g_strdup (soup_tld_get_base_domain (host, NULL));
 }

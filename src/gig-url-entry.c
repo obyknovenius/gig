@@ -1,6 +1,7 @@
 #include "gig-url-entry-private.h"
 
 #include "gig-page.h"
+#include "gig-utils.h"
 #include "gig-web-view.h"
 
 struct _GigUrlEntry
@@ -11,6 +12,8 @@ struct _GigUrlEntry
 
   gboolean focused;
   gboolean editing;
+
+  PangoAttrList *attributes;
 
   GigWebView *web_view;
 
@@ -42,6 +45,45 @@ static const gchar *gig_url_entry_get_primary_icon_name (GigUrlEntry *self);
 
 static gdouble gig_url_entry_get_progress_fraction (GigUrlEntry *self);
 
+static void
+update_attributes (GigUrlEntry *self,
+                   const gchar *address)
+{
+  g_autoptr (PangoAttrList) attributes = NULL;
+  g_autofree gchar *base_domain = NULL;
+  PangoAttribute *normal_color = NULL;
+  PangoAttribute *dimmed_color = NULL;
+  const gchar *substring = NULL;
+
+  g_assert (GIG_IS_URL_ENTRY (self));
+
+  if (!address)
+    {
+      g_clear_pointer (&self->attributes, pango_attr_list_unref);
+      return;
+    }
+
+  attributes = pango_attr_list_new ();
+
+  dimmed_color = pango_attr_foreground_alpha_new (32768);
+  pango_attr_list_insert (attributes, dimmed_color);
+
+  base_domain = gig_utils_get_base_domain (address);
+  if (base_domain)
+    substring = strstr (address, base_domain);
+
+  if (substring)
+    {
+      normal_color = pango_attr_foreground_alpha_new (65535);
+      normal_color->start_index = substring - address;
+      normal_color->end_index = normal_color->start_index + strlen (base_domain);
+      pango_attr_list_insert (attributes, normal_color);
+    }
+
+  g_clear_pointer (&self->attributes, pango_attr_list_unref);
+  self->attributes = g_steal_pointer (&attributes);
+}
+
 static void entry_changed_cb (GigUrlEntry *self,
                               GtkEntry *entry);
 
@@ -61,6 +103,7 @@ entry_focus_enter_cb (GigUrlEntry *self,
   g_assert (GIG_IS_URL_ENTRY (self));
 
   gig_url_entry_set_focused (self, TRUE);
+  gtk_entry_set_attributes (GTK_ENTRY (self->entry), NULL);
 }
 
 static void
@@ -71,6 +114,7 @@ entry_focus_leave_cb (GigUrlEntry *self,
   g_assert (GIG_IS_WEB_VIEW (self->web_view));
 
   gig_url_entry_set_focused (self, FALSE);
+  gtk_entry_set_attributes (GTK_ENTRY (self->entry), self->attributes);
 }
 
 static void
@@ -126,11 +170,14 @@ web_view_address_changed_cb (GigUrlEntry *self,
   g_assert (GIG_IS_URL_ENTRY (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
+  address = gig_web_view_get_address (web_view);
+  update_attributes (self, address);
+
   if (self->editing)
     return;
 
-  address = gig_web_view_get_address (web_view);
   gig_url_entry_set_text (self, address);
+  gtk_entry_set_attributes (GTK_ENTRY (self->entry), self->attributes);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRIMARY_ICON_NAME]);
 }
@@ -175,6 +222,7 @@ gig_url_entry_finalize (GObject *object)
   GigUrlEntry *self = GIG_URL_ENTRY (object);
 
   g_clear_object (&self->web_view_signals);
+  g_clear_pointer (&self->attributes, pango_attr_list_unref);
 
   G_OBJECT_CLASS (gig_url_entry_parent_class)->finalize (object);
 }
@@ -403,4 +451,7 @@ gig_url_entry_reset (GigUrlEntry *self)
 
   gig_url_entry_set_text (self, address);
   gig_url_entry_set_editing (self, FALSE);
+
+  update_attributes (self, address);
+  gtk_entry_set_attributes (GTK_ENTRY (self->entry), self->attributes);
 }
