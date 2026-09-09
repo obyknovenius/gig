@@ -19,7 +19,9 @@ tab_overview_create_tab_cb (GigWindow *self,
   web_view = GIG_WEB_VIEW (gig_web_view_new ());
   page = gig_page_new (web_view);
 
-  return gig_window_add_tab_page (self, page, NULL);
+  gig_window_add_tab_page (self, page, FALSE, NULL);
+
+  return adw_tab_view_get_page (self->tab_view, GTK_WIDGET (page));
 }
 
 static WebKitWebView *
@@ -31,7 +33,7 @@ web_view_create_cb (GigWindow *self,
   GigPage *page = NULL;
   WebKitURIRequest *request = NULL;
   const gchar *pending_uri = NULL;
-  AdwTabPage *tab_page = NULL, *parent = NULL;
+  AdwTabPage *parent = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
@@ -43,9 +45,8 @@ web_view_create_cb (GigWindow *self,
 
   page = gig_page_new (web_view);
   parent = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (self->selected_page));
-  tab_page = gig_window_add_tab_page (self, page, parent);
 
-  adw_tab_view_set_selected_page (self->tab_view, tab_page);
+  gig_window_add_tab_page (self, page, TRUE, parent);
 
   return WEBKIT_WEB_VIEW (web_view);
 }
@@ -241,16 +242,17 @@ gig_window_new (GtkApplication *application)
                        NULL);
 }
 
-AdwTabPage *
+void
 gig_window_add_tab_page (GigWindow *self,
                          GigPage *page,
+                         gboolean set_selected,
                          AdwTabPage *parent)
 {
   AdwTabPage *tab_page;
 
-  g_return_val_if_fail (GIG_IS_WINDOW (self), NULL);
-  g_return_val_if_fail (GIG_IS_PAGE (page), NULL);
-  g_return_val_if_fail (!parent || ADW_IS_TAB_PAGE (parent), NULL);
+  g_return_if_fail (GIG_IS_WINDOW (self));
+  g_return_if_fail (GIG_IS_PAGE (page));
+  g_return_if_fail (!parent || ADW_IS_TAB_PAGE (parent));
 
   tab_page = adw_tab_view_add_page (self->tab_view,
                                     GTK_WIDGET (page),
@@ -268,5 +270,6 @@ gig_window_add_tab_page (GigWindow *self,
                           tab_page, "loading",
                           G_BINDING_SYNC_CREATE);
 
-  return tab_page;
+  if (set_selected)
+    adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }

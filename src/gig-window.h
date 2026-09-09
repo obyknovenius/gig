@@ -10,8 +10,9 @@ G_DECLARE_FINAL_TYPE (GigWindow, gig_window, GIG, WINDOW, AdwApplicationWindow)
 
 GigWindow *gig_window_new (GtkApplication *app);
 
-AdwTabPage *gig_window_add_tab_page (GigWindow *self,
-                                     GigPage *page,
-                                     AdwTabPage *parent);
+void gig_window_add_tab_page (GigWindow *self,
+                              GigPage *page,
+                              gboolean set_selected,
+                              AdwTabPage *parent);
 
 G_END_DECLS
