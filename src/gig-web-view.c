@@ -15,6 +15,7 @@ enum
 {
   PROP_0,
   PROP_ADDRESS,
+  PROP_IS_BLANK,
   PROP_CAN_GO_BACK,
   PROP_CAN_GO_FORWARD,
   N_PROPS
@@ -28,6 +29,7 @@ web_view_uri_changed_cb (GigWebView *self,
                          WebKitWebView *web_view)
 {
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ADDRESS]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_BLANK]);
 }
 
 static void
@@ -103,6 +105,10 @@ gig_web_view_get_property (GObject *object,
       g_value_set_string (value, gig_web_view_get_address (self));
       break;
 
+    case PROP_IS_BLANK:
+      g_value_set_boolean (value, gig_web_view_is_blank (self));
+      break;
+
     case PROP_CAN_GO_BACK:
       g_value_set_boolean (value, webkit_web_view_can_go_back (web_view));
       break;
@@ -130,6 +136,12 @@ gig_web_view_class_init (GigWebViewClass *klass)
                            NULL, NULL,
                            NULL,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_IS_BLANK] =
+      g_param_spec_boolean ("is-blank",
+                            NULL, NULL,
+                            TRUE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_CAN_GO_BACK] =
       g_param_spec_boolean ("can-go-back",

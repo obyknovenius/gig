@@ -251,6 +251,12 @@ gig_page_set_web_view (GigPage *self,
 
   self->web_view = web_view;
 
+  g_object_bind_property (self->web_view,
+                          "is-blank",
+                          self->web_view,
+                          "visible",
+                          G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);
+
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_WEB_VIEW]);
 }
 
