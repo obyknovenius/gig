@@ -1,7 +1,7 @@
 #include "gig-url-entry-private.h"
 
 #include "gig-page.h"
-#include "gig-utils.h"
+#include "gig-uri-utils.h"
 #include "gig-web-view.h"
 
 struct _GigUrlEntry
@@ -71,9 +71,9 @@ update_attributes (GigUrlEntry *self)
                                          (guint16) (text_color.blue * G_MAXUINT16));
   pango_attr_list_insert (attrs, text_attr);
 
-  if ((base_domain = gig_utils_get_base_domain (text,
-                                                &start_index,
-                                                &end_index)))
+  if ((base_domain = gig_get_base_domain (text,
+                                          &start_index,
+                                          &end_index)))
     {
       base_domain_attr = pango_attr_foreground_new (0, 0, 0);
       base_domain_attr->start_index = start_index;

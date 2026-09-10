@@ -1,11 +1,11 @@
 gig_sources = [
   'gig-application.c',
   'gig-page.c',
+  'gig-uri-utils.c',
   'gig-url-entry.c',
-  'gig-utils.c',
+  'gig-web-view.c',
   'gig-window-actions.c',
   'gig-window.c',
-  'gig-web-view.c',
   'main.c',
 ]
 

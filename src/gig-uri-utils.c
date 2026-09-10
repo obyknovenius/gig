@@ -1,4 +1,4 @@
-#include "gig-utils.h"
+#include "gig-uri-utils.h"
 
 #include <libsoup/soup.h>
 #include <string.h>
@@ -19,7 +19,7 @@ host_is_plausible (const gchar *host)
 }
 
 gchar *
-gig_utils_fixup_uri (const gchar *uri)
+gig_fixup_uri (const gchar *uri)
 {
   const gchar *scheme;
   g_autofree gchar *uri_with_scheme = NULL;
@@ -46,7 +46,7 @@ gig_utils_fixup_uri (const gchar *uri)
 }
 
 gchar *
-gig_utils_build_search_uri (const gchar *query)
+gig_build_search_uri (const gchar *query)
 {
   g_autofree gchar *escaped_query = NULL;
 
@@ -58,9 +58,9 @@ gig_utils_build_search_uri (const gchar *query)
 }
 
 gchar *
-gig_utils_get_base_domain (const gchar *uri,
-                           guint *start_index,
-                           guint *end_index)
+gig_get_base_domain (const gchar *uri,
+                     guint *start_index,
+                     guint *end_index)
 {
   g_autoptr (GUri) parsed_uri = NULL;
   const gchar *host = NULL;

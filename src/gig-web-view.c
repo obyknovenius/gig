@@ -1,6 +1,6 @@
 #include "gig-web-view.h"
 
-#include "gig-utils.h"
+#include "gig-uri-utils.h"
 
 struct _GigWebView
 {
@@ -174,9 +174,8 @@ gig_web_view_load_address (GigWebView *web_view,
   g_return_if_fail (GIG_IS_WEB_VIEW (web_view));
   g_return_if_fail (address != NULL);
 
-  uri = gig_utils_fixup_uri (address);
-  if (!uri)
-    uri = gig_utils_build_search_uri (address);
+  if ((uri = gig_fixup_uri (address)) == NULL)
+    uri = gig_build_search_uri (address);
 
   webkit_web_view_load_uri (WEBKIT_WEB_VIEW (web_view), uri);
 }
