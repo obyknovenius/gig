@@ -8,7 +8,9 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GigPage, gig_page, GIG, PAGE, GtkWidget)
 
-GigPage *gig_page_new (GigWebView *web_view);
+GtkWidget *gig_page_new (void);
+
+GtkWidget *gig_page_new_with_web_view (GigWebView *web_view);
 
 GigWebView *gig_page_get_web_view (GigPage *self);
 

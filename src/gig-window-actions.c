@@ -9,14 +9,12 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
                                const gchar *action_name,
                                GVariant *param)
 {
-  GigWebView *web_view = NULL;
   GigWindow *self = (GigWindow *) widget;
   GigPage *page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  web_view = GIG_WEB_VIEW (gig_web_view_new ());
-  page = gig_page_new (web_view);
+  page = GIG_PAGE (gig_page_new ());
 
   gig_window_add_tab_page (self, page, TRUE, NULL);
 }

@@ -73,15 +73,12 @@ static void
 gig_application_activate (GApplication *application)
 {
   GigWindow *window = NULL;
-  GigWebView *web_view = NULL;
   GigPage *page = NULL;
 
   g_assert (GIG_IS_APPLICATION (application));
 
   window = gig_window_new (GTK_APPLICATION (application));
-
-  web_view = GIG_WEB_VIEW (gig_web_view_new ());
-  page = gig_page_new (web_view);
+  page = GIG_PAGE (gig_page_new ());
 
   gig_window_add_tab_page (window, page, TRUE, NULL);
 
@@ -104,13 +101,11 @@ gig_application_open (GApplication *application,
   for (gint i = 0; i < n_files; i++)
     {
       g_autofree gchar *uri = g_file_get_uri (files[i]);
-      GigWebView *web_view = NULL;
       gboolean set_selected = (i == n_files - 1);
 
-      web_view = GIG_WEB_VIEW (gig_web_view_new ());
-      gig_web_view_load_address (web_view, uri);
+      page = GIG_PAGE (gig_page_new ());
+      gig_web_view_load_address (gig_page_get_web_view (page), uri);
 
-      page = gig_page_new (web_view);
       gig_window_add_tab_page (window, page, set_selected, NULL);
     }
 

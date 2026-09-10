@@ -10,14 +10,12 @@ static AdwTabPage *
 tab_overview_create_tab_cb (GigWindow *self,
                             AdwTabOverview *tab_overview)
 {
-  GigWebView *web_view = NULL;
   GigPage *page = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
 
-  web_view = GIG_WEB_VIEW (gig_web_view_new ());
-  page = gig_page_new (web_view);
+  page = GIG_PAGE (gig_page_new ());
 
   gig_window_add_tab_page (self, page, FALSE, NULL);
 
@@ -44,7 +42,7 @@ web_view_create_cb (GigWindow *self,
   pending_uri = webkit_uri_request_get_uri (request);
   gig_web_view_set_pending_address (web_view, pending_uri);
 
-  page = gig_page_new (web_view);
+  page = GIG_PAGE (gig_page_new_with_web_view (web_view));
   parent = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (self->selected_page));
 
   gig_window_add_tab_page (self, page, TRUE, parent);

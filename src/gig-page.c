@@ -224,8 +224,18 @@ gig_page_init (GigPage *self)
 {
 }
 
-GigPage *
-gig_page_new (GigWebView *web_view)
+GtkWidget *
+gig_page_new (void)
+{
+  GigWebView *web_view = GIG_WEB_VIEW (gig_web_view_new ());
+
+  return g_object_new (GIG_TYPE_PAGE,
+                       "web-view", web_view,
+                       NULL);
+}
+
+GtkWidget *
+gig_page_new_with_web_view (GigWebView *web_view)
 {
   return g_object_new (GIG_TYPE_PAGE,
                        "web-view", web_view,
