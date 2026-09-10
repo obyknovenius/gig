@@ -1,6 +1,7 @@
 #include "gig-utils.h"
 
 #include <libsoup/soup.h>
+#include <string.h>
 
 static gboolean
 host_is_plausible (const gchar *host)
@@ -57,10 +58,13 @@ gig_utils_build_search_uri (const gchar *query)
 }
 
 gchar *
-gig_utils_get_base_domain (const gchar *uri)
+gig_utils_get_base_domain (const gchar *uri,
+                           guint *start_index,
+                           guint *end_index)
 {
   g_autoptr (GUri) parsed_uri = NULL;
   const gchar *host = NULL;
+  const gchar *base_domain = NULL;
 
   g_return_val_if_fail (uri != NULL && uri[0] != '\0', NULL);
 
@@ -72,5 +76,21 @@ gig_utils_get_base_domain (const gchar *uri)
   if (!host)
     return NULL;
 
-  return g_strdup (soup_tld_get_base_domain (host, NULL));
+  base_domain = soup_tld_get_base_domain (host, NULL);
+  if (!base_domain)
+    return NULL;
+
+  if (start_index || end_index)
+    {
+      const gchar *substring = g_strstr_len (uri, -1, base_domain);
+      g_assert (substring != NULL);
+
+      if (start_index)
+        *start_index = substring - uri;
+
+      if (end_index)
+        *end_index = (substring - uri) + strlen (base_domain);
+    }
+
+  return g_strdup (base_domain);
 }
