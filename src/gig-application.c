@@ -72,11 +72,19 @@ gig_application_constructed (GObject *object)
 static void
 gig_application_activate (GApplication *application)
 {
-  GigWindow *window;
+  GigWindow *window = NULL;
+  GigWebView *web_view = NULL;
+  GigPage *page = NULL;
 
   g_assert (GIG_IS_APPLICATION (application));
 
   window = gig_window_new (GTK_APPLICATION (application));
+
+  web_view = GIG_WEB_VIEW (gig_web_view_new ());
+  page = gig_page_new (web_view);
+
+  gig_window_add_tab_page (window, page, TRUE, NULL);
+
   gtk_window_present (GTK_WINDOW (window));
 }
 
