@@ -8,6 +8,8 @@ struct _GigWindow
 {
   AdwApplicationWindow parent_instance;
 
+  AdwHeaderBar *header_bar;
+  AdwTabBar *tab_bar;
   GtkButton *stop_reload_button;
   GigAddressBar *address_bar;
   AdwTabView *tab_view;

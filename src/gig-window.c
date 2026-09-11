@@ -101,6 +101,30 @@ web_view_can_go_forward_changed_cb (GigWindow *self,
                                  webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)));
 }
 
+static gboolean
+web_view_enter_fullscreen_cb (GigWindow *self,
+                              GigWebView *web_view)
+{
+  g_assert (GIG_IS_WINDOW (self));
+
+  gtk_widget_set_visible (GTK_WIDGET (self->header_bar), FALSE);
+  gtk_widget_set_visible (GTK_WIDGET (self->tab_bar), FALSE);
+
+  return FALSE;
+}
+
+static gboolean
+web_view_leave_fullscreen_cb (GigWindow *self,
+                              GigWebView *web_view)
+{
+  g_assert (GIG_IS_WINDOW (self));
+
+  gtk_widget_set_visible (GTK_WIDGET (self->header_bar), TRUE);
+  gtk_widget_set_visible (GTK_WIDGET (self->tab_bar), TRUE);
+
+  return FALSE;
+}
+
 static void
 tab_view_selected_page_changed_cb (GigWindow *self,
                                    GParamSpec *pspec,
@@ -179,6 +203,8 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, header_bar);
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, address_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
@@ -201,6 +227,18 @@ gig_window_init (GigWindow *self)
   g_signal_group_connect_object (self->web_view_signals,
                                  "create",
                                  G_CALLBACK (web_view_create_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "enter-fullscreen",
+                                 G_CALLBACK (web_view_enter_fullscreen_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "leave-fullscreen",
+                                 G_CALLBACK (web_view_leave_fullscreen_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 

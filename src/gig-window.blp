@@ -14,7 +14,7 @@ template $GigWindow: Adw.ApplicationWindow {
             top-bar-style: raised_border;
 
             [top]
-            Adw.HeaderBar {
+            Adw.HeaderBar header_bar {
                 [start]
                 Gtk.Box {
                     spacing: 6;
@@ -64,7 +64,7 @@ template $GigWindow: Adw.ApplicationWindow {
             }
 
             [top]
-            Adw.TabBar {
+            Adw.TabBar tab_bar {
                 view: tab_view;
             }
 
