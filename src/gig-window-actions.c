@@ -1,7 +1,7 @@
 #include "gig-window-private.h"
 
+#include "gig-address-bar-private.h"
 #include "gig-page.h"
-#include "gig-url-entry-private.h"
 #include "gig-web-view.h"
 
 static void
@@ -37,7 +37,7 @@ gig_window_actions_stop_reload_cb (GtkWidget *widget,
     webkit_web_view_stop_loading (WEBKIT_WEB_VIEW (web_view));
   else
     {
-      gig_url_entry_reset (self->url_entry);
+      gig_address_bar_reset (self->address_bar);
       webkit_web_view_reload (WEBKIT_WEB_VIEW (web_view));
     }
 }

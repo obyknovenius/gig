@@ -1,8 +1,8 @@
 gig_sources = [
+  'gig-address-bar.c',
   'gig-application.c',
   'gig-page.c',
   'gig-uri-utils.c',
-  'gig-url-entry.c',
   'gig-web-view.c',
   'gig-window-actions.c',
   'gig-window.c',
@@ -12,7 +12,7 @@ gig_sources = [
 blueprints = custom_target(
   'blueprints',
   input: files(
-    'gig-url-entry.blp',
+    'gig-address-bar.blp',
     'gig-window.blp',
   ),
   output: '.',

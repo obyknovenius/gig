@@ -1,7 +1,7 @@
 #include "gig-window-private.h"
 
+#include "gig-address-bar.h"
 #include "gig-page.h"
-#include "gig-url-entry.h"
 #include "gig-web-view.h"
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
@@ -190,7 +190,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
                             is_loading ? "process-stop-symbolic"
                                        : "view-refresh-symbolic");
 
-  gig_url_entry_set_web_view (GIG_URL_ENTRY (self->url_entry), web_view);
+  gig_address_bar_set_web_view (GIG_ADDRESS_BAR (self->address_bar), web_view);
 
   gig_window_update_actions (self, web_view);
 
@@ -201,7 +201,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   if (web_view && !gig_web_view_is_blank (web_view))
     gtk_widget_grab_focus (GTK_WIDGET (page));
   else
-    gtk_widget_grab_focus (GTK_WIDGET (self->url_entry));
+    gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
 }
 
 static void
@@ -240,13 +240,13 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
-  gtk_widget_class_bind_template_child (widget_class, GigWindow, url_entry);
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, address_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
-  g_type_ensure (GIG_TYPE_URL_ENTRY);
+  g_type_ensure (GIG_TYPE_ADDRESS_BAR);
 
   gig_window_class_init_actions (klass);
 }

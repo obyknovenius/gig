@@ -1,10 +1,10 @@
-#include "gig-url-entry-private.h"
+#include "gig-address-bar-private.h"
 
 #include "gig-page.h"
 #include "gig-uri-utils.h"
 #include "gig-web-view.h"
 
-struct _GigUrlEntry
+struct _GigAddressBar
 {
   GtkWidget parent_instance;
 
@@ -18,7 +18,7 @@ struct _GigUrlEntry
   GSignalGroup *web_view_signals;
 };
 
-G_DEFINE_FINAL_TYPE (GigUrlEntry, gig_url_entry, GTK_TYPE_WIDGET)
+G_DEFINE_FINAL_TYPE (GigAddressBar, gig_address_bar, GTK_TYPE_WIDGET)
 
 enum
 {
@@ -30,21 +30,21 @@ enum
 
 static GParamSpec *properties[N_PROPS];
 
-static void gig_url_entry_set_text (GigUrlEntry *self,
-                                    const gchar *text);
+static void gig_address_bar_set_text (GigAddressBar *self,
+                                      const gchar *text);
 
-static void gig_url_entry_set_editing (GigUrlEntry *self,
-                                       gboolean editing);
+static void gig_address_bar_set_editing (GigAddressBar *self,
+                                         gboolean editing);
 
-static void gig_url_entry_set_focused (GigUrlEntry *self,
-                                       gboolean focused);
+static void gig_address_bar_set_focused (GigAddressBar *self,
+                                         gboolean focused);
 
-static const gchar *gig_url_entry_get_primary_icon_name (GigUrlEntry *self);
+static const gchar *gig_address_bar_get_primary_icon_name (GigAddressBar *self);
 
-static gdouble gig_url_entry_get_progress_fraction (GigUrlEntry *self);
+static gdouble gig_address_bar_get_progress_fraction (GigAddressBar *self);
 
 static void
-update_attributes (GigUrlEntry *self)
+update_attributes (GigAddressBar *self)
 {
   g_autoptr (PangoAttrList) attrs = NULL;
   const gchar *text = NULL;
@@ -54,7 +54,7 @@ update_attributes (GigUrlEntry *self)
   PangoAttribute *text_attr = NULL;
   PangoAttribute *base_domain_attr = NULL;
 
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
@@ -84,44 +84,44 @@ update_attributes (GigUrlEntry *self)
   gtk_entry_set_attributes (GTK_ENTRY (self->entry), attrs);
 }
 
-static void entry_changed_cb (GigUrlEntry *self,
+static void entry_changed_cb (GigAddressBar *self,
                               GtkEntry *entry);
 
 static void
-entry_changed_cb (GigUrlEntry *self,
+entry_changed_cb (GigAddressBar *self,
                   GtkEntry *entry)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  gig_url_entry_set_editing (self, TRUE);
+  gig_address_bar_set_editing (self, TRUE);
 }
 
 static void
-entry_focus_enter_cb (GigUrlEntry *self,
+entry_focus_enter_cb (GigAddressBar *self,
                       GtkEventControllerFocus *controller)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  gig_url_entry_set_focused (self, TRUE);
+  gig_address_bar_set_focused (self, TRUE);
 }
 
 static void
-entry_focus_leave_cb (GigUrlEntry *self,
+entry_focus_leave_cb (GigAddressBar *self,
                       GtkEventControllerFocus *controller)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GIG_IS_WEB_VIEW (self->web_view));
 
-  gig_url_entry_set_focused (self, FALSE);
+  gig_address_bar_set_focused (self, FALSE);
 }
 
 static void
-entry_activate_cb (GigUrlEntry *self,
+entry_activate_cb (GigAddressBar *self,
                    GtkEntry *entry)
 {
   const gchar *text;
 
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GTK_IS_ENTRY (entry));
   g_assert (GIG_IS_WEB_VIEW (self->web_view));
 
@@ -129,7 +129,7 @@ entry_activate_cb (GigUrlEntry *self,
   if (!text || text[0] == '\0')
     return;
 
-  gig_url_entry_set_editing (self, FALSE);
+  gig_address_bar_set_editing (self, FALSE);
 
   gig_web_view_load_address (self->web_view, text);
 
@@ -137,14 +137,14 @@ entry_activate_cb (GigUrlEntry *self,
 }
 
 static gboolean
-web_view_decide_policy_cb (GigUrlEntry *self,
+web_view_decide_policy_cb (GigAddressBar *self,
                            WebKitPolicyDecision *decision,
                            WebKitPolicyDecisionType decision_type,
                            GigWebView *web_view)
 {
   WebKitNavigationAction *navigation_action;
 
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
     return FALSE;
@@ -153,90 +153,90 @@ web_view_decide_policy_cb (GigUrlEntry *self,
       webkit_navigation_policy_decision_get_navigation_action (WEBKIT_NAVIGATION_POLICY_DECISION (decision));
 
   if (webkit_navigation_action_is_user_gesture (navigation_action))
-    gig_url_entry_reset (self);
+    gig_address_bar_reset (self);
 
   return FALSE;
 }
 
 static void
-web_view_address_changed_cb (GigUrlEntry *self,
+web_view_address_changed_cb (GigAddressBar *self,
                              GParamSpec *pspec,
                              GigWebView *web_view)
 {
   const gchar *address;
 
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
   if (self->editing)
     return;
 
   address = gig_web_view_get_address (web_view);
-  gig_url_entry_set_text (self, address);
+  gig_address_bar_set_text (self, address);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRIMARY_ICON_NAME]);
 }
 
 static void
-web_view_is_loading_changed_cb (GigUrlEntry *self,
+web_view_is_loading_changed_cb (GigAddressBar *self,
                                 GParamSpec *pspec,
                                 GigWebView *web_view)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PROGRESS_FRACTION]);
 }
 
 static void
-web_view_estimated_load_progress_changed_cb (GigUrlEntry *self,
+web_view_estimated_load_progress_changed_cb (GigAddressBar *self,
                                              GParamSpec *pspec,
                                              GigWebView *web_view)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PROGRESS_FRACTION]);
 }
 
 static void
-gig_url_entry_dispose (GObject *object)
+gig_address_bar_dispose (GObject *object)
 {
-  GigUrlEntry *self = GIG_URL_ENTRY (object);
+  GigAddressBar *self = GIG_ADDRESS_BAR (object);
 
   g_clear_object (&self->web_view);
 
   g_signal_group_set_target (self->web_view_signals, NULL);
 
-  gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_URL_ENTRY);
+  gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_ADDRESS_BAR);
 
-  G_OBJECT_CLASS (gig_url_entry_parent_class)->dispose (object);
+  G_OBJECT_CLASS (gig_address_bar_parent_class)->dispose (object);
 }
 
 static void
-gig_url_entry_finalize (GObject *object)
+gig_address_bar_finalize (GObject *object)
 {
-  GigUrlEntry *self = GIG_URL_ENTRY (object);
+  GigAddressBar *self = GIG_ADDRESS_BAR (object);
 
   g_clear_object (&self->web_view_signals);
 
-  G_OBJECT_CLASS (gig_url_entry_parent_class)->finalize (object);
+  G_OBJECT_CLASS (gig_address_bar_parent_class)->finalize (object);
 }
 
 static void
-gig_url_entry_get_property (GObject *object,
-                            guint prop_id,
-                            GValue *value,
-                            GParamSpec *pspec)
+gig_address_bar_get_property (GObject *object,
+                              guint prop_id,
+                              GValue *value,
+                              GParamSpec *pspec)
 {
-  GigUrlEntry *self = GIG_URL_ENTRY (object);
+  GigAddressBar *self = GIG_ADDRESS_BAR (object);
 
   switch (prop_id)
     {
     case PROP_PRIMARY_ICON_NAME:
-      g_value_set_string (value, gig_url_entry_get_primary_icon_name (self));
+      g_value_set_string (value, gig_address_bar_get_primary_icon_name (self));
       break;
 
     case PROP_PROGRESS_FRACTION:
-      g_value_set_double (value, gig_url_entry_get_progress_fraction (self));
+      g_value_set_double (value, gig_address_bar_get_progress_fraction (self));
       break;
 
     default:
@@ -245,25 +245,25 @@ gig_url_entry_get_property (GObject *object,
 }
 
 static gboolean
-gig_url_entry_grab_focus (GtkWidget *widget)
+gig_address_bar_grab_focus (GtkWidget *widget)
 {
-  GigUrlEntry *self = GIG_URL_ENTRY (widget);
+  GigAddressBar *self = GIG_ADDRESS_BAR (widget);
 
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   return gtk_widget_grab_focus (GTK_WIDGET (self->entry));
 }
 
 static void
-gig_url_entry_class_init (GigUrlEntryClass *klass)
+gig_address_bar_class_init (GigAddressBarClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
-  object_class->dispose = gig_url_entry_dispose;
-  object_class->finalize = gig_url_entry_finalize;
-  object_class->get_property = gig_url_entry_get_property;
-  widget_class->grab_focus = gig_url_entry_grab_focus;
+  object_class->dispose = gig_address_bar_dispose;
+  object_class->finalize = gig_address_bar_finalize;
+  object_class->get_property = gig_address_bar_get_property;
+  widget_class->grab_focus = gig_address_bar_grab_focus;
 
   properties[PROP_PRIMARY_ICON_NAME] =
       g_param_spec_string ("primary-icon-name", NULL, NULL,
@@ -279,9 +279,9 @@ gig_url_entry_class_init (GigUrlEntryClass *klass)
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
 
-  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-url-entry.ui");
+  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-address-bar.ui");
 
-  gtk_widget_class_bind_template_child (widget_class, GigUrlEntry, entry);
+  gtk_widget_class_bind_template_child (widget_class, GigAddressBar, entry);
 
   gtk_widget_class_bind_template_callback (widget_class, entry_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_activate_cb);
@@ -290,7 +290,7 @@ gig_url_entry_class_init (GigUrlEntryClass *klass)
 }
 
 static void
-gig_url_entry_init (GigUrlEntry *self)
+gig_address_bar_init (GigAddressBar *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
@@ -329,17 +329,17 @@ gig_url_entry_init (GigUrlEntry *self)
                                  G_CONNECT_SWAPPED);
 }
 
-GigUrlEntry *
-gig_url_entry_new (void)
+GtkWidget *
+gig_address_bar_new (void)
 {
-  return g_object_new (GIG_TYPE_URL_ENTRY, NULL);
+  return g_object_new (GIG_TYPE_ADDRESS_BAR, NULL);
 }
 
 static void
-gig_url_entry_set_text (GigUrlEntry *self,
-                        const gchar *text)
+gig_address_bar_set_text (GigAddressBar *self,
+                          const gchar *text)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   g_signal_handlers_block_by_func (self->entry,
                                    G_CALLBACK (entry_changed_cb),
@@ -355,10 +355,10 @@ gig_url_entry_set_text (GigUrlEntry *self,
 }
 
 static void
-gig_url_entry_set_focused (GigUrlEntry *self,
-                           gboolean focused)
+gig_address_bar_set_focused (GigAddressBar *self,
+                             gboolean focused)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   if (self->focused == focused)
     return;
@@ -371,10 +371,10 @@ gig_url_entry_set_focused (GigUrlEntry *self,
 }
 
 static void
-gig_url_entry_set_editing (GigUrlEntry *self,
-                           gboolean editing)
+gig_address_bar_set_editing (GigAddressBar *self,
+                             gboolean editing)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   if (self->editing == editing)
     return;
@@ -387,11 +387,11 @@ gig_url_entry_set_editing (GigUrlEntry *self,
 }
 
 static const gchar *
-gig_url_entry_get_primary_icon_name (GigUrlEntry *self)
+gig_address_bar_get_primary_icon_name (GigAddressBar *self)
 {
   const gchar *address = NULL;
 
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   if (self->editing)
     return "system-search-symbolic";
@@ -406,9 +406,9 @@ gig_url_entry_get_primary_icon_name (GigUrlEntry *self)
 }
 
 static gdouble
-gig_url_entry_get_progress_fraction (GigUrlEntry *self)
+gig_address_bar_get_progress_fraction (GigAddressBar *self)
 {
-  g_assert (GIG_IS_URL_ENTRY (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GTK_IS_ENTRY (self->entry));
 
   if (self->focused)
@@ -421,10 +421,10 @@ gig_url_entry_get_progress_fraction (GigUrlEntry *self)
 }
 
 void
-gig_url_entry_set_web_view (GigUrlEntry *self,
-                            GigWebView *web_view)
+gig_address_bar_set_web_view (GigAddressBar *self,
+                              GigWebView *web_view)
 {
-  g_return_if_fail (GIG_IS_URL_ENTRY (self));
+  g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
   g_return_if_fail (!web_view || GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_set_sensitive (GTK_WIDGET (self->entry), web_view != NULL);
@@ -433,23 +433,23 @@ gig_url_entry_set_web_view (GigUrlEntry *self,
 
   g_signal_group_set_target (self->web_view_signals, web_view);
 
-  gig_url_entry_reset (self);
+  gig_address_bar_reset (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRIMARY_ICON_NAME]);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PROGRESS_FRACTION]);
 }
 
 void
-gig_url_entry_reset (GigUrlEntry *self)
+gig_address_bar_reset (GigAddressBar *self)
 {
   const gchar *address = NULL;
 
-  g_return_if_fail (GIG_IS_URL_ENTRY (self));
+  g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
 
-  gig_url_entry_set_editing (self, FALSE);
+  gig_address_bar_set_editing (self, FALSE);
 
   if (self->web_view)
     address = gig_web_view_get_address (self->web_view);
 
-  gig_url_entry_set_text (self, address);
+  gig_address_bar_set_text (self, address);
 }
