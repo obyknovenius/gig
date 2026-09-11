@@ -52,7 +52,8 @@ web_view_create_cb (GigWindow *self,
 
 static WebKitContextMenuItem *
 find_item_in_context_menu (WebKitContextMenu *context_menu,
-                           WebKitContextMenuAction action)
+                           WebKitContextMenuAction action,
+                           guint *index)
 {
   GList *items, *iter;
 
@@ -62,7 +63,11 @@ find_item_in_context_menu (WebKitContextMenu *context_menu,
       WebKitContextMenuItem *item = (WebKitContextMenuItem *) iter->data;
 
       if (webkit_context_menu_item_get_stock_action (item) == action)
-        return item;
+        {
+          if (index)
+            *index = g_list_index (items, item);
+          return item;
+        }
     }
 
   return NULL;
@@ -79,9 +84,27 @@ web_view_context_menu_cb (GigWindow *self,
 
   if (webkit_hit_test_result_context_is_link (hit_test_result))
     {
-      WebKitContextMenuItem *open_link_item =
-          find_item_in_context_menu (context_menu, WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK);
-      webkit_context_menu_remove (context_menu, open_link_item);
+      WebKitContextMenuItem *open_link = NULL;
+      WebKitContextMenuItem *open_link_in_new_window = NULL;
+      guint index;
+
+      open_link = find_item_in_context_menu (context_menu,
+                                             WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK,
+                                             NULL);
+      if (open_link)
+        webkit_context_menu_remove (context_menu, open_link);
+
+      open_link_in_new_window = find_item_in_context_menu (context_menu,
+                                                           WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
+                                                           &index);
+      if (open_link_in_new_window)
+        {
+          webkit_context_menu_remove (context_menu, open_link_in_new_window);
+
+          open_link_in_new_window = webkit_context_menu_item_new_from_stock_action_with_label (WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
+                                                                                               "Open Link in New Tab");
+          webkit_context_menu_insert (context_menu, open_link_in_new_window, index);
+        }
     }
 
   return FALSE;
