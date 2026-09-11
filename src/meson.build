@@ -46,4 +46,5 @@ executable(
   gig_sources,
   include_directories: include_directories('..'),
   dependencies: gig_deps,
+  install: true,
 )
