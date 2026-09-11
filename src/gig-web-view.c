@@ -46,6 +46,35 @@ find_item_in_context_menu (WebKitContextMenu *context_menu,
   return NULL;
 }
 
+static void
+remove_context_menu_item (WebKitContextMenu *context_menu,
+                          WebKitContextMenuAction action)
+{
+  WebKitContextMenuItem *item = find_item_in_context_menu (context_menu, action, NULL);
+
+  if (item)
+    webkit_context_menu_remove (context_menu, item);
+}
+
+static void
+rename_context_menu_item (WebKitContextMenu *context_menu,
+                          WebKitContextMenuAction action,
+                          const gchar *new_label)
+{
+  guint index;
+  WebKitContextMenuItem *item = find_item_in_context_menu (context_menu, action, &index);
+
+  if (item)
+    {
+      webkit_context_menu_remove (context_menu, item);
+
+      item = webkit_context_menu_item_new_from_stock_action_with_label (action,
+                                                                        new_label);
+
+      webkit_context_menu_insert (context_menu, item, index);
+    }
+}
+
 static gboolean
 web_view_context_menu_cb (GigWebView *self,
                           WebKitContextMenu *context_menu,
@@ -57,27 +86,23 @@ web_view_context_menu_cb (GigWebView *self,
 
   if (webkit_hit_test_result_context_is_link (hit_test_result))
     {
-      WebKitContextMenuItem *open_link = NULL;
-      WebKitContextMenuItem *open_link_in_new_window = NULL;
-      guint index;
+      remove_context_menu_item (context_menu,
+                                WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK);
 
-      open_link = find_item_in_context_menu (context_menu,
-                                             WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK,
-                                             NULL);
-      if (open_link)
-        webkit_context_menu_remove (context_menu, open_link);
+      rename_context_menu_item (context_menu,
+                                WEBKIT_CONTEXT_MENU_ACTION_COPY_LINK_TO_CLIPBOARD,
+                                "Copy Link Address");
 
-      open_link_in_new_window = find_item_in_context_menu (context_menu,
-                                                           WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
-                                                           &index);
-      if (open_link_in_new_window)
-        {
-          webkit_context_menu_remove (context_menu, open_link_in_new_window);
+      rename_context_menu_item (context_menu,
+                                WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
+                                "Open Link in New Tab");
+    }
 
-          open_link_in_new_window = webkit_context_menu_item_new_from_stock_action_with_label (WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
-                                                                                               "Open Link in New Tab");
-          webkit_context_menu_insert (context_menu, open_link_in_new_window, index);
-        }
+  if (webkit_hit_test_result_context_is_image (hit_test_result))
+    {
+      rename_context_menu_item (context_menu,
+                                WEBKIT_CONTEXT_MENU_ACTION_OPEN_IMAGE_IN_NEW_WINDOW,
+                                "Open Image in New Tab");
     }
 
   return FALSE;
