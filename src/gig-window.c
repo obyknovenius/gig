@@ -50,66 +50,6 @@ web_view_create_cb (GigWindow *self,
   return WEBKIT_WEB_VIEW (web_view);
 }
 
-static WebKitContextMenuItem *
-find_item_in_context_menu (WebKitContextMenu *context_menu,
-                           WebKitContextMenuAction action,
-                           guint *index)
-{
-  GList *items, *iter;
-
-  items = webkit_context_menu_get_items (context_menu);
-  for (iter = items; iter; iter = g_list_next (iter))
-    {
-      WebKitContextMenuItem *item = (WebKitContextMenuItem *) iter->data;
-
-      if (webkit_context_menu_item_get_stock_action (item) == action)
-        {
-          if (index)
-            *index = g_list_index (items, item);
-          return item;
-        }
-    }
-
-  return NULL;
-}
-
-static gboolean
-web_view_context_menu_cb (GigWindow *self,
-                          WebKitContextMenu *context_menu,
-                          WebKitHitTestResult *hit_test_result,
-                          WebKitWebView *web_view)
-{
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  if (webkit_hit_test_result_context_is_link (hit_test_result))
-    {
-      WebKitContextMenuItem *open_link = NULL;
-      WebKitContextMenuItem *open_link_in_new_window = NULL;
-      guint index;
-
-      open_link = find_item_in_context_menu (context_menu,
-                                             WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK,
-                                             NULL);
-      if (open_link)
-        webkit_context_menu_remove (context_menu, open_link);
-
-      open_link_in_new_window = find_item_in_context_menu (context_menu,
-                                                           WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
-                                                           &index);
-      if (open_link_in_new_window)
-        {
-          webkit_context_menu_remove (context_menu, open_link_in_new_window);
-
-          open_link_in_new_window = webkit_context_menu_item_new_from_stock_action_with_label (WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW,
-                                                                                               "Open Link in New Tab");
-          webkit_context_menu_insert (context_menu, open_link_in_new_window, index);
-        }
-    }
-
-  return FALSE;
-}
-
 static void
 web_view_address_changed_cb (GigWindow *self,
                              GParamSpec *pspec,
@@ -261,12 +201,6 @@ gig_window_init (GigWindow *self)
   g_signal_group_connect_object (self->web_view_signals,
                                  "create",
                                  G_CALLBACK (web_view_create_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "context-menu",
-                                 G_CALLBACK (web_view_context_menu_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
