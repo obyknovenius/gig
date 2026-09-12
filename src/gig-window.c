@@ -220,6 +220,25 @@ gig_window_class_init (GigWindowClass *klass)
 static void
 gig_window_init (GigWindow *self)
 {
+
+  GSettings *settings = g_settings_new ("com.github.obyknovenius.Gig.State");
+
+  g_settings_bind (settings, "width",
+                   self, "default-width",
+                   G_SETTINGS_BIND_DEFAULT);
+
+  g_settings_bind (settings, "height",
+                   self, "default-height",
+                   G_SETTINGS_BIND_DEFAULT);
+
+  g_settings_bind (settings, "is-maximized",
+                   self, "maximized",
+                   G_SETTINGS_BIND_DEFAULT);
+
+  g_settings_bind (settings, "is-fullscreen",
+                   self, "fullscreened",
+                   G_SETTINGS_BIND_DEFAULT);
+
   gtk_widget_init_template (GTK_WIDGET (self));
 
   self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);

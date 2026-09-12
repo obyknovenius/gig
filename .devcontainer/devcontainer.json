@@ -19,6 +19,7 @@
 		"source=${localEnv:HOME}/.claude,target=/home/${localEnv:USER}/.claude,type=bind"
 	],
 	"containerEnv": {
+		"GSETTINGS_BACKEND": "keyfile",
 		"DISPLAY": "${localEnv:DISPLAY}",
 		"XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
 		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}"
