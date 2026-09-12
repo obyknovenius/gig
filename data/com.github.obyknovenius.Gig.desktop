@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Side Gig
+Comment=Access the Internet
+TryExec=gig
+Exec=gig %U
+Icon=web-browser
+MimeType=text/html;

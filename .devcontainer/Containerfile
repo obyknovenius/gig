@@ -10,8 +10,9 @@ RUN dnf -y install \
         @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
 
 RUN dnf -y install \
-        clang-tools-extra \
         blueprint-compiler \
+        clang-tools-extra \
+        desktop-file-utils \
         gtk4-devel \
         libadwaita-devel \
         meson \
