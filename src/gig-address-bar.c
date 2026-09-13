@@ -50,7 +50,6 @@ update_attributes (GigAddressBar *self)
   const gchar *text = NULL;
   g_autofree gchar *base_domain = NULL;
   guint start_index = 0, end_index = 0;
-  const GdkRGBA text_color = { 0.5, 0.5, 0.5, 1.0 };
   PangoAttribute *text_attr = NULL;
   PangoAttribute *base_domain_attr = NULL;
 
@@ -66,16 +65,14 @@ update_attributes (GigAddressBar *self)
 
   attrs = pango_attr_list_new ();
 
-  text_attr = pango_attr_foreground_new ((guint16) (text_color.red * G_MAXUINT16),
-                                         (guint16) (text_color.green * G_MAXUINT16),
-                                         (guint16) (text_color.blue * G_MAXUINT16));
+  text_attr = pango_attr_foreground_alpha_new (CLAMP (0.55 * 65535. + 0.5, 0, 65535));
   pango_attr_list_insert (attrs, text_attr);
 
-  if ((base_domain = gig_get_base_domain (text,
-                                          &start_index,
-                                          &end_index)))
+  if ((base_domain = gig_get_base_domain (text, &start_index, &end_index)))
     {
-      base_domain_attr = pango_attr_foreground_new (0, 0, 0);
+      GdkRGBA color;
+      gtk_widget_get_color (GTK_WIDGET (self->entry), &color);
+      base_domain_attr = pango_attr_foreground_alpha_new (CLAMP (color.alpha * 65535. + 0.5, 0, 65535));
       base_domain_attr->start_index = start_index;
       base_domain_attr->end_index = end_index;
       pango_attr_list_insert (attrs, base_domain_attr);
@@ -255,6 +252,19 @@ gig_address_bar_grab_focus (GtkWidget *widget)
 }
 
 static void
+gig_address_bar_css_changed (GtkWidget *widget,
+                             GtkCssStyleChange *change)
+{
+  GigAddressBar *self = GIG_ADDRESS_BAR (widget);
+
+  GTK_WIDGET_CLASS (gig_address_bar_parent_class)->css_changed (widget, change);
+
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  update_attributes (self);
+}
+
+static void
 gig_address_bar_class_init (GigAddressBarClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -264,6 +274,7 @@ gig_address_bar_class_init (GigAddressBarClass *klass)
   object_class->finalize = gig_address_bar_finalize;
   object_class->get_property = gig_address_bar_get_property;
   widget_class->grab_focus = gig_address_bar_grab_focus;
+  widget_class->css_changed = gig_address_bar_css_changed;
 
   properties[PROP_PRIMARY_ICON_NAME] =
       g_param_spec_string ("primary-icon-name", NULL, NULL,
