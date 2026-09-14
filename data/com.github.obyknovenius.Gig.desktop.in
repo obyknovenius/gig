@@ -4,5 +4,5 @@ Name=Side Gig
 Comment=Access the Internet
 TryExec=gig
 Exec=gig %U
-Icon=web-browser
+Icon=@app_id@
 MimeType=text/html;

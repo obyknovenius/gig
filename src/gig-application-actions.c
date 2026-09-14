@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "gig-application-private.h"
 
 static void
@@ -14,7 +16,7 @@ gig_application_actions_about_cb (GSimpleAction *action,
 
   adw_show_about_dialog (GTK_WIDGET (window),
                          "application-name", "Side Gig",
-                         "application-icon", "web-browser",
+                         "application-icon", APP_ID,
                          "developer-name", "Vitaly Dyachkov",
                          NULL);
 }

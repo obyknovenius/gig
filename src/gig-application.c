@@ -117,6 +117,8 @@ gig_application_startup (GApplication *application)
   G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
 
   gig_application_init_actions (self);
+
+  gtk_window_set_default_icon_name (APP_ID);
 }
 
 static void
