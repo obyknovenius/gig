@@ -1,15 +1,10 @@
 #include "config.h"
 
-#include "gig-application.h"
+#include "gig-application-private.h"
 
 #include "gig-page.h"
 #include "gig-web-view.h"
 #include "gig-window.h"
-
-struct _GigApplication
-{
-  AdwApplication parent_instance;
-};
 
 G_DEFINE_TYPE (GigApplication, gig_application, ADW_TYPE_APPLICATION)
 
@@ -113,6 +108,18 @@ gig_application_open (GApplication *application,
 }
 
 static void
+gig_application_startup (GApplication *application)
+{
+  GigApplication *self = (GigApplication *) application;
+
+  g_assert (GIG_IS_APPLICATION (self));
+
+  G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
+
+  gig_application_init_actions (self);
+}
+
+static void
 gig_application_class_init (GigApplicationClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -122,6 +129,7 @@ gig_application_class_init (GigApplicationClass *klass)
 
   application_class->activate = gig_application_activate;
   application_class->open = gig_application_open;
+  application_class->startup = gig_application_startup;
 }
 
 static void
@@ -133,4 +141,24 @@ GigApplication *
 gig_application_new (void)
 {
   return g_object_new (GIG_TYPE_APPLICATION, NULL);
+}
+
+GigWindow *
+gig_application_get_current_window (GigApplication *self)
+{
+  const GList *windows;
+
+  g_return_val_if_fail (GIG_IS_APPLICATION (self), NULL);
+
+  windows = gtk_application_get_windows (GTK_APPLICATION (self));
+
+  for (const GList *iter = windows; iter; iter = iter->next)
+    {
+      GtkWindow *window = iter->data;
+
+      if (GIG_IS_WINDOW (window))
+        return GIG_WINDOW (window);
+    }
+
+  return NULL;
 }

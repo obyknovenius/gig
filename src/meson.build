@@ -1,5 +1,6 @@
 gig_sources = [
   'gig-address-bar.c',
+  'gig-application-actions.c',
   'gig-application.c',
   'gig-page.c',
   'gig-uri-utils.c',

@@ -10,4 +10,6 @@ G_DECLARE_FINAL_TYPE (GigApplication, gig_application, GIG, APPLICATION, AdwAppl
 
 GigApplication *gig_application_new ();
 
+GigWindow *gig_application_get_current_window (GigApplication *self);
+
 G_END_DECLS
