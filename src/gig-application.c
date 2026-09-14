@@ -120,16 +120,36 @@ gig_application_startup (GApplication *application)
 }
 
 static void
+gig_application_window_added (GtkApplication *application,
+                              GtkWindow *window)
+{
+  g_assert (GIG_IS_APPLICATION (application));
+  g_assert (GTK_IS_WINDOW (window));
+
+  if (GIG_IS_WINDOW (window))
+    {
+#if DEVELOPMENT_BUILD
+      gtk_widget_add_css_class (GTK_WIDGET (window), "devel");
+#endif
+    }
+
+  GTK_APPLICATION_CLASS (gig_application_parent_class)->window_added (application, window);
+}
+
+static void
 gig_application_class_init (GigApplicationClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GApplicationClass *application_class = G_APPLICATION_CLASS (klass);
+  GtkApplicationClass *gtk_application_class = GTK_APPLICATION_CLASS (klass);
 
   object_class->constructed = gig_application_constructed;
 
   application_class->activate = gig_application_activate;
   application_class->open = gig_application_open;
   application_class->startup = gig_application_startup;
+
+  gtk_application_class->window_added = gig_application_window_added;
 }
 
 static void

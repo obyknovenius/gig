@@ -2,10 +2,15 @@ project('gig', 'c')
 
 gnome = import('gnome')
 
-app_id = 'com.github.obyknovenius.Gig'
+if get_option('development')
+    app_id = 'com.github.obyknovenius.Gig.Devel'
+else
+    app_id = 'com.github.obyknovenius.Gig'
+endif
 
 config = configuration_data()
 config.set_quoted('APP_ID', app_id)
+config.set10('DEVELOPMENT_BUILD', get_option('development'))
 
 subdir('data')
 subdir('src')
