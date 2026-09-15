@@ -195,6 +195,16 @@ web_view_estimated_load_progress_changed_cb (GigAddressBar *self,
 }
 
 static void
+web_view_connection_security_level_changed_cb (GigAddressBar *self,
+                                               GParamSpec *pspec,
+                                               GigWebView *web_view)
+{
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRIMARY_ICON_NAME]);
+}
+
+static void
 gig_address_bar_dispose (GObject *object)
 {
   GigAddressBar *self = GIG_ADDRESS_BAR (object);
@@ -338,6 +348,12 @@ gig_address_bar_init (GigAddressBar *self)
                                  G_CALLBACK (web_view_estimated_load_progress_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "notify::connection-security-level",
+                                 G_CALLBACK (web_view_connection_security_level_changed_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
 }
 
 GtkWidget *
@@ -401,6 +417,7 @@ static const gchar *
 gig_address_bar_get_primary_icon_name (GigAddressBar *self)
 {
   const gchar *address = NULL;
+  GigConnectionSecurityLevel connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
@@ -408,10 +425,19 @@ gig_address_bar_get_primary_icon_name (GigAddressBar *self)
     return "system-search-symbolic";
 
   if (self->web_view)
-    address = gig_web_view_get_address (self->web_view);
+    {
+      address = gig_web_view_get_address (self->web_view);
+      connection_security_level = gig_web_view_get_connection_security_level (self->web_view);
+    }
 
   if (!address || address[0] == '\0')
     return "system-search-symbolic";
+
+  if (connection_security_level == GIG_CONNECTION_SECURITY_LEVEL_SECURE)
+    return "channel-secure-symbolic";
+
+  if (connection_security_level == GIG_CONNECTION_SECURITY_LEVEL_INSECURE)
+    return "channel-insecure-symbolic";
 
   return NULL;
 }

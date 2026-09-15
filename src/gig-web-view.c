@@ -7,6 +7,8 @@ struct _GigWebView
   WebKitWebView parent_instance;
 
   gchar *pending_address;
+
+  GigConnectionSecurityLevel connection_security_level;
 };
 
 G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
@@ -18,10 +20,14 @@ enum
   PROP_IS_BLANK,
   PROP_CAN_GO_BACK,
   PROP_CAN_GO_FORWARD,
+  PROP_CONNECTION_SECURITY_LEVEL,
   N_PROPS
 };
 
 static GParamSpec *properties[N_PROPS];
+
+static void gig_web_view_set_connection_security_level (GigWebView *self,
+                                                        GigConnectionSecurityLevel connection_security_level);
 
 static WebKitContextMenuItem *
 find_item_in_context_menu (WebKitContextMenu *context_menu,
@@ -109,6 +115,38 @@ web_view_context_menu_cb (GigWebView *self,
 }
 
 static void
+web_view_load_changed_cb (GigWebView *self,
+                          WebKitLoadEvent load_event,
+                          WebKitWebView *web_view)
+{
+  switch (load_event)
+    {
+    case WEBKIT_LOAD_STARTED:
+      gig_web_view_set_connection_security_level (self,
+                                                  GIG_CONNECTION_SECURITY_LEVEL_TBD);
+      break;
+
+    case WEBKIT_LOAD_COMMITTED:
+      {
+        GTlsCertificate *certificate = NULL;
+        GTlsCertificateFlags tls_errors = 0;
+
+        if (webkit_web_view_get_tls_info (web_view, &certificate, &tls_errors) &&
+            tls_errors == 0)
+          gig_web_view_set_connection_security_level (self,
+                                                      GIG_CONNECTION_SECURITY_LEVEL_SECURE);
+        else
+          gig_web_view_set_connection_security_level (self,
+                                                      GIG_CONNECTION_SECURITY_LEVEL_INSECURE);
+        break;
+      }
+
+    default:
+      break;
+    }
+}
+
+static void
 web_view_uri_changed_cb (GigWebView *self,
                          GParamSpec *pspec,
                          WebKitWebView *web_view)
@@ -153,6 +191,12 @@ gig_web_view_constructed (GObject *object)
   g_signal_connect_object (web_view,
                            "context-menu",
                            G_CALLBACK (web_view_context_menu_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (web_view,
+                           "load-changed",
+                           G_CALLBACK (web_view_load_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -208,9 +252,31 @@ gig_web_view_get_property (GObject *object,
       g_value_set_boolean (value, webkit_web_view_can_go_forward (web_view));
       break;
 
+    case PROP_CONNECTION_SECURITY_LEVEL:
+      g_value_set_enum (value, gig_web_view_get_connection_security_level (self));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
+}
+
+GType
+gig_connection_security_level_get_type (void)
+{
+  static GType type_id = 0;
+
+  static const GEnumValue values[] = {
+    { GIG_CONNECTION_SECURITY_LEVEL_TBD, "GIG_CONNECTION_SECURITY_LEVEL_TBD", "tbd" },
+    { GIG_CONNECTION_SECURITY_LEVEL_INSECURE, "GIG_CONNECTION_SECURITY_LEVEL_INSECURE", "insecure" },
+    { GIG_CONNECTION_SECURITY_LEVEL_SECURE, "GIG_CONNECTION_SECURITY_LEVEL_SECURE", "secure" },
+    { 0 }
+  };
+
+  if (G_UNLIKELY (!type_id))
+    type_id = g_enum_register_static ("GigConnectionSecurityLevel", values);
+
+  return type_id;
 }
 
 static void
@@ -246,12 +312,20 @@ gig_web_view_class_init (GigWebViewClass *klass)
                             FALSE,
                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  properties[PROP_CONNECTION_SECURITY_LEVEL] =
+      g_param_spec_enum ("connection-security-level",
+                         NULL, NULL,
+                         GIG_TYPE_CONNECTION_SECURITY_LEVEL,
+                         GIG_CONNECTION_SECURITY_LEVEL_TBD,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
 static void
 gig_web_view_init (GigWebView *self)
 {
+  self->connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
 }
 
 GtkWidget *
@@ -312,4 +386,26 @@ gig_web_view_is_blank (GigWebView *self)
   g_return_val_if_fail (GIG_IS_WEB_VIEW (self), FALSE);
 
   return gig_web_view_get_address (self) == NULL;
+}
+
+GigConnectionSecurityLevel
+gig_web_view_get_connection_security_level (GigWebView *self)
+{
+  g_return_val_if_fail (GIG_IS_WEB_VIEW (self), GIG_CONNECTION_SECURITY_LEVEL_TBD);
+
+  return self->connection_security_level;
+}
+
+static void
+gig_web_view_set_connection_security_level (GigWebView *self,
+                                            GigConnectionSecurityLevel connection_security_level)
+{
+  g_return_if_fail (GIG_IS_WEB_VIEW (self));
+
+  if (self->connection_security_level == connection_security_level)
+    return;
+
+  self->connection_security_level = connection_security_level;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CONNECTION_SECURITY_LEVEL]);
 }

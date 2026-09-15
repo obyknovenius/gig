@@ -5,8 +5,18 @@
 G_BEGIN_DECLS
 
 #define GIG_TYPE_WEB_VIEW (gig_web_view_get_type ())
+#define GIG_TYPE_CONNECTION_SECURITY_LEVEL (gig_connection_security_level_get_type ())
 
 G_DECLARE_FINAL_TYPE (GigWebView, gig_web_view, GIG, WEB_VIEW, WebKitWebView)
+
+typedef enum _GigConnectionSecurityLevel
+{
+  GIG_CONNECTION_SECURITY_LEVEL_TBD,
+  GIG_CONNECTION_SECURITY_LEVEL_INSECURE,
+  GIG_CONNECTION_SECURITY_LEVEL_SECURE
+} GigConnectionSecurityLevel;
+
+GType gig_connection_security_level_get_type (void) G_GNUC_CONST;
 
 GtkWidget *gig_web_view_new (void);
 
@@ -21,5 +31,7 @@ void gig_web_view_set_pending_address (GigWebView *web_view,
 const gchar *gig_web_view_get_address (GigWebView *web_view);
 
 gboolean gig_web_view_is_blank (GigWebView *web_view);
+
+GigConnectionSecurityLevel gig_web_view_get_connection_security_level (GigWebView *web_view);
 
 G_END_DECLS
