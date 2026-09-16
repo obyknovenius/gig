@@ -46,39 +46,39 @@ static gdouble gig_address_bar_get_progress_fraction (GigAddressBar *self);
 static void
 update_attributes (GigAddressBar *self)
 {
-  g_autoptr (PangoAttrList) attrs = NULL;
   const gchar *text = NULL;
-  g_autofree gchar *base_domain = NULL;
-  guint start_index = 0, end_index = 0;
-  PangoAttribute *text_attr = NULL;
-  PangoAttribute *base_domain_attr = NULL;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
   text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
   if (self->focused || self->editing || text[0] == '\0')
+    gtk_entry_set_attributes (GTK_ENTRY (self->entry), NULL);
+  else
     {
-      gtk_entry_set_attributes (GTK_ENTRY (self->entry), NULL);
-      return;
-    }
-
-  attrs = pango_attr_list_new ();
-
-  text_attr = pango_attr_foreground_alpha_new (CLAMP (0.55 * 65535. + 0.5, 0, 65535));
-  pango_attr_list_insert (attrs, text_attr);
-
-  if ((base_domain = gig_get_base_domain (text, &start_index, &end_index)))
-    {
+      g_autoptr (PangoAttrList) attrs = pango_attr_list_new ();
+      PangoAttribute *attr = NULL;
       GdkRGBA color;
-      gtk_widget_get_color (GTK_WIDGET (self->entry), &color);
-      base_domain_attr = pango_attr_foreground_alpha_new (CLAMP (color.alpha * 65535. + 0.5, 0, 65535));
-      base_domain_attr->start_index = start_index;
-      base_domain_attr->end_index = end_index;
-      pango_attr_list_insert (attrs, base_domain_attr);
-    }
+      gfloat dim_opacity = 0.55;
+      g_autofree gchar *domain = NULL;
+      guint start_index = 0, end_index = 0;
 
-  gtk_entry_set_attributes (GTK_ENTRY (self->entry), attrs);
+      gtk_widget_get_color (GTK_WIDGET (self->entry), &color);
+
+      attr = pango_attr_foreground_alpha_new (
+          CLAMP (color.alpha * dim_opacity * 65535. + 0.5, 0, 65535));
+      pango_attr_list_insert (attrs, attr);
+
+      if ((domain = gig_get_base_domain (text, &start_index, &end_index)))
+        {
+          attr = pango_attr_foreground_alpha_new (0);
+          attr->start_index = start_index;
+          attr->end_index = end_index;
+          pango_attr_list_insert (attrs, attr);
+        }
+
+      gtk_entry_set_attributes (GTK_ENTRY (self->entry), attrs);
+    }
 }
 
 static void entry_changed_cb (GigAddressBar *self,
