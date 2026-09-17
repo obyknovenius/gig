@@ -8,6 +8,7 @@ template $GigAddressBar: Gtk.Widget {
         sensitive: false;
         changed => $entry_changed_cb() swapped;
         activate => $entry_activate_cb() swapped;
+        icon-release => $entry_icon_release_cb() swapped;
 
         Gtk.EventControllerFocus {
             enter => $entry_focus_enter_cb() swapped;

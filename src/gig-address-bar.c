@@ -24,6 +24,8 @@ static void update_attributes (GigAddressBar *self);
 
 static void update_primary_icon (GigAddressBar *self);
 
+static void update_secondary_icon (GigAddressBar *self);
+
 static void update_progress (GigAddressBar *self);
 
 static void entry_changed_cb (GigAddressBar *self,
@@ -60,6 +62,8 @@ set_focused (GigAddressBar *self,
   self->focused = focused;
 
   update_attributes (self);
+  update_primary_icon (self);
+  update_secondary_icon (self);
   update_progress (self);
 }
 
@@ -131,7 +135,7 @@ update_primary_icon (GigAddressBar *self)
       connection_security_level = gig_web_view_get_connection_security_level (self->web_view);
     }
 
-  if (self->modified || !uri || uri[0] == '\0')
+  if (self->focused || self->modified || !uri || uri[0] == '\0')
     icon_name = "system-search-symbolic";
   else if (connection_security_level == GIG_CONNECTION_SECURITY_LEVEL_SECURE)
     icon_name = "channel-secure-symbolic";
@@ -139,6 +143,23 @@ update_primary_icon (GigAddressBar *self)
     icon_name = "channel-insecure-symbolic";
 
   gtk_entry_set_icon_from_icon_name (self->entry, GTK_ENTRY_ICON_PRIMARY,
+                                     icon_name);
+}
+
+static void
+update_secondary_icon (GigAddressBar *self)
+{
+  const gchar *icon_name = NULL;
+  const gchar *text = NULL;
+
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
+
+  if (self->focused && text && text[0] != '\0')
+    icon_name = "edit-clear-symbolic";
+
+  gtk_entry_set_icon_from_icon_name (self->entry, GTK_ENTRY_ICON_SECONDARY,
                                      icon_name);
 }
 
@@ -165,6 +186,8 @@ entry_changed_cb (GigAddressBar *self,
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
   set_modified (self, TRUE);
+
+  update_secondary_icon (self);
 }
 
 static void
@@ -205,6 +228,17 @@ entry_activate_cb (GigAddressBar *self,
   gig_web_view_load_uri (self->web_view, text);
 
   gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
+}
+
+static void
+entry_icon_release_cb (GigAddressBar *self,
+                       GtkEntryIconPosition icon_pos,
+                       GtkEntry *entry)
+{
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  if (icon_pos == GTK_ENTRY_ICON_SECONDARY)
+    gtk_editable_delete_text (GTK_EDITABLE (entry), 0, -1);
 }
 
 static gboolean
@@ -344,6 +378,7 @@ gig_address_bar_class_init (GigAddressBarClass *klass)
 
   gtk_widget_class_bind_template_callback (widget_class, entry_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_activate_cb);
+  gtk_widget_class_bind_template_callback (widget_class, entry_icon_release_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_focus_enter_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_focus_leave_cb);
 }
