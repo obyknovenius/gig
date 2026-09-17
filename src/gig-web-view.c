@@ -121,11 +121,6 @@ web_view_load_changed_cb (GigWebView *self,
 {
   switch (load_event)
     {
-    case WEBKIT_LOAD_STARTED:
-      gig_web_view_set_connection_security_level (self,
-                                                  GIG_CONNECTION_SECURITY_LEVEL_TBD);
-      break;
-
     case WEBKIT_LOAD_COMMITTED:
       {
         GTlsCertificate *certificate = NULL;
