@@ -26,9 +26,9 @@ static GParamSpec *properties[N_PROPS];
 static void gig_page_set_web_view (GigPage *self, GigWebView *web_view);
 
 static void
-web_view_address_changed_cb (GigPage *self,
-                             GParamSpec *pspec,
-                             GigWebView *web_view)
+web_view_uri_changed_cb (GigPage *self,
+                         GParamSpec *pspec,
+                         GigWebView *web_view)
 {
   g_assert (GIG_IS_PAGE (self));
 
@@ -80,8 +80,8 @@ gig_page_constructed (GObject *object)
   gtk_widget_set_parent (GTK_WIDGET (self->web_view), GTK_WIDGET (self));
 
   g_signal_connect_object (self->web_view,
-                           "notify::address",
-                           G_CALLBACK (web_view_address_changed_cb),
+                           "notify::uri",
+                           G_CALLBACK (web_view_uri_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -281,7 +281,7 @@ gig_page_get_title (GigPage *self)
   if (title && title[0] != '\0')
     return title;
 
-  title = gig_web_view_get_address (self->web_view);
+  title = gig_web_view_get_uri (self->web_view);
   if (title && title[0] != '\0')
     return title;
 

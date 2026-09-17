@@ -40,7 +40,7 @@ web_view_create_cb (GigWindow *self,
 
   request = webkit_navigation_action_get_request (navigation_action);
   pending_uri = webkit_uri_request_get_uri (request);
-  gig_web_view_set_pending_address (web_view, pending_uri);
+  gig_web_view_set_pending_uri (web_view, pending_uri);
 
   page = GIG_PAGE (gig_page_new_with_web_view (web_view));
   parent = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (self->selected_page));
@@ -51,9 +51,9 @@ web_view_create_cb (GigWindow *self,
 }
 
 static void
-web_view_address_changed_cb (GigWindow *self,
-                             GParamSpec *pspec,
-                             GigWebView *web_view)
+web_view_uri_changed_cb (GigWindow *self,
+                         GParamSpec *pspec,
+                         GigWebView *web_view)
 {
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
@@ -262,8 +262,8 @@ gig_window_init (GigWindow *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::address",
-                                 G_CALLBACK (web_view_address_changed_cb),
+                                 "notify::uri",
+                                 G_CALLBACK (web_view_uri_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 

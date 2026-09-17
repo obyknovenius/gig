@@ -120,18 +120,18 @@ static void
 update_primary_icon (GigAddressBar *self)
 {
   const gchar *icon_name = NULL;
-  const gchar *address = NULL;
+  const gchar *uri = NULL;
   GigConnectionSecurityLevel connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
   if (self->web_view)
     {
-      address = gig_web_view_get_address (self->web_view);
+      uri = gig_web_view_get_uri (self->web_view);
       connection_security_level = gig_web_view_get_connection_security_level (self->web_view);
     }
 
-  if (self->editing || !address || address[0] == '\0')
+  if (self->editing || !uri || uri[0] == '\0')
     icon_name = "system-search-symbolic";
   else if (connection_security_level == GIG_CONNECTION_SECURITY_LEVEL_SECURE)
     icon_name = "channel-secure-symbolic";
@@ -202,7 +202,7 @@ entry_activate_cb (GigAddressBar *self,
 
   set_editing (self, FALSE);
 
-  gig_web_view_load_address (self->web_view, text);
+  gig_web_view_load_uri (self->web_view, text);
 
   gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
 }
@@ -230,11 +230,11 @@ web_view_decide_policy_cb (GigAddressBar *self,
 }
 
 static void
-web_view_address_changed_cb (GigAddressBar *self,
-                             GParamSpec *pspec,
-                             GigWebView *web_view)
+web_view_uri_changed_cb (GigAddressBar *self,
+                         GParamSpec *pspec,
+                         GigWebView *web_view)
 {
-  const gchar *address;
+  const gchar *uri;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
@@ -242,8 +242,8 @@ web_view_address_changed_cb (GigAddressBar *self,
   if (self->editing)
     return;
 
-  address = gig_web_view_get_address (web_view);
-  set_text (self, address);
+  uri = gig_web_view_get_uri (web_view);
+  set_text (self, uri);
 
   update_primary_icon (self);
 }
@@ -353,10 +353,6 @@ gig_address_bar_init (GigAddressBar *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  g_object_bind_property (self, "progress-fraction",
-                          self->entry, "progress-fraction",
-                          G_BINDING_SYNC_CREATE);
-
   self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
 
   g_signal_group_connect_object (self->web_view_signals,
@@ -366,8 +362,8 @@ gig_address_bar_init (GigAddressBar *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::address",
-                                 G_CALLBACK (web_view_address_changed_cb),
+                                 "notify::uri",
+                                 G_CALLBACK (web_view_uri_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
@@ -418,14 +414,14 @@ gig_address_bar_set_web_view (GigAddressBar *self,
 void
 gig_address_bar_reset (GigAddressBar *self)
 {
-  const gchar *address = NULL;
+  const gchar *uri = NULL;
 
   g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
 
   set_editing (self, FALSE);
 
   if (self->web_view)
-    address = gig_web_view_get_address (self->web_view);
+    uri = gig_web_view_get_uri (self->web_view);
 
-  set_text (self, address);
+  set_text (self, uri);
 }

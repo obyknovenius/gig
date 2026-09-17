@@ -99,7 +99,7 @@ gig_application_open (GApplication *application,
       gboolean set_selected = (i == n_files - 1);
 
       page = GIG_PAGE (gig_page_new ());
-      gig_web_view_load_address (gig_page_get_web_view (page), uri);
+      gig_web_view_load_uri (gig_page_get_web_view (page), uri);
 
       gig_window_add_tab_page (window, page, set_selected, NULL);
     }

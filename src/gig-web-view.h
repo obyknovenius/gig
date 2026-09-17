@@ -22,13 +22,13 @@ GtkWidget *gig_web_view_new (void);
 
 GtkWidget *gig_web_view_new_with_related_view (WebKitWebView *related_view);
 
-void gig_web_view_load_address (GigWebView *web_view,
-                                const gchar *address);
+void gig_web_view_load_uri (GigWebView *web_view,
+                            const gchar *uri);
 
-void gig_web_view_set_pending_address (GigWebView *web_view,
-                                       const gchar *pending_address);
+void gig_web_view_set_pending_uri (GigWebView *web_view,
+                                   const gchar *uri);
 
-const gchar *gig_web_view_get_address (GigWebView *web_view);
+const gchar *gig_web_view_get_uri (GigWebView *web_view);
 
 gboolean gig_web_view_is_blank (GigWebView *web_view);
 
