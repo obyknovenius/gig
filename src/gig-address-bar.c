@@ -11,7 +11,7 @@ struct _GigAddressBar
   GtkEntry *entry;
 
   gboolean focused;
-  gboolean editing;
+  gboolean modified;
 
   GigWebView *web_view;
 
@@ -64,15 +64,15 @@ set_focused (GigAddressBar *self,
 }
 
 static void
-set_editing (GigAddressBar *self,
-             gboolean editing)
+set_modified (GigAddressBar *self,
+              gboolean modified)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  if (self->editing == editing)
+  if (self->modified == modified)
     return;
 
-  self->editing = editing;
+  self->modified = modified;
 
   update_attributes (self);
   update_primary_icon (self);
@@ -87,7 +87,7 @@ update_attributes (GigAddressBar *self)
 
   text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
-  if (self->focused || self->editing || text[0] == '\0')
+  if (self->focused || self->modified || text[0] == '\0')
     gtk_entry_set_attributes (self->entry, NULL);
   else
     {
@@ -131,7 +131,7 @@ update_primary_icon (GigAddressBar *self)
       connection_security_level = gig_web_view_get_connection_security_level (self->web_view);
     }
 
-  if (self->editing || !uri || uri[0] == '\0')
+  if (self->modified || !uri || uri[0] == '\0')
     icon_name = "system-search-symbolic";
   else if (connection_security_level == GIG_CONNECTION_SECURITY_LEVEL_SECURE)
     icon_name = "channel-secure-symbolic";
@@ -164,7 +164,7 @@ entry_changed_cb (GigAddressBar *self,
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  set_editing (self, TRUE);
+  set_modified (self, TRUE);
 }
 
 static void
@@ -200,7 +200,7 @@ entry_activate_cb (GigAddressBar *self,
   if (!text || text[0] == '\0')
     return;
 
-  set_editing (self, FALSE);
+  set_modified (self, FALSE);
 
   gig_web_view_load_uri (self->web_view, text);
 
@@ -239,7 +239,7 @@ web_view_uri_changed_cb (GigAddressBar *self,
   g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  if (self->editing)
+  if (self->modified)
     return;
 
   uri = gig_web_view_get_uri (web_view);
@@ -418,7 +418,7 @@ gig_address_bar_reset (GigAddressBar *self)
 
   g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
 
-  set_editing (self, FALSE);
+  set_modified (self, FALSE);
 
   if (self->web_view)
     uri = gig_web_view_get_uri (self->web_view);
