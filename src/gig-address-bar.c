@@ -203,8 +203,14 @@ static void
 entry_focus_leave_cb (GigAddressBar *self,
                       GtkEventControllerFocus *controller)
 {
+  GtkRoot *root = NULL;
+
   g_assert (GIG_IS_ADDRESS_BAR (self));
-  g_assert (GIG_IS_WEB_VIEW (self->web_view));
+
+  root = gtk_widget_get_root (GTK_WIDGET (self));
+
+  if (GTK_IS_WINDOW (root) && !gtk_window_is_active (GTK_WINDOW (root)))
+    return;
 
   set_focused (self, FALSE);
 }
