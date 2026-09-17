@@ -61,7 +61,11 @@ set_focused (GigAddressBar *self,
 
   self->focused = focused;
 
-  update_attributes (self);
+  if (!focused)
+    gig_address_bar_reset (self);
+  else
+    update_attributes (self);
+
   update_primary_icon (self);
   update_secondary_icon (self);
   update_progress (self);
