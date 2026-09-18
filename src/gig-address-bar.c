@@ -10,7 +10,7 @@ struct _GigAddressBar
 
   GtkEntry *entry;
 
-  gboolean focused;
+  gboolean editing;
   gboolean modified;
 
   GigWebView *web_view;
@@ -51,17 +51,17 @@ set_text (GigAddressBar *self,
 }
 
 static void
-set_focused (GigAddressBar *self,
-             gboolean focused)
+set_editing (GigAddressBar *self,
+             gboolean editing)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  if (self->focused == focused)
+  if (self->editing == editing)
     return;
 
-  self->focused = focused;
+  self->editing = editing;
 
-  if (!focused)
+  if (!editing)
     gig_address_bar_reset (self);
   else
     update_attributes (self);
@@ -95,7 +95,7 @@ update_attributes (GigAddressBar *self)
 
   text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
-  if (self->focused || self->modified || text[0] == '\0')
+  if (self->editing || self->modified || text[0] == '\0')
     gtk_entry_set_attributes (self->entry, NULL);
   else
     {
@@ -139,7 +139,7 @@ update_primary_icon (GigAddressBar *self)
       connection_security_level = gig_web_view_get_connection_security_level (self->web_view);
     }
 
-  if (self->focused || self->modified || !uri || uri[0] == '\0')
+  if (self->editing || self->modified || !uri || uri[0] == '\0')
     icon_name = "system-search-symbolic";
   else if (connection_security_level == GIG_CONNECTION_SECURITY_LEVEL_SECURE)
     icon_name = "channel-secure-symbolic";
@@ -160,7 +160,7 @@ update_secondary_icon (GigAddressBar *self)
 
   text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
-  if (self->focused && text && text[0] != '\0')
+  if (self->editing && text && text[0] != '\0')
     icon_name = "edit-clear-symbolic";
 
   gtk_entry_set_icon_from_icon_name (self->entry, GTK_ENTRY_ICON_SECONDARY,
@@ -177,7 +177,7 @@ update_progress (GigAddressBar *self)
 
   web_view = WEBKIT_WEB_VIEW (self->web_view);
 
-  if (!self->focused && web_view && webkit_web_view_is_loading (web_view))
+  if (!self->editing && web_view && webkit_web_view_is_loading (web_view))
     progress = webkit_web_view_get_estimated_load_progress (web_view);
 
   gtk_entry_set_progress_fraction (self->entry, progress);
@@ -200,7 +200,7 @@ entry_focus_enter_cb (GigAddressBar *self,
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  set_focused (self, TRUE);
+  set_editing (self, TRUE);
 }
 
 static void
@@ -216,7 +216,7 @@ entry_focus_leave_cb (GigAddressBar *self,
   if (GTK_IS_WINDOW (root) && !gtk_window_is_active (GTK_WINDOW (root)))
     return;
 
-  set_focused (self, FALSE);
+  set_editing (self, FALSE);
 }
 
 static void
