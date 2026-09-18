@@ -61,11 +61,7 @@ set_editing (GigAddressBar *self,
 
   self->editing = editing;
 
-  if (!editing)
-    gig_address_bar_reset (self);
-  else
-    update_attributes (self);
-
+  update_attributes (self);
   update_primary_icon (self);
   update_secondary_icon (self);
   update_progress (self);
@@ -84,6 +80,7 @@ set_modified (GigAddressBar *self,
 
   update_attributes (self);
   update_primary_icon (self);
+  update_progress (self);
 }
 
 static void
@@ -171,13 +168,13 @@ static void
 update_progress (GigAddressBar *self)
 {
   WebKitWebView *web_view = NULL;
-  gdouble progress = 0.0f;
+  gdouble progress = 0.0;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
   web_view = WEBKIT_WEB_VIEW (self->web_view);
 
-  if (!self->editing && web_view && webkit_web_view_is_loading (web_view))
+  if (!self->editing && !self->modified && web_view && webkit_web_view_is_loading (web_view))
     progress = webkit_web_view_get_estimated_load_progress (web_view);
 
   gtk_entry_set_progress_fraction (self->entry, progress);
@@ -216,7 +213,7 @@ entry_focus_leave_cb (GigAddressBar *self,
   if (GTK_IS_WINDOW (root) && !gtk_window_is_active (GTK_WINDOW (root)))
     return;
 
-  set_editing (self, FALSE);
+  gig_address_bar_reset (self);
 }
 
 static void
@@ -464,6 +461,7 @@ gig_address_bar_reset (GigAddressBar *self)
   g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
 
   set_modified (self, FALSE);
+  set_editing (self, FALSE);
 
   if (self->web_view)
     uri = gig_web_view_get_uri (self->web_view);
