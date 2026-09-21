@@ -1,31 +1,39 @@
 using Gtk 4.0;
+using Adw 1;
 
 template $GigFindBar: Gtk.Widget {
-    Gtk.Box box {
-        orientation: horizontal;
+    Gtk.CenterBox center_box {
+        [center]
+        Adw.Clamp clamp {
+            maximum-size: 400;
 
-        Gtk.SearchEntry search_entry {
-            max-width-chars: 30;
-            placeholder-text: "Find";
+            Gtk.Box {
+                orientation: horizontal;
+                spacing: 6;
+
+                Gtk.SearchEntry search_entry {
+                    placeholder-text: "Find";
+                    hexpand: true;
+                }
+
+                Gtk.Button {
+                    icon-name: "go-up-symbolic";
+                    action-name: "find.previous";
+                    focus-on-click: false;
+                }
+
+                Gtk.Button {
+                    icon-name: "go-down-symbolic";
+                    action-name: "find.next";
+                    focus-on-click: false;
+                }
+            }
         }
 
-        Gtk.Button {
-            icon-name: "go-up-symbolic";
-            action-name: "find.previous";
-            focus-on-click: false;
-        }
-
-        Gtk.Button {
-            icon-name: "go-down-symbolic";
-            action-name: "find.next";
-            focus-on-click: false;
-        }
-
+        [end]
         Gtk.Button {
             icon-name: "window-close-symbolic";
             can-focus: false;
-            hexpand: true;
-            halign: end;
             action-name: "find.dismiss";
 
             styles [
