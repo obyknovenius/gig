@@ -55,12 +55,15 @@ web_view_uri_changed_cb (GigWindow *self,
                          GParamSpec *pspec,
                          GigWebView *web_view)
 {
+  gboolean is_blank = TRUE;
+
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self),
-                                 "win.stop-reload",
-                                 !gig_web_view_is_blank (web_view));
+  is_blank = gig_web_view_is_blank (web_view);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.find", !is_blank);
 }
 
 static void
@@ -156,7 +159,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 
   gig_address_bar_set_web_view (GIG_ADDRESS_BAR (self->address_bar), web_view);
 
-  gig_window_update_actions (self, web_view);
+  gig_window_actions_update (self, page);
 
   g_signal_group_set_target (self->web_view_signals, web_view);
 
@@ -201,6 +204,8 @@ gig_window_class_init (GigWindowClass *klass)
   object_class->dispose = gig_window_dispose;
   object_class->finalize = gig_window_finalize;
 
+  gig_window_class_actions_init (klass);
+
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
   gtk_widget_class_bind_template_child (widget_class, GigWindow, header_bar);
@@ -213,8 +218,6 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
   g_type_ensure (GIG_TYPE_ADDRESS_BAR);
-
-  gig_window_class_init_actions (klass);
 }
 
 static void
@@ -285,7 +288,7 @@ gig_window_init (GigWindow *self)
                                  self,
                                  G_CONNECT_SWAPPED);
 
-  gig_window_init_actions (self);
+  gig_window_actions_init (self);
 }
 
 GigWindow *

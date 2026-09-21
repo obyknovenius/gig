@@ -19,10 +19,11 @@ struct _GigWindow
   GSignalGroup *web_view_signals;
 };
 
-void gig_window_class_init_actions (GigWindowClass *klass);
+void gig_window_class_actions_init (GigWindowClass *klass);
 
-void gig_window_init_actions (GigWindow *self);
+void gig_window_actions_init (GigWindow *self);
 
-void gig_window_update_actions (GigWindow *self, GigWebView *web_view);
+void gig_window_actions_update (GigWindow *self,
+                                GigPage *page);
 
 G_END_DECLS

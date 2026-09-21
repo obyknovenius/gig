@@ -20,4 +20,6 @@ GdkTexture *gig_page_get_icon (GigPage *self);
 
 gboolean gig_page_get_is_loading (GigPage *self);
 
+void gig_page_reveal_find_bar (GigPage *self);
+
 G_END_DECLS

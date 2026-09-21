@@ -74,8 +74,17 @@ template $GigWindow: Adw.ApplicationWindow {
 }
 
 menu primary_menu {
-    item {
-        label: "About Side Gig";
-        action: "app.about";
+    section {
+        item {
+            label: "Find";
+            action: "win.find";
+        }
+    }
+
+    section {
+        item {
+            label: "About Side Gig";
+            action: "app.about";
+        }
     }
 }
