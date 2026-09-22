@@ -81,6 +81,13 @@ template $GigWindow: Adw.ApplicationWindow {
 menu primary_menu {
     section {
         item {
+            label: "New Tab";
+            action: "win.new-tab";
+        }
+    }
+
+    section {
+        item {
             label: "Find";
             action: "win.reveal-find";
         }

@@ -134,6 +134,10 @@ gig_window_class_actions_init (GigWindowClass *klass)
                                    gig_window_actions_dismiss_find_cb);
 
   gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_t, GDK_CONTROL_MASK,
+                                       "win.new-tab", NULL);
+
+  gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_f, GDK_CONTROL_MASK,
                                        "win.reveal-find", NULL);
 
