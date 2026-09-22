@@ -11,9 +11,10 @@ template $GigFindBar: Gtk.Widget {
                 orientation: horizontal;
                 spacing: 6;
 
-                Gtk.SearchEntry search_entry {
+                Gtk.SearchEntry entry {
                     placeholder-text: "Find";
                     hexpand: true;
+                    sensitive: false;
                 }
 
                 Gtk.Button {
@@ -34,7 +35,7 @@ template $GigFindBar: Gtk.Widget {
         Gtk.Button {
             icon-name: "window-close-symbolic";
             can-focus: false;
-            action-name: "find.dismiss";
+            action-name: "win.dismiss-find";
 
             styles [
                 "flat",

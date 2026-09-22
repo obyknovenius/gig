@@ -1,6 +1,7 @@
 #include "gig-window-private.h"
 
 #include "gig-address-bar.h"
+#include "gig-find-bar.h"
 #include "gig-page.h"
 #include "gig-web-view.h"
 
@@ -63,7 +64,7 @@ web_view_uri_changed_cb (GigWindow *self,
   is_blank = gig_web_view_is_blank (web_view);
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.find", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.reveal-find", !is_blank);
 }
 
 static void
@@ -136,6 +137,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   AdwTabPage *tab_page = NULL;
   GigPage *page = NULL;
   GigWebView *web_view = NULL;
+  WebKitFindController *find_controller = NULL;
   gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -150,6 +152,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   if (page)
     {
       web_view = gig_page_get_web_view (page);
+      find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (web_view));
       is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
     }
 
@@ -158,6 +161,9 @@ tab_view_selected_page_changed_cb (GigWindow *self,
                                        : "view-refresh-symbolic");
 
   gig_address_bar_set_web_view (GIG_ADDRESS_BAR (self->address_bar), web_view);
+
+  gig_find_bar_set_find_controller (GIG_FIND_BAR (self->find_bar),
+                                    find_controller);
 
   gig_window_actions_update (self, page);
 
@@ -179,6 +185,8 @@ gig_window_dispose (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_signal_group_set_target (self->web_view_signals, NULL);
+
+  gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_WINDOW);
 
   G_OBJECT_CLASS (gig_window_parent_class)->dispose (object);
 }
@@ -208,22 +216,24 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
 
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, toolbar_view);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, header_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, address_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
+  gtk_widget_class_bind_template_child (widget_class, GigWindow, find_bar);
 
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
   g_type_ensure (GIG_TYPE_ADDRESS_BAR);
+  g_type_ensure (GIG_TYPE_FIND_BAR);
 }
 
 static void
 gig_window_init (GigWindow *self)
 {
-
   GSettings *settings = g_settings_new ("com.github.obyknovenius.Gig.State");
 
   g_settings_bind (settings, "width",
@@ -243,6 +253,8 @@ gig_window_init (GigWindow *self)
                    G_SETTINGS_BIND_DEFAULT);
 
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  gig_window_actions_init (self);
 
   self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
 
@@ -287,8 +299,6 @@ gig_window_init (GigWindow *self)
                                  G_CALLBACK (web_view_can_go_forward_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
-
-  gig_window_actions_init (self);
 }
 
 GigWindow *

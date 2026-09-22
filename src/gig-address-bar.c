@@ -339,6 +339,7 @@ gig_address_bar_finalize (GObject *object)
   GigAddressBar *self = GIG_ADDRESS_BAR (object);
 
   g_clear_object (&self->web_view_signals);
+  g_clear_object (&self->web_view);
 
   G_OBJECT_CLASS (gig_address_bar_parent_class)->finalize (object);
 }
@@ -441,11 +442,12 @@ gig_address_bar_set_web_view (GigAddressBar *self,
   g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
   g_return_if_fail (!web_view || GIG_IS_WEB_VIEW (web_view));
 
-  gtk_widget_set_sensitive (GTK_WIDGET (self->entry), web_view != NULL);
-
-  g_set_object (&self->web_view, web_view);
+  if (!g_set_object (&self->web_view, web_view))
+    return;
 
   g_signal_group_set_target (self->web_view_signals, web_view);
+
+  gtk_widget_set_sensitive (GTK_WIDGET (self->entry), self->web_view != NULL);
 
   gig_address_bar_reset (self);
 
