@@ -361,6 +361,8 @@ gig_page_reveal_find_bar (GigPage *self)
 
   adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, TRUE);
 
+  gig_find_bar_search (self->find_bar);
+
   gtk_widget_grab_focus (GTK_WIDGET (self->find_bar));
 }
 
@@ -368,6 +370,9 @@ void
 gig_page_dismiss_find_bar (GigPage *self)
 {
   g_return_if_fail (GIG_IS_PAGE (self));
+  g_return_if_fail (GIG_IS_FIND_BAR (self->find_bar));
 
   adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, FALSE);
+
+  gig_find_bar_search_finish (self->find_bar);
 }
