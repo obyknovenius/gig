@@ -1,7 +1,6 @@
 #include "gig-window-private.h"
 
 #include "gig-address-bar.h"
-#include "gig-find-bar.h"
 #include "gig-page.h"
 #include "gig-web-view.h"
 
@@ -137,7 +136,6 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   AdwTabPage *tab_page = NULL;
   GigPage *page = NULL;
   GigWebView *web_view = NULL;
-  WebKitFindController *find_controller = NULL;
   gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -152,7 +150,6 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   if (page)
     {
       web_view = gig_page_get_web_view (page);
-      find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (web_view));
       is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
     }
 
@@ -161,9 +158,6 @@ tab_view_selected_page_changed_cb (GigWindow *self,
                                        : "view-refresh-symbolic");
 
   gig_address_bar_set_web_view (GIG_ADDRESS_BAR (self->address_bar), web_view);
-
-  gig_find_bar_set_find_controller (GIG_FIND_BAR (self->find_bar),
-                                    find_controller);
 
   gig_window_actions_update (self, page);
 
@@ -222,13 +216,11 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, address_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
-  gtk_widget_class_bind_template_child (widget_class, GigWindow, find_bar);
 
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
   g_type_ensure (GIG_TYPE_ADDRESS_BAR);
-  g_type_ensure (GIG_TYPE_FIND_BAR);
 }
 
 static void

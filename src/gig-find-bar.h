@@ -8,12 +8,9 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GigFindBar, gig_find_bar, GIG, FIND_BAR, GtkWidget)
 
-GigFindBar *gig_find_bar_new (void);
+GigFindBar *gig_find_bar_new (WebKitFindController *find_controller);
 
 WebKitFindController *gig_find_bar_get_find_controller (GigFindBar *self);
-
-void gig_find_bar_set_find_controller (GigFindBar *self,
-                                       WebKitFindController *find_controller);
 
 void gig_find_bar_search (GigFindBar *self);
 

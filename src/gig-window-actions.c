@@ -87,11 +87,7 @@ gig_window_actions_reveal_find_cb (GtkWidget *widget,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_PAGE (self->selected_page));
 
-  adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, TRUE);
-
-  gtk_widget_grab_focus (GTK_WIDGET (self->find_bar));
-
-  gig_find_bar_search (self->find_bar);
+  gig_page_reveal_find_bar (self->selected_page);
 }
 
 static void
@@ -102,12 +98,9 @@ gig_window_actions_dismiss_find_cb (GtkWidget *widget,
   GigWindow *self = (GigWindow *) widget;
 
   g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_PAGE (self->selected_page));
 
-  gig_find_bar_search_finish (self->find_bar);
-
-  adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, FALSE);
-
-  gtk_widget_grab_focus (GTK_WIDGET (self->selected_page));
+  gig_page_dismiss_find_bar (self->selected_page);
 }
 
 void

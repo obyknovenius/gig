@@ -11,8 +11,6 @@ struct _GigFindBar
   GtkCenterBox *center_box;
   GtkSearchEntry *entry;
   WebKitFindController *find_controller;
-
-  GSignalGroup *find_controller_signals;
 };
 
 void gig_find_bar_class_actions_init (GigFindBarClass *klass);

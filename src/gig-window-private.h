@@ -14,7 +14,6 @@ struct _GigWindow
   GtkButton *stop_reload_button;
   GigAddressBar *address_bar;
   AdwTabView *tab_view;
-  GigFindBar *find_bar;
 
   GigPage *selected_page;
 

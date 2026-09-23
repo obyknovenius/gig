@@ -9,8 +9,6 @@ template $GigWindow: Adw.ApplicationWindow {
 
         child: Adw.ToolbarView toolbar_view {
             top-bar-style: raised_border;
-            bottom-bar-style: raised_border;
-            reveal-bottom-bars: false;
 
             [top]
             Adw.HeaderBar header_bar {
@@ -71,9 +69,6 @@ template $GigWindow: Adw.ApplicationWindow {
             Adw.TabView tab_view {
                 notify::selected-page => $tab_view_selected_page_changed_cb() swapped;
             }
-
-            [bottom]
-            $GigFindBar find_bar {}
         };
     }
 }

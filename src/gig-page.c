@@ -1,12 +1,15 @@
 #include "gig-page.h"
 
+#include "gig-find-bar.h"
 #include "gig-web-view.h"
 
 struct _GigPage
 {
   GtkWidget parent_instance;
 
+  AdwToolbarView *toolbar_view;
   GigWebView *web_view;
+  GigFindBar *find_bar;
 };
 
 G_DEFINE_FINAL_TYPE (GigPage, gig_page, GTK_TYPE_WIDGET)
@@ -73,11 +76,10 @@ gig_page_constructed (GObject *object)
   G_OBJECT_CLASS (gig_page_parent_class)->constructed (object);
 
   g_assert (GIG_IS_WEB_VIEW (self->web_view));
+  g_assert (GIG_IS_FIND_BAR (self->find_bar));
 
-  gtk_widget_set_parent (GTK_WIDGET (self->web_view), GTK_WIDGET (self));
-
-  gtk_widget_set_hexpand (GTK_WIDGET (self->web_view), TRUE);
-  gtk_widget_set_vexpand (GTK_WIDGET (self->web_view), TRUE);
+  adw_toolbar_view_set_content (self->toolbar_view, GTK_WIDGET (self->web_view));
+  adw_toolbar_view_add_bottom_bar (self->toolbar_view, GTK_WIDGET (self->find_bar));
 
   g_signal_connect_object (self->web_view,
                            "notify::uri",
@@ -112,7 +114,8 @@ gig_page_dispose (GObject *object)
   if (self->web_view)
     {
       g_signal_handlers_disconnect_by_data (self->web_view, self);
-      g_clear_pointer ((GtkWidget **) &self->web_view, gtk_widget_unparent);
+      adw_toolbar_view_set_content (self->toolbar_view, NULL);
+      adw_toolbar_view_remove (self->toolbar_view, GTK_WIDGET (self->find_bar));
     }
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_PAGE);
@@ -220,6 +223,8 @@ gig_page_class_init (GigPageClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-page.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
+
+  gtk_widget_class_bind_template_child (widget_class, GigPage, toolbar_view);
 }
 
 static void
@@ -258,12 +263,18 @@ static void
 gig_page_set_web_view (GigPage *self,
                        GigWebView *web_view)
 {
+  WebKitFindController *find_controller;
+
   g_assert (GIG_IS_PAGE (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
   if (self->web_view == web_view)
     return;
 
   self->web_view = web_view;
+
+  find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (web_view));
+  self->find_bar = gig_find_bar_new (find_controller);
 
   g_object_bind_property (self->web_view,
                           "is-blank",
@@ -306,4 +317,23 @@ gig_page_get_is_loading (GigPage *self)
   g_return_val_if_fail (GIG_IS_PAGE (self), FALSE);
 
   return webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+void
+gig_page_reveal_find_bar (GigPage *self)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+  g_return_if_fail (GIG_IS_FIND_BAR (self->find_bar));
+
+  adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, TRUE);
+
+  gtk_widget_grab_focus (GTK_WIDGET (self->find_bar));
+}
+
+void
+gig_page_dismiss_find_bar (GigPage *self)
+{
+  g_return_if_fail (GIG_IS_PAGE (self));
+
+  adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, FALSE);
 }

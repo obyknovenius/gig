@@ -13,6 +13,9 @@ enum
 
 static GParamSpec *properties[N_PROPS];
 
+static void gig_find_bar_set_find_controller (GigFindBar *self,
+                                              WebKitFindController *find_controller);
+
 static void
 find_controller_counted_matches_cb (GigFindBar *self,
                                     guint count,
@@ -62,6 +65,14 @@ gig_find_bar_constructed (GObject *object)
                            G_CALLBACK (entry_stop_search_cb),
                            self,
                            G_CONNECT_SWAPPED);
+
+  g_assert (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
+
+  g_signal_connect_object (self->find_controller,
+                           "counted-matches",
+                           G_CALLBACK (find_controller_counted_matches_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
 }
 
 static void
@@ -69,24 +80,9 @@ gig_find_bar_dispose (GObject *object)
 {
   GigFindBar *self = GIG_FIND_BAR (object);
 
-  g_signal_group_set_target (self->find_controller_signals, NULL);
-
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_FIND_BAR);
 
   G_OBJECT_CLASS (gig_find_bar_parent_class)->dispose (object);
-}
-
-static void
-gig_find_bar_finalize (GObject *object)
-{
-  GigFindBar *self = GIG_FIND_BAR (object);
-
-  g_assert (GIG_IS_FIND_BAR (self));
-
-  g_clear_object (&self->find_controller_signals);
-  g_clear_object (&self->find_controller);
-
-  G_OBJECT_CLASS (gig_find_bar_parent_class)->finalize (object);
 }
 
 static void
@@ -145,7 +141,6 @@ gig_find_bar_class_init (GigFindBarClass *klass)
 
   object_class->constructed = gig_find_bar_constructed;
   object_class->dispose = gig_find_bar_dispose;
-  object_class->finalize = gig_find_bar_finalize;
   object_class->set_property = gig_find_bar_set_property;
   object_class->get_property = gig_find_bar_get_property;
   widget_class->grab_focus = gig_find_bar_grab_focus;
@@ -154,7 +149,7 @@ gig_find_bar_class_init (GigFindBarClass *klass)
       g_param_spec_object ("find-controller",
                            NULL, NULL,
                            WEBKIT_TYPE_FIND_CONTROLLER,
-                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
@@ -174,20 +169,14 @@ gig_find_bar_init (GigFindBar *self)
   gtk_widget_init_template (GTK_WIDGET (self));
 
   gig_find_bar_actions_init (self);
-
-  self->find_controller_signals = g_signal_group_new (WEBKIT_TYPE_FIND_CONTROLLER);
-
-  g_signal_group_connect_object (self->find_controller_signals,
-                                 "counted-matches",
-                                 G_CALLBACK (find_controller_counted_matches_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
 }
 
 GigFindBar *
-gig_find_bar_new (void)
+gig_find_bar_new (WebKitFindController *find_controller)
 {
-  return g_object_new (GIG_TYPE_FIND_BAR, NULL);
+  return g_object_new (GIG_TYPE_FIND_BAR,
+                       "find-controller", find_controller,
+                       NULL);
 }
 
 WebKitFindController *
@@ -198,32 +187,17 @@ gig_find_bar_get_find_controller (GigFindBar *self)
   return self->find_controller;
 }
 
-void
+static void
 gig_find_bar_set_find_controller (GigFindBar *self,
                                   WebKitFindController *find_controller)
 {
-  const gchar *search_text;
-  WebKitFindOptions options = WEBKIT_FIND_OPTIONS_WRAP_AROUND | WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE;
-
   g_assert (GIG_IS_FIND_BAR (self));
+  g_assert (WEBKIT_IS_FIND_CONTROLLER (find_controller));
 
-  if (!g_set_object (&self->find_controller, find_controller))
+  if (self->find_controller == find_controller)
     return;
 
-  search_text = webkit_find_controller_get_search_text (self->find_controller);
-  if (!search_text)
-    search_text = "";
-
-  gtk_editable_set_text (GTK_EDITABLE (self->entry), search_text);
-
-  webkit_find_controller_count_matches (self->find_controller,
-                                        search_text, options, G_MAXUINT);
-
-  g_signal_group_set_target (self->find_controller_signals,
-                             self->find_controller);
-
-  gtk_widget_set_sensitive (GTK_WIDGET (self->entry),
-                            self->find_controller != NULL);
+  self->find_controller = find_controller;
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_FIND_CONTROLLER]);
 }
