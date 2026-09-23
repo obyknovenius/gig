@@ -78,9 +78,9 @@ gig_window_actions_go_forward_cb (GtkWidget *widget,
 }
 
 static void
-gig_window_actions_reveal_find_cb (GtkWidget *widget,
-                                   const gchar *action_name,
-                                   GVariant *param)
+gig_window_actions_find_cb (GtkWidget *widget,
+                            const gchar *action_name,
+                            GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -91,9 +91,9 @@ gig_window_actions_reveal_find_cb (GtkWidget *widget,
 }
 
 static void
-gig_window_actions_dismiss_find_cb (GtkWidget *widget,
-                                    const gchar *action_name,
-                                    GVariant *param)
+gig_window_actions_find_finish_cb (GtkWidget *widget,
+                                   const gchar *action_name,
+                                   GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -120,11 +120,11 @@ gig_window_class_actions_init (GigWindowClass *klass)
   gtk_widget_class_install_action (widget_class, "win.go-forward", NULL,
                                    gig_window_actions_go_forward_cb);
 
-  gtk_widget_class_install_action (widget_class, "win.reveal-find", NULL,
-                                   gig_window_actions_reveal_find_cb);
+  gtk_widget_class_install_action (widget_class, "page.find", NULL,
+                                   gig_window_actions_find_cb);
 
-  gtk_widget_class_install_action (widget_class, "win.dismiss-find", NULL,
-                                   gig_window_actions_dismiss_find_cb);
+  gtk_widget_class_install_action (widget_class, "page.find-finish", NULL,
+                                   gig_window_actions_find_finish_cb);
 
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_t, GDK_CONTROL_MASK,
@@ -132,11 +132,11 @@ gig_window_class_actions_init (GigWindowClass *klass)
 
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_f, GDK_CONTROL_MASK,
-                                       "win.reveal-find", NULL);
+                                       "page.find", NULL);
 
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_Escape, GDK_NO_MODIFIER_MASK,
-                                       "win.dismiss-find", NULL);
+                                       "page.find-finish", NULL);
 }
 
 void
@@ -171,5 +171,5 @@ gig_window_actions_update (GigWindow *self,
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.reveal-find", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "page.find", !is_blank);
 }

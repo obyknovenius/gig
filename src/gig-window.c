@@ -63,7 +63,7 @@ web_view_uri_changed_cb (GigWindow *self,
   is_blank = gig_web_view_is_blank (web_view);
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.reveal-find", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "page.find", !is_blank);
 }
 
 static void
