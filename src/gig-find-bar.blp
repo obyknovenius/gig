@@ -14,6 +14,11 @@ template $GigFindBar: Gtk.Widget {
                 Gtk.SearchEntry entry {
                     placeholder-text: "Find";
                     hexpand: true;
+
+                    Gtk.EventControllerFocus {
+                        enter => $entry_focus_enter_cb() swapped;
+                        leave => $entry_focus_leave_cb() swapped;
+                    }
                 }
 
                 Gtk.Button {

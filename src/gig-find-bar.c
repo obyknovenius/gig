@@ -28,6 +28,24 @@ find_controller_counted_matches_cb (GigFindBar *self,
 }
 
 static void
+entry_focus_enter_cb (GigFindBar *self,
+                      GtkEventControllerFocus *controller)
+{
+  g_assert (GIG_IS_FIND_BAR (self));
+
+  gtk_editable_select_region (GTK_EDITABLE (self->entry), 0, -1);
+}
+
+static void
+entry_focus_leave_cb (GigFindBar *self,
+                      GtkEventControllerFocus *controller)
+{
+  g_assert (GIG_IS_FIND_BAR (self));
+
+  gtk_editable_set_position (GTK_EDITABLE (self->entry), -1);
+}
+
+static void
 entry_search_changed_cb (GigFindBar *self,
                          GtkSearchEntry *entry)
 {
@@ -161,6 +179,9 @@ gig_find_bar_class_init (GigFindBarClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, center_box);
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, entry);
+
+  gtk_widget_class_bind_template_callback (widget_class, entry_focus_enter_cb);
+  gtk_widget_class_bind_template_callback (widget_class, entry_focus_leave_cb);
 }
 
 static void
