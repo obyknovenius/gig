@@ -34,13 +34,13 @@ template $GigFindBar: Gtk.Widget {
         [end]
         Gtk.Button {
             icon-name: "window-close-symbolic";
+            valign: center;
             can-focus: false;
             action-name: "win.dismiss-find";
 
             styles [
-                "flat",
-                "small-button",
-                "circular",
+                "close",
+                "image-button",
             ]
         }
 

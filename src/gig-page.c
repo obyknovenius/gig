@@ -218,9 +218,8 @@ gig_page_class_init (GigPageClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
+  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-page.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
-
-  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-page.ui");
 }
 
 static void

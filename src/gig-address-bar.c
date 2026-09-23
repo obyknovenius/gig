@@ -378,9 +378,8 @@ gig_address_bar_class_init (GigAddressBarClass *klass)
   widget_class->grab_focus = gig_address_bar_grab_focus;
   widget_class->css_changed = gig_address_bar_css_changed;
 
+  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-address-bar.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
-
-  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-address-bar.ui");
 
   gtk_widget_class_bind_template_child (widget_class, GigAddressBar, entry);
 

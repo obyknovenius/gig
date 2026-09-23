@@ -114,6 +114,8 @@ gig_application_startup (GApplication *application)
 
   g_assert (GIG_IS_APPLICATION (self));
 
+  g_application_set_resource_base_path (G_APPLICATION (self), "/com/github/obyknovenius/Gig");
+
   G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
 
   gig_application_init_actions (self);

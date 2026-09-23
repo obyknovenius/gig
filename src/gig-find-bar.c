@@ -160,9 +160,9 @@ gig_find_bar_class_init (GigFindBarClass *klass)
 
   gig_find_bar_class_actions_init (klass);
 
+  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-find-bar.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
-
-  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-find-bar.ui");
+  gtk_widget_class_set_css_name (widget_class, "findbar");
 
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, center_box);
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, entry);

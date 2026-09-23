@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/com/github/obyknovenius/Gig/ui">
+  <gresource prefix="/com/github/obyknovenius/Gig">
     <file preprocess="xml-stripblanks">gig-address-bar.ui</file>
     <file preprocess="xml-stripblanks">gig-find-bar.ui</file>
     <file preprocess="xml-stripblanks">gig-page.ui</file>
     <file preprocess="xml-stripblanks">gig-window.ui</file>
+
+    <file>style.css</file>
   </gresource>
 </gresources>

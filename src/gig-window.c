@@ -214,7 +214,7 @@ gig_window_class_init (GigWindowClass *klass)
 
   gig_window_class_actions_init (klass);
 
-  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/ui/gig-window.ui");
+  gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-window.ui");
 
   gtk_widget_class_bind_template_child (widget_class, GigWindow, toolbar_view);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, header_bar);

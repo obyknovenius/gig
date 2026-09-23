@@ -1,0 +1,22 @@
+findbar .close,
+findbar .close:hover,
+findbar .close:active {
+    background: none;
+    box-shadow: none;
+}
+
+findbar .close > image {
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+    border-radius: 100%;
+    padding: 4px;
+    transition: background 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+findbar .close:hover > image {
+    background-color: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+findbar .close:active > image {
+    background-color: color-mix(in srgb, currentColor 30%, transparent);
+}
