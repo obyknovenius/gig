@@ -202,10 +202,22 @@ void
 gig_find_bar_set_find_controller (GigFindBar *self,
                                   WebKitFindController *find_controller)
 {
+  const gchar *search_text;
+  WebKitFindOptions options = WEBKIT_FIND_OPTIONS_WRAP_AROUND | WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE;
+
   g_assert (GIG_IS_FIND_BAR (self));
 
   if (!g_set_object (&self->find_controller, find_controller))
     return;
+
+  search_text = webkit_find_controller_get_search_text (self->find_controller);
+  if (!search_text)
+    search_text = "";
+
+  gtk_editable_set_text (GTK_EDITABLE (self->entry), search_text);
+
+  webkit_find_controller_count_matches (self->find_controller,
+                                        search_text, options, G_MAXUINT);
 
   g_signal_group_set_target (self->find_controller_signals,
                              self->find_controller);
@@ -219,19 +231,19 @@ gig_find_bar_set_find_controller (GigFindBar *self,
 void
 gig_find_bar_search (GigFindBar *self)
 {
-  const gchar *text;
+  const gchar *search_text;
   WebKitFindOptions options = WEBKIT_FIND_OPTIONS_WRAP_AROUND | WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE;
 
   g_assert (GIG_IS_FIND_BAR (self));
   g_assert (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
-  text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
+  search_text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
   webkit_find_controller_count_matches (self->find_controller,
-                                        text, options, G_MAXUINT);
+                                        search_text, options, G_MAXUINT);
 
   webkit_find_controller_search (self->find_controller,
-                                 text, options, G_MAXUINT);
+                                 search_text, options, G_MAXUINT);
 }
 
 void
