@@ -68,6 +68,28 @@ web_view_is_loading_changed_cb (GigPage *self,
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
 }
 
+static gboolean
+web_view_enter_fullscreen_cb (GigPage *self,
+                              GigWebView *web_view)
+{
+  g_assert (GIG_IS_PAGE (self));
+
+  gtk_widget_set_visible (GTK_WIDGET (self->find_bar), FALSE);
+
+  return FALSE;
+}
+
+static gboolean
+web_view_leave_fullscreen_cb (GigPage *self,
+                              GigWebView *web_view)
+{
+  g_assert (GIG_IS_PAGE (self));
+
+  gtk_widget_set_visible (GTK_WIDGET (self->find_bar), TRUE);
+
+  return FALSE;
+}
+
 static void
 gig_page_constructed (GObject *object)
 {
@@ -102,6 +124,18 @@ gig_page_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "notify::is-loading",
                            G_CALLBACK (web_view_is_loading_changed_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "enter-fullscreen",
+                           G_CALLBACK (web_view_enter_fullscreen_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "leave-fullscreen",
+                           G_CALLBACK (web_view_leave_fullscreen_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
