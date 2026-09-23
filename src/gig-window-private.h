@@ -15,7 +15,7 @@ struct _GigWindow
   GigAddressBar *address_bar;
   AdwTabView *tab_view;
 
-  GigPage *selected_page;
+  AdwTabPage *menu_page;
 
   GSignalGroup *web_view_signals;
 };
@@ -24,7 +24,6 @@ void gig_window_class_actions_init (GigWindowClass *klass);
 
 void gig_window_actions_init (GigWindow *self);
 
-void gig_window_actions_update (GigWindow *self,
-                                GigPage *page);
+void gig_window_actions_update (GigWindow *self);
 
 G_END_DECLS

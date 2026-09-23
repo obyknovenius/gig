@@ -75,7 +75,7 @@ gig_application_activate (GApplication *application)
   window = gig_window_new (GTK_APPLICATION (application));
   page = GIG_PAGE (gig_page_new ());
 
-  gig_window_add_tab_page (window, page, TRUE, NULL);
+  gig_window_add_page (window, page, TRUE, NULL);
 
   gtk_window_present (GTK_WINDOW (window));
 }
@@ -101,7 +101,7 @@ gig_application_open (GApplication *application,
       page = GIG_PAGE (gig_page_new ());
       gig_web_view_load_uri (gig_page_get_web_view (page), uri);
 
-      gig_window_add_tab_page (window, page, set_selected, NULL);
+      gig_window_add_page (window, page, set_selected, NULL);
     }
 
   gtk_window_present (GTK_WINDOW (window));
