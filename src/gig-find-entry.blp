@@ -1,0 +1,30 @@
+using Gtk 4.0;
+
+template $GigFindEntry: Gtk.Widget {
+    Gtk.Image {
+        icon-name: 'edit-find-symbolic';
+        sensitive: false;
+    }
+
+    Gtk.Text text {
+        placeholder-text: 'Find';
+        hexpand: true;
+        changed => $text_changed_cb() swapped after;
+    }
+
+    Gtk.Label occurrence_label {
+        styles [
+            'numeric',
+            'dim-label',
+        ]
+    }
+
+    Gtk.Image clear_image {
+        icon-name: 'edit-clear-symbolic';
+        visible: false;
+
+        Gtk.GestureClick {
+            pressed => $clear_pressed_cb() swapped after;
+        }
+    }
+}

@@ -9,7 +9,7 @@ struct _GigFindBar
   GtkWidget parent_instance;
 
   GtkCenterBox *center_box;
-  GtkSearchEntry *entry;
+  GigFindEntry *entry;
   WebKitFindController *find_controller;
 };
 

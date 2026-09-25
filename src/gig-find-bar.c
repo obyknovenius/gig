@@ -1,5 +1,6 @@
 #include "gig-find-bar-private.h"
 
+#include "gig-find-entry.h"
 #include "gig-web-view.h"
 
 G_DEFINE_FINAL_TYPE (GigFindBar, gig_find_bar, GTK_TYPE_WIDGET)
@@ -22,6 +23,9 @@ find_controller_counted_matches_cb (GigFindBar *self,
                                     WebKitFindController *find_controller)
 {
   g_assert (GIG_IS_FIND_BAR (self));
+
+  gig_find_entry_set_occurrence_count (self->entry, count);
+  gig_find_entry_set_occurrence_position (self->entry, 1);
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.previous", count > 1);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.next", count > 1);
@@ -47,7 +51,7 @@ entry_focus_leave_cb (GigFindBar *self,
 
 static void
 entry_search_changed_cb (GigFindBar *self,
-                         GtkSearchEntry *entry)
+                         GigFindEntry *entry)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -56,7 +60,7 @@ entry_search_changed_cb (GigFindBar *self,
 
 static void
 entry_stop_search_cb (GigFindBar *self,
-                      GtkSearchEntry *entry)
+                      GigFindEntry *entry)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -69,20 +73,6 @@ gig_find_bar_constructed (GObject *object)
   GigFindBar *self = GIG_FIND_BAR (object);
 
   G_OBJECT_CLASS (gig_find_bar_parent_class)->constructed (object);
-
-  g_assert (GTK_IS_SEARCH_ENTRY (self->entry));
-
-  g_signal_connect_object (self->entry,
-                           "search-changed",
-                           G_CALLBACK (entry_search_changed_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  g_signal_connect_object (self->entry,
-                           "stop-search",
-                           G_CALLBACK (entry_stop_search_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
 
   g_assert (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
@@ -180,8 +170,12 @@ gig_find_bar_class_init (GigFindBarClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, center_box);
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, entry);
 
+  gtk_widget_class_bind_template_callback (widget_class, entry_search_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, entry_stop_search_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_focus_enter_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_focus_leave_cb);
+
+  g_type_ensure (GIG_TYPE_FIND_ENTRY);
 }
 
 static void
@@ -203,7 +197,7 @@ gig_find_bar_new (WebKitFindController *find_controller)
 WebKitFindController *
 gig_find_bar_get_find_controller (GigFindBar *self)
 {
-  g_assert (GIG_IS_FIND_BAR (self));
+  g_return_val_if_fail (GIG_IS_FIND_BAR (self), NULL);
 
   return self->find_controller;
 }
@@ -229,8 +223,8 @@ gig_find_bar_search (GigFindBar *self)
   const gchar *search_text;
   WebKitFindOptions options = WEBKIT_FIND_OPTIONS_WRAP_AROUND | WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE;
 
-  g_assert (GIG_IS_FIND_BAR (self));
-  g_assert (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
+  g_return_if_fail (GIG_IS_FIND_BAR (self));
+  g_return_if_fail (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
   search_text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
@@ -244,8 +238,8 @@ gig_find_bar_search (GigFindBar *self)
 void
 gig_find_bar_search_finish (GigFindBar *self)
 {
-  g_assert (GIG_IS_FIND_BAR (self));
-  g_assert (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
+  g_return_if_fail (GIG_IS_FIND_BAR (self));
+  g_return_if_fail (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
   webkit_find_controller_search_finish (self->find_controller);
 }

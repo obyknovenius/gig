@@ -9,6 +9,7 @@ G_BEGIN_DECLS
 typedef struct _GigAddressBar GigAddressBar;
 typedef struct _GigApplication GigApplication;
 typedef struct _GigFindBar GigFindBar;
+typedef struct _GigFindEntry GigFindEntry;
 typedef struct _GigPage GigPage;
 typedef struct _GigWebView GigWebView;
 typedef struct _GigWindow GigWindow;
