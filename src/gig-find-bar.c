@@ -64,7 +64,7 @@ entry_stop_search_cb (GigFindBar *self,
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
-  gtk_widget_activate_action (GTK_WIDGET (self), "page.find-finish", NULL);
+  gtk_widget_activate_action (GTK_WIDGET (self), "tab.find-finish", NULL);
 }
 
 static void

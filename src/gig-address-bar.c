@@ -1,6 +1,6 @@
 #include "gig-address-bar-private.h"
 
-#include "gig-page.h"
+#include "gig-tab.h"
 #include "gig-uri-utils.h"
 #include "gig-web-view.h"
 

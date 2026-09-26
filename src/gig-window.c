@@ -1,7 +1,7 @@
 #include "gig-window-private.h"
 
 #include "gig-address-bar.h"
-#include "gig-page.h"
+#include "gig-tab.h"
 #include "gig-web-view.h"
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
@@ -10,16 +10,16 @@ static AdwTabPage *
 tab_overview_create_tab_cb (GigWindow *self,
                             AdwTabOverview *tab_overview)
 {
-  GigPage *page = NULL;
+  GigTab *tab = NULL;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
 
-  page = GIG_PAGE (gig_page_new ());
+  tab = GIG_TAB (gig_tab_new ());
 
-  gig_window_add_page (self, page, FALSE, NULL);
+  gig_window_add_tab (self, tab, FALSE, NULL);
 
-  return adw_tab_view_get_page (self->tab_view, GTK_WIDGET (page));
+  return adw_tab_view_get_page (self->tab_view, GTK_WIDGET (tab));
 }
 
 static WebKitWebView *
@@ -28,10 +28,10 @@ web_view_create_cb (GigWindow *self,
                     WebKitWebView *related_web_view)
 {
   GigWebView *web_view;
-  GigPage *page;
+  GigTab *tab;
   WebKitURIRequest *request;
   const gchar *pending_uri;
-  GigPage *parent_page;
+  GigTab *parent_tab;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
@@ -42,11 +42,11 @@ web_view_create_cb (GigWindow *self,
   pending_uri = webkit_uri_request_get_uri (request);
   gig_web_view_set_pending_uri (web_view, pending_uri);
 
-  page = GIG_PAGE (gig_page_new_with_web_view (web_view));
-  parent_page = gig_window_get_selected_page (self);
-  g_assert (GIG_IS_PAGE (parent_page));
+  tab = GIG_TAB (gig_tab_new_with_web_view (web_view));
+  parent_tab = gig_window_get_selected_tab (self);
+  g_assert (GIG_IS_TAB (parent_tab));
 
-  gig_window_add_page (self, page, TRUE, parent_page);
+  gig_window_add_tab (self, tab, TRUE, parent_tab);
 
   return WEBKIT_WEB_VIEW (web_view);
 }
@@ -64,7 +64,7 @@ web_view_uri_changed_cb (GigWindow *self,
   is_blank = gig_web_view_is_blank (web_view);
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "page.find", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.find", !is_blank);
 }
 
 static void
@@ -145,16 +145,16 @@ tab_view_selected_page_changed_cb (GigWindow *self,
                                    GParamSpec *pspec,
                                    AdwTabView *tab_view)
 {
-  GigPage *page = NULL;
+  GigTab *tab = NULL;
   GigWebView *web_view = NULL;
   gboolean is_loading = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
-  if ((page = gig_window_get_selected_page (self)))
+  if ((tab = gig_window_get_selected_tab (self)))
     {
-      web_view = gig_page_get_web_view (page);
+      web_view = gig_tab_get_web_view (tab);
       is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
     }
 
@@ -169,7 +169,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
   g_signal_group_set_target (self->web_view_signals, web_view);
 
   if (web_view && !gig_web_view_is_blank (web_view))
-    gtk_widget_grab_focus (GTK_WIDGET (page));
+    gtk_widget_grab_focus (GTK_WIDGET (tab));
   else
     gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
 }
@@ -308,34 +308,34 @@ gig_window_new (GtkApplication *application)
 }
 
 void
-gig_window_add_page (GigWindow *self,
-                     GigPage *page,
-                     gboolean set_selected,
-                     GigPage *parent_page)
+gig_window_add_tab (GigWindow *self,
+                    GigTab *tab,
+                    gboolean set_selected,
+                    GigTab *parent_tab)
 {
   AdwTabPage *tab_page;
   AdwTabPage *parent_tab_page = NULL;
 
   g_return_if_fail (GIG_IS_WINDOW (self));
-  g_return_if_fail (GIG_IS_PAGE (page));
-  g_return_if_fail (!parent_page || GIG_IS_PAGE (parent_page));
+  g_return_if_fail (GIG_IS_TAB (tab));
+  g_return_if_fail (!parent_tab || GIG_IS_TAB (parent_tab));
 
-  if (parent_page)
-    parent_tab_page = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (parent_page));
+  if (parent_tab)
+    parent_tab_page = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (parent_tab));
 
   tab_page = adw_tab_view_add_page (self->tab_view,
-                                    GTK_WIDGET (page),
+                                    GTK_WIDGET (tab),
                                     parent_tab_page);
 
-  g_object_bind_property (page, "title",
+  g_object_bind_property (tab, "title",
                           tab_page, "title",
                           G_BINDING_SYNC_CREATE);
 
-  g_object_bind_property (page, "icon",
+  g_object_bind_property (tab, "icon",
                           tab_page, "icon",
                           G_BINDING_SYNC_CREATE);
 
-  g_object_bind_property (page, "is-loading",
+  g_object_bind_property (tab, "is-loading",
                           tab_page, "loading",
                           G_BINDING_SYNC_CREATE);
 
@@ -343,8 +343,8 @@ gig_window_add_page (GigWindow *self,
     adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }
 
-GigPage *
-gig_window_get_selected_page (GigWindow *self)
+GigTab *
+gig_window_get_selected_tab (GigWindow *self)
 {
   AdwTabPage *tab_page;
 
@@ -355,5 +355,5 @@ gig_window_get_selected_page (GigWindow *self)
   if (!tab_page)
     return NULL;
 
-  return GIG_PAGE (adw_tab_page_get_child (tab_page));
+  return GIG_TAB (adw_tab_page_get_child (tab_page));
 }
