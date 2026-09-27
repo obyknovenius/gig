@@ -135,6 +135,57 @@ gig_window_actions_tab_close_cb (GtkWidget *widget,
   adw_tab_view_close_page (self->tab_view, tab_page);
 }
 
+static void
+gig_window_actions_tab_close_others_cb (GtkWidget *widget,
+                                        const gchar *action_name,
+                                        GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+  AdwTabPage *tab_page;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  tab_page = self->menu_page;
+  if (!tab_page)
+    tab_page = adw_tab_view_get_selected_page (self->tab_view);
+
+  adw_tab_view_close_other_pages (self->tab_view, tab_page);
+}
+
+static void
+gig_window_actions_tab_close_before_cb (GtkWidget *widget,
+                                        const gchar *action_name,
+                                        GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+  AdwTabPage *tab_page;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  tab_page = self->menu_page;
+  if (!tab_page)
+    tab_page = adw_tab_view_get_selected_page (self->tab_view);
+
+  adw_tab_view_close_pages_before (self->tab_view, tab_page);
+}
+
+static void
+gig_window_actions_tab_close_after_cb (GtkWidget *widget,
+                                       const gchar *action_name,
+                                       GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+  AdwTabPage *tab_page;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  tab_page = self->menu_page;
+  if (!tab_page)
+    tab_page = adw_tab_view_get_selected_page (self->tab_view);
+
+  adw_tab_view_close_pages_after (self->tab_view, tab_page);
+}
+
 void
 gig_window_class_actions_init (GigWindowClass *klass)
 {
@@ -160,6 +211,15 @@ gig_window_class_actions_init (GigWindowClass *klass)
 
   gtk_widget_class_install_action (widget_class, "tab.close", NULL,
                                    gig_window_actions_tab_close_cb);
+
+  gtk_widget_class_install_action (widget_class, "tab.close-others", NULL,
+                                   gig_window_actions_tab_close_others_cb);
+
+  gtk_widget_class_install_action (widget_class, "tab.close-before", NULL,
+                                   gig_window_actions_tab_close_before_cb);
+
+  gtk_widget_class_install_action (widget_class, "tab.close-after", NULL,
+                                   gig_window_actions_tab_close_after_cb);
 
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_t, GDK_CONTROL_MASK,

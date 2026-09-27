@@ -134,8 +134,25 @@ tab_view_setup_menu_cb (GigWindow *self,
                         AdwTabPage *page,
                         AdwTabView *tab_view)
 {
+  gint n_pages = -1;
+  gint position = -1;
+
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
+
+  if (page)
+    {
+      n_pages = adw_tab_view_get_n_pages (tab_view);
+      position = adw_tab_view_get_page_position (tab_view, page);
+    }
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "tab.close-before",
+                                 page && position > 0);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "tab.close-after",
+                                 page && position < n_pages - 1);
 
   self->menu_page = page;
 }
