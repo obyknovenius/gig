@@ -330,7 +330,7 @@ gig_tab_get_title (GigTab *self)
   if (title && title[0] != '\0')
     return title;
 
-  title = gig_web_view_get_uri (self->web_view);
+  title = gig_web_view_get_display_uri (self->web_view);
   if (title && title[0] != '\0')
     return title;
 

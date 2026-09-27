@@ -132,7 +132,7 @@ update_primary_icon (GigAddressBar *self)
 
   if (self->web_view)
     {
-      uri = gig_web_view_get_uri (self->web_view);
+      uri = gig_web_view_get_display_uri (self->web_view);
       connection_security_level = gig_web_view_get_connection_security_level (self->web_view);
     }
 
@@ -271,9 +271,9 @@ web_view_decide_policy_cb (GigAddressBar *self,
 }
 
 static void
-web_view_uri_changed_cb (GigAddressBar *self,
-                         GParamSpec *pspec,
-                         GigWebView *web_view)
+web_view_display_uri_changed_cb (GigAddressBar *self,
+                                 GParamSpec *pspec,
+                                 GigWebView *web_view)
 {
   const gchar *uri;
 
@@ -283,7 +283,7 @@ web_view_uri_changed_cb (GigAddressBar *self,
   if (self->modified)
     return;
 
-  uri = gig_web_view_get_uri (web_view);
+  uri = gig_web_view_get_display_uri (web_view);
   set_text (self, uri);
 
   update_primary_icon (self);
@@ -404,8 +404,8 @@ gig_address_bar_init (GigAddressBar *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::uri",
-                                 G_CALLBACK (web_view_uri_changed_cb),
+                                 "notify::display-uri",
+                                 G_CALLBACK (web_view_display_uri_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
@@ -465,7 +465,7 @@ gig_address_bar_reset (GigAddressBar *self)
   set_editing (self, FALSE);
 
   if (self->web_view)
-    uri = gig_web_view_get_uri (self->web_view);
+    uri = gig_web_view_get_display_uri (self->web_view);
 
   set_text (self, uri);
 }

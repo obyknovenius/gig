@@ -16,16 +16,13 @@ G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
 enum
 {
   PROP_0,
+  PROP_PENDING_URI,
+  PROP_DISPLAY_URI,
   PROP_IS_BLANK,
   PROP_CAN_GO_BACK,
   PROP_CAN_GO_FORWARD,
   PROP_CONNECTION_SECURITY_LEVEL,
   N_PROPS
-};
-
-enum
-{
-  PROP_URI = N_PROPS
 };
 
 static GParamSpec *properties[N_PROPS];
@@ -150,6 +147,9 @@ web_view_uri_changed_cb (GigWebView *self,
                          GParamSpec *pspec,
                          WebKitWebView *web_view)
 {
+  g_clear_pointer (&self->pending_uri, g_free);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_DISPLAY_URI]);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_BLANK]);
 }
 
@@ -224,6 +224,25 @@ gig_web_view_finalize (GObject *object)
 }
 
 static void
+gig_web_view_set_property (GObject *object,
+                           guint prop_id,
+                           const GValue *value,
+                           GParamSpec *pspec)
+{
+  GigWebView *self = GIG_WEB_VIEW (object);
+
+  switch (prop_id)
+    {
+    case PROP_PENDING_URI:
+      g_set_str (&self->pending_uri, g_value_get_string (value));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
 gig_web_view_get_property (GObject *object,
                            guint prop_id,
                            GValue *value,
@@ -234,8 +253,8 @@ gig_web_view_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_URI:
-      g_value_set_string (value, gig_web_view_get_uri (self));
+    case PROP_DISPLAY_URI:
+      g_value_set_string (value, gig_web_view_get_display_uri (self));
       break;
 
     case PROP_IS_BLANK:
@@ -283,10 +302,21 @@ gig_web_view_class_init (GigWebViewClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->constructed = gig_web_view_constructed;
+  object_class->set_property = gig_web_view_set_property;
   object_class->get_property = gig_web_view_get_property;
   object_class->finalize = gig_web_view_finalize;
 
-  g_object_class_override_property (object_class, PROP_URI, "uri");
+  properties[PROP_PENDING_URI] =
+      g_param_spec_string ("pending-uri",
+                           NULL, NULL,
+                           NULL,
+                           G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_DISPLAY_URI] =
+      g_param_spec_string ("display-uri",
+                           NULL, NULL,
+                           NULL,
+                           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_IS_BLANK] =
       g_param_spec_boolean ("is-blank",
@@ -328,41 +358,8 @@ gig_web_view_new (void)
   return g_object_new (GIG_TYPE_WEB_VIEW, NULL);
 }
 
-GtkWidget *
-gig_web_view_new_with_related_view (WebKitWebView *related_view)
-{
-  return g_object_new (GIG_TYPE_WEB_VIEW,
-                       "related-view", related_view,
-                       NULL);
-}
-
-void
-gig_web_view_load_uri (GigWebView *web_view,
-                       const gchar *uri)
-{
-  g_autofree gchar *effective_uri = NULL;
-
-  g_return_if_fail (GIG_IS_WEB_VIEW (web_view));
-  g_return_if_fail (uri != NULL);
-
-  if ((effective_uri = gig_fixup_uri (uri)) == NULL)
-    effective_uri = gig_build_search_uri (uri);
-
-  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (web_view), effective_uri);
-}
-
-void
-gig_web_view_set_pending_uri (GigWebView *web_view,
-                              const gchar *uri)
-{
-  g_return_if_fail (GIG_IS_WEB_VIEW (web_view));
-
-  if (g_set_str (&web_view->pending_uri, uri))
-    g_object_notify (G_OBJECT (web_view), "uri");
-}
-
 const gchar *
-gig_web_view_get_uri (GigWebView *self)
+gig_web_view_get_display_uri (GigWebView *self)
 {
   const gchar *uri;
 
@@ -379,7 +376,7 @@ gig_web_view_is_blank (GigWebView *self)
 {
   g_return_val_if_fail (GIG_IS_WEB_VIEW (self), FALSE);
 
-  return gig_web_view_get_uri (self) == NULL;
+  return gig_web_view_get_display_uri (self) == NULL;
 }
 
 GigConnectionSecurityLevel
@@ -402,4 +399,19 @@ gig_web_view_set_connection_security_level (GigWebView *self,
   self->connection_security_level = connection_security_level;
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CONNECTION_SECURITY_LEVEL]);
+}
+
+void
+gig_web_view_load_uri (GigWebView *web_view,
+                       const gchar *uri)
+{
+  g_autofree gchar *effective_uri = NULL;
+
+  g_return_if_fail (GIG_IS_WEB_VIEW (web_view));
+  g_return_if_fail (uri != NULL);
+
+  if ((effective_uri = gig_fixup_uri (uri)) == NULL)
+    effective_uri = gig_build_search_uri (uri);
+
+  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (web_view), effective_uri);
 }
