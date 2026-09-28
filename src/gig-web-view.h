@@ -22,7 +22,7 @@ GtkWidget *gig_web_view_new (void);
 
 const gchar *gig_web_view_get_display_uri (GigWebView *web_view);
 
-gboolean gig_web_view_is_blank (GigWebView *web_view);
+gboolean gig_web_view_is_empty (GigWebView *web_view);
 
 GigConnectionSecurityLevel gig_web_view_get_connection_security_level (GigWebView *web_view);
 

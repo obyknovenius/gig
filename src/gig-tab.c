@@ -212,10 +212,11 @@ gig_tab_grab_focus (GtkWidget *widget)
 {
   GigTab *self = GIG_TAB (widget);
 
-  if (gig_web_view_is_blank (self->web_view))
-    return FALSE;
+  if (!gig_web_view_is_empty (self->web_view))
+    return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
 
-  return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
+  gtk_root_set_focus (gtk_widget_get_root (widget), widget);
+  return TRUE;
 }
 
 static void
@@ -311,7 +312,7 @@ gig_tab_set_web_view (GigTab *self,
   self->find_bar = gig_find_bar_new (find_controller);
 
   g_object_bind_property (self->web_view,
-                          "is-blank",
+                          "is-empty",
                           self->web_view,
                           "visible",
                           G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);

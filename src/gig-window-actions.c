@@ -250,7 +250,8 @@ void
 gig_window_actions_update (GigWindow *self)
 {
   GigTab *tab = NULL;
-  gboolean is_blank = TRUE;
+  gboolean is_empty = TRUE;
+  gboolean is_loading = FALSE;
   gboolean can_go_back = FALSE;
   gboolean can_go_forward = FALSE;
 
@@ -259,13 +260,25 @@ gig_window_actions_update (GigWindow *self)
   if ((tab = gig_window_get_selected_tab (self)))
     {
       GigWebView *web_view = gig_tab_get_web_view (tab);
-      is_blank = gig_web_view_is_blank (web_view);
+      is_empty = gig_web_view_is_empty (web_view);
+      is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
       can_go_back = webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view));
       can_go_forward = webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view));
     }
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", can_go_back);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", can_go_forward);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.find", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "win.stop-reload",
+                                 !is_empty || is_loading);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "win.go-back",
+                                 can_go_back);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "win.go-forward",
+                                 can_go_forward);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "tab.find",
+                                 !is_empty);
 }

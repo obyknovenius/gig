@@ -6,6 +6,7 @@ struct _GigWebView
 {
   WebKitWebView parent_instance;
 
+  gboolean is_empty;
   gchar *pending_uri;
 
   GigConnectionSecurityLevel connection_security_level;
@@ -16,9 +17,9 @@ G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
 enum
 {
   PROP_0,
+  PROP_IS_EMPTY,
   PROP_PENDING_URI,
   PROP_DISPLAY_URI,
-  PROP_IS_BLANK,
   PROP_CAN_GO_BACK,
   PROP_CAN_GO_FORWARD,
   PROP_CONNECTION_SECURITY_LEVEL,
@@ -26,6 +27,9 @@ enum
 };
 
 static GParamSpec *properties[N_PROPS];
+
+static void gig_web_view_set_is_empty (GigWebView *self,
+                                       gboolean is_empty);
 
 static void gig_web_view_set_connection_security_level (GigWebView *self,
                                                         GigConnectionSecurityLevel connection_security_level);
@@ -127,13 +131,14 @@ web_view_load_changed_cb (GigWebView *self,
         GTlsCertificate *certificate = NULL;
         GTlsCertificateFlags tls_errors = 0;
 
-        if (webkit_web_view_get_tls_info (web_view, &certificate, &tls_errors) &&
-            tls_errors == 0)
+        if (webkit_web_view_get_tls_info (web_view, &certificate, &tls_errors) && tls_errors == 0)
           gig_web_view_set_connection_security_level (self,
                                                       GIG_CONNECTION_SECURITY_LEVEL_SECURE);
         else
           gig_web_view_set_connection_security_level (self,
                                                       GIG_CONNECTION_SECURITY_LEVEL_INSECURE);
+
+        gig_web_view_set_is_empty (self, FALSE);
         break;
       }
 
@@ -150,7 +155,6 @@ web_view_uri_changed_cb (GigWebView *self,
   g_clear_pointer (&self->pending_uri, g_free);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_DISPLAY_URI]);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_BLANK]);
 }
 
 static void
@@ -253,12 +257,12 @@ gig_web_view_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_DISPLAY_URI:
-      g_value_set_string (value, gig_web_view_get_display_uri (self));
+    case PROP_IS_EMPTY:
+      g_value_set_boolean (value, gig_web_view_is_empty (self));
       break;
 
-    case PROP_IS_BLANK:
-      g_value_set_boolean (value, gig_web_view_is_blank (self));
+    case PROP_DISPLAY_URI:
+      g_value_set_string (value, gig_web_view_get_display_uri (self));
       break;
 
     case PROP_CAN_GO_BACK:
@@ -306,6 +310,12 @@ gig_web_view_class_init (GigWebViewClass *klass)
   object_class->get_property = gig_web_view_get_property;
   object_class->finalize = gig_web_view_finalize;
 
+  properties[PROP_IS_EMPTY] =
+      g_param_spec_boolean ("is-empty",
+                            NULL, NULL,
+                            TRUE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
   properties[PROP_PENDING_URI] =
       g_param_spec_string ("pending-uri",
                            NULL, NULL,
@@ -317,12 +327,6 @@ gig_web_view_class_init (GigWebViewClass *klass)
                            NULL, NULL,
                            NULL,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
-
-  properties[PROP_IS_BLANK] =
-      g_param_spec_boolean ("is-blank",
-                            NULL, NULL,
-                            TRUE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_CAN_GO_BACK] =
       g_param_spec_boolean ("can-go-back",
@@ -349,6 +353,7 @@ gig_web_view_class_init (GigWebViewClass *klass)
 static void
 gig_web_view_init (GigWebView *self)
 {
+  self->is_empty = TRUE;
   self->connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
 }
 
@@ -372,11 +377,25 @@ gig_web_view_get_display_uri (GigWebView *self)
 }
 
 gboolean
-gig_web_view_is_blank (GigWebView *self)
+gig_web_view_is_empty (GigWebView *self)
 {
   g_return_val_if_fail (GIG_IS_WEB_VIEW (self), FALSE);
 
-  return gig_web_view_get_display_uri (self) == NULL;
+  return self->is_empty;
+}
+
+static void
+gig_web_view_set_is_empty (GigWebView *self,
+                           gboolean is_empty)
+{
+  g_return_if_fail (GIG_IS_WEB_VIEW (self));
+
+  if (self->is_empty == is_empty)
+    return;
+
+  self->is_empty = is_empty;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_EMPTY]);
 }
 
 GigConnectionSecurityLevel

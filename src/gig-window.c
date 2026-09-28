@@ -54,19 +54,26 @@ web_view_create_cb (GigWindow *self,
 }
 
 static void
-web_view_uri_changed_cb (GigWindow *self,
-                         GParamSpec *pspec,
-                         GigWebView *web_view)
+web_view_is_empty_changed_cb (GigWindow *self,
+                              GParamSpec *pspec,
+                              GigWebView *web_view)
 {
-  gboolean is_blank = TRUE;
+  gboolean is_empty;
+  gboolean is_loading;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  is_blank = gig_web_view_is_blank (web_view);
+  is_empty = gig_web_view_is_empty (web_view);
+  is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", !is_blank);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.find", !is_blank);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "win.stop-reload",
+                                 !is_empty || is_loading);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "tab.find",
+                                 !is_empty);
 }
 
 static void
@@ -74,11 +81,21 @@ web_view_is_loading_changed_cb (GigWindow *self,
                                 GParamSpec *pspec,
                                 GigWebView *web_view)
 {
+  gboolean is_empty;
+  gboolean is_loading;
+
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
+  is_empty = gig_web_view_is_empty (web_view);
+  is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "win.stop-reload",
+                                 !is_empty || is_loading);
+
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button),
-                            webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view))
+                            is_loading
                                 ? "process-stop-symbolic"
                                 : "view-refresh-symbolic");
 }
@@ -187,10 +204,13 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 
   g_signal_group_set_target (self->web_view_signals, web_view);
 
-  if (web_view && !gig_web_view_is_blank (web_view))
-    gtk_widget_grab_focus (GTK_WIDGET (tab));
-  else
-    gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
+  if (web_view)
+    {
+      if (!gig_web_view_get_display_uri (web_view))
+        gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
+      else
+        gtk_widget_grab_focus (GTK_WIDGET (tab));
+    }
 }
 
 static void
@@ -292,8 +312,8 @@ gig_window_init (GigWindow *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::uri",
-                                 G_CALLBACK (web_view_uri_changed_cb),
+                                 "notify::is-empty",
+                                 G_CALLBACK (web_view_is_empty_changed_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
