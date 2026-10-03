@@ -163,22 +163,11 @@ back_forward_list_changed_cb (GigWebView *self,
                               gpointer items_removed,
                               WebKitBackForwardList *back_forward_list)
 {
-  GList *back_list = NULL;
-  GList *forward_list = NULL;
-
   g_assert (GIG_IS_WEB_VIEW (self));
   g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
 
-  if (webkit_back_forward_list_get_back_list (back_forward_list))
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_BACK]);
-
-  if (webkit_back_forward_list_get_forward_list (back_forward_list))
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_FORWARD]);
-
-  forward_list = webkit_back_forward_list_get_forward_list (back_forward_list);
-
-  g_list_free (back_list);
-  g_list_free (forward_list);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_BACK]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_FORWARD]);
 }
 
 static void
