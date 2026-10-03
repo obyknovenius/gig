@@ -382,6 +382,34 @@ gig_web_view_new_with_related_view (WebKitWebView *related_view,
                        NULL);
 }
 
+GigWebView *
+gig_web_view_copy (GigWebView *self)
+{
+  GigWebView *new_view;
+  WebKitWebViewSessionState *session_state;
+  WebKitBackForwardList *back_forward_list;
+  WebKitBackForwardListItem *item;
+
+  g_return_val_if_fail (GIG_IS_WEB_VIEW (self), NULL);
+
+  new_view = GIG_WEB_VIEW (gig_web_view_new ());
+
+  session_state = webkit_web_view_get_session_state (WEBKIT_WEB_VIEW (self));
+
+  webkit_web_view_restore_session_state (WEBKIT_WEB_VIEW (new_view), session_state);
+  webkit_web_view_session_state_unref (session_state);
+
+  back_forward_list = webkit_web_view_get_back_forward_list (WEBKIT_WEB_VIEW (new_view));
+  item = webkit_back_forward_list_get_current_item (back_forward_list);
+  if (item)
+    webkit_web_view_go_to_back_forward_list_item (WEBKIT_WEB_VIEW (new_view), item);
+  else
+    webkit_web_view_load_uri (WEBKIT_WEB_VIEW (new_view),
+                              webkit_web_view_get_uri (WEBKIT_WEB_VIEW (self)));
+
+  return GIG_WEB_VIEW (new_view);
+}
+
 const gchar *
 gig_web_view_get_display_uri (GigWebView *self)
 {
@@ -440,16 +468,16 @@ gig_web_view_set_connection_security_level (GigWebView *self,
 }
 
 void
-gig_web_view_load_uri (GigWebView *web_view,
+gig_web_view_load_uri (GigWebView *self,
                        const gchar *uri)
 {
   g_autofree gchar *effective_uri = NULL;
 
-  g_return_if_fail (GIG_IS_WEB_VIEW (web_view));
+  g_return_if_fail (GIG_IS_WEB_VIEW (self));
   g_return_if_fail (uri != NULL);
 
   if ((effective_uri = gig_fixup_uri (uri)) == NULL)
     effective_uri = gig_build_search_uri (uri);
 
-  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (web_view), effective_uri);
+  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (self), effective_uri);
 }

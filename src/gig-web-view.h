@@ -25,6 +25,8 @@ GtkWidget *gig_web_view_new (void);
 GtkWidget *gig_web_view_new_with_related_view (WebKitWebView *related_view,
                                                const gchar *pending_uri);
 
+GigWebView *gig_web_view_copy (GigWebView *web_view);
+
 const gchar *gig_web_view_get_display_uri (GigWebView *web_view);
 
 gboolean gig_web_view_is_empty (GigWebView *web_view);

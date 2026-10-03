@@ -186,6 +186,31 @@ gig_window_actions_tab_close_after_cb (GtkWidget *widget,
   adw_tab_view_close_pages_after (self->tab_view, tab_page);
 }
 
+static void
+gig_window_actions_tab_duplicate_cb (GtkWidget *widget,
+                                     const gchar *action_name,
+                                     GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+  AdwTabPage *tab_page;
+  GtkWidget *tab, *new_tab;
+  GigWebView *web_view, *new_view;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  tab_page = self->menu_page;
+  if (!tab_page)
+    tab_page = adw_tab_view_get_selected_page (self->tab_view);
+
+  tab = adw_tab_page_get_child (tab_page);
+  web_view = gig_tab_get_web_view (GIG_TAB (tab));
+
+  new_view = gig_web_view_copy (web_view);
+  new_tab = gig_tab_new_with_web_view (new_view);
+
+  gig_window_add_tab (self, GIG_TAB (new_tab), TRUE, NULL);
+}
+
 void
 gig_window_class_actions_init (GigWindowClass *klass)
 {
@@ -220,6 +245,9 @@ gig_window_class_actions_init (GigWindowClass *klass)
 
   gtk_widget_class_install_action (widget_class, "tab.close-after", NULL,
                                    gig_window_actions_tab_close_after_cb);
+
+  gtk_widget_class_install_action (widget_class, "tab.duplicate", NULL,
+                                   gig_window_actions_tab_duplicate_cb);
 
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_t, GDK_CONTROL_MASK,
