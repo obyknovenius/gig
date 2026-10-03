@@ -18,7 +18,12 @@ typedef enum _GigConnectionSecurityLevel
 
 GType gig_connection_security_level_get_type (void) G_GNUC_CONST;
 
+WebKitSettings *gig_web_view_get_default_settings (void);
+
 GtkWidget *gig_web_view_new (void);
+
+GtkWidget *gig_web_view_new_with_related_view (WebKitWebView *related_view,
+                                               const gchar *pending_uri);
 
 const gchar *gig_web_view_get_display_uri (GigWebView *web_view);
 

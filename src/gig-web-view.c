@@ -357,10 +357,40 @@ gig_web_view_init (GigWebView *self)
   self->connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
 }
 
+WebKitSettings *
+gig_web_view_get_default_settings (void)
+{
+  static WebKitSettings *settings = NULL;
+
+  if (settings == NULL)
+    {
+      settings = webkit_settings_new_with_settings (
+          "enable-back-forward-navigation-gestures", TRUE,
+          NULL);
+
+      g_object_add_weak_pointer (G_OBJECT (settings), (gpointer *) &settings);
+    }
+
+  return settings;
+}
+
 GtkWidget *
 gig_web_view_new (void)
 {
-  return g_object_new (GIG_TYPE_WEB_VIEW, NULL);
+  return g_object_new (GIG_TYPE_WEB_VIEW,
+                       "settings", gig_web_view_get_default_settings (),
+                       NULL);
+}
+
+GtkWidget *
+gig_web_view_new_with_related_view (WebKitWebView *related_view,
+                                    const gchar *pending_uri)
+{
+  return g_object_new (GIG_TYPE_WEB_VIEW,
+                       "settings", gig_web_view_get_default_settings (),
+                       "related-view", related_view,
+                       "pending-uri", pending_uri,
+                       NULL);
 }
 
 const gchar *

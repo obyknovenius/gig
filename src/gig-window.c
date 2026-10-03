@@ -25,26 +25,23 @@ tab_overview_create_tab_cb (GigWindow *self,
 static WebKitWebView *
 web_view_create_cb (GigWindow *self,
                     WebKitNavigationAction *navigation_action,
-                    WebKitWebView *related_web_view)
+                    WebKitWebView *related_view)
 {
-  GigWebView *web_view;
-  GigTab *tab;
+  GtkWidget *web_view;
   WebKitURIRequest *request;
   const gchar *pending_uri;
-  GigTab *parent_tab;
+  GigTab *tab, *parent_tab;
 
   g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (related_web_view));
+  g_assert (WEBKIT_IS_WEB_VIEW (related_view));
 
   request = webkit_navigation_action_get_request (navigation_action);
   pending_uri = webkit_uri_request_get_uri (request);
 
-  web_view = g_object_new (GIG_TYPE_WEB_VIEW,
-                           "related-view", related_web_view,
-                           "pending-uri", pending_uri,
-                           NULL);
+  web_view = gig_web_view_new_with_related_view (related_view,
+                                                 pending_uri);
 
-  tab = GIG_TAB (gig_tab_new_with_web_view (web_view));
+  tab = GIG_TAB (gig_tab_new_with_web_view (GIG_WEB_VIEW (web_view)));
   parent_tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (parent_tab));
 
