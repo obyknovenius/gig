@@ -1,20 +1,57 @@
 FROM fedora:45
 
+ARG WEBKIT_COMMIT=b3f79b3b2e5ca72e5979b191c89c7d5ce276e0f3
+ARG WEBKIT_CHECKOUT_DIR=/src/WebKit
+
+RUN --mount=type=cache,target=/var/cache/libdnf5 \
+    dnf -y install git
+
+# Fetch WebKit sources
+RUN git init --initial-branch=main "$WEBKIT_CHECKOUT_DIR" && \
+    cd "$WEBKIT_CHECKOUT_DIR" && \
+    git remote add origin https://github.com/WebKit/WebKit.git && \
+    git sparse-checkout set Source Tools && \
+    git fetch --depth=1 --filter=blob:none origin "$WEBKIT_COMMIT" && \
+    git switch --detach FETCH_HEAD
+
+WORKDIR $WEBKIT_CHECKOUT_DIR
+
+# Install WebKit dependencies
+RUN --mount=type=cache,target=/var/cache/libdnf5 \
+    Tools/gtk/install-dependencies && \
+    dnf -y install perl
+
+# Build and install WebKit
+RUN --mount=type=cache,target=${WEBKIT_CHECKOUT_DIR}/WebKitBuild \
+    cmake --preset gtk-release \
+        -DUSE_LIBBACKTRACE=OFF \
+        -DENABLE_DOCUMENTATION=OFF \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib64 && \
+    cmake --build --preset gtk-release --target install
+
+WORKDIR /
+
 # Install Free and Nonfree RPM Fusion Repositories
-RUN dnf -y install \
+RUN --mount=type=cache,target=/var/cache/libdnf5 \
+    dnf -y install \
         https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-45.noarch.rpm \
         https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-45.noarch.rpm
 
 # Install additional codec
-RUN dnf -y install \
+RUN --mount=type=cache,target=/var/cache/libdnf5 \
+    dnf -y install \
         @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
 
-RUN dnf -y install \
+# Install gig dependencies
+RUN --mount=type=cache,target=/var/cache/libdnf5 \
+    dnf -y install \
         blueprint-compiler \
         clang-tools-extra \
         desktop-file-utils \
         gtk4-devel \
         libadwaita-devel \
         meson \
-        webkitgtk6.0-devel \
         yaru-theme

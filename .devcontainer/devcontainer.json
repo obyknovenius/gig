@@ -4,6 +4,7 @@
 		"dockerfile": "Containerfile"
 	},
 	"runArgs": [
+		"--hostname=fedora-45",
 		"--device=/dev/dri"
 	],
 	"capAdd": [
@@ -15,8 +16,9 @@
 		"systempaths=unconfined"
 	],
 	"mounts": [
-		"source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind",
-		"source=${localEnv:HOME}/.claude,target=/home/${localEnv:USER}/.claude,type=bind"
+		"type=tmpfs,target=/tmp,tmpfs-mode=1777",
+		"type=bind,source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR}",
+		"type=bind,source=${localEnv:HOME}/.claude,target=/home/${localEnv:USER}/.claude"
 	],
 	"containerEnv": {
 		"GSETTINGS_BACKEND": "keyfile",
@@ -25,9 +27,7 @@
 		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}"
 	},
 	"features": {
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"username": "${localEnv:USER}"
-		}
+		"ghcr.io/obyknovenius/devcontainer-features/add-user:1": {}
 	},
 	"customizations": {
 		"vscode": {
