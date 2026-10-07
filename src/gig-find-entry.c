@@ -55,9 +55,7 @@ update_occurrence_label (GigFindEntry *self)
   g_assert (GIG_IS_FIND_ENTRY (self));
 
   if (self->occurrence_count == 0)
-    {
-      gtk_label_set_label (self->occurrence_label, NULL);
-    }
+    gtk_label_set_label (self->occurrence_label, NULL);
   else
     {
       g_autofree char *str = g_strdup_printf ("%u of %u",

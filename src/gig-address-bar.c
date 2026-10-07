@@ -324,9 +324,9 @@ gig_address_bar_dispose (GObject *object)
 {
   GigAddressBar *self = GIG_ADDRESS_BAR (object);
 
-  g_clear_object (&self->web_view);
-
   g_signal_group_set_target (self->web_view_signals, NULL);
+
+  g_clear_object (&self->web_view);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_ADDRESS_BAR);
 
@@ -339,7 +339,6 @@ gig_address_bar_finalize (GObject *object)
   GigAddressBar *self = GIG_ADDRESS_BAR (object);
 
   g_clear_object (&self->web_view_signals);
-  g_clear_object (&self->web_view);
 
   G_OBJECT_CLASS (gig_address_bar_parent_class)->finalize (object);
 }

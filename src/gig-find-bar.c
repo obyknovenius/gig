@@ -18,17 +18,45 @@ static void gig_find_bar_set_find_controller (GigFindBar *self,
                                               WebKitFindController *find_controller);
 
 static void
-find_controller_counted_matches_cb (GigFindBar *self,
-                                    guint count,
-                                    WebKitFindController *find_controller)
+reset (GigFindBar *self)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
-  gig_find_entry_set_occurrence_count (self->entry, count);
-  gig_find_entry_set_occurrence_position (self->entry, 1);
+  gig_find_entry_set_occurrence_count (self->entry, 0);
+  gig_find_entry_set_occurrence_position (self->entry, 0);
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.previous", count > 1);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.next", count > 1);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.previous", FALSE);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.next", FALSE);
+}
+
+static void
+find_controller_found_text_cb (GigFindBar *self,
+                               guint match_count,
+                               WebKitFindController *find_controller)
+{
+  g_assert (GIG_IS_FIND_BAR (self));
+
+  gig_find_entry_set_occurrence_count (self->entry, match_count);
+
+  if (gig_find_entry_get_occurrence_position (self->entry) == 0 && match_count > 0)
+    gig_find_entry_set_occurrence_position (self->entry, 1);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "find.previous",
+                                 match_count > 1);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self),
+                                 "find.next",
+                                 match_count > 1);
+}
+
+static void
+find_controller_failed_to_find_text_cb (GigFindBar *self,
+                                        WebKitFindController *find_controller)
+{
+  g_assert (GIG_IS_FIND_BAR (self));
+
+  reset (self);
 }
 
 static void
@@ -77,8 +105,14 @@ gig_find_bar_constructed (GObject *object)
   g_assert (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
   g_signal_connect_object (self->find_controller,
-                           "counted-matches",
-                           G_CALLBACK (find_controller_counted_matches_cb),
+                           "found-text",
+                           G_CALLBACK (find_controller_found_text_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->find_controller,
+                           "failed-to-find-text",
+                           G_CALLBACK (find_controller_failed_to_find_text_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
@@ -87,6 +121,10 @@ static void
 gig_find_bar_dispose (GObject *object)
 {
   GigFindBar *self = GIG_FIND_BAR (object);
+
+  if (self->find_controller)
+    g_signal_handlers_disconnect_by_data (self->find_controller, self);
+  g_clear_object (&self->find_controller);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_FIND_BAR);
 
@@ -105,25 +143,6 @@ gig_find_bar_set_property (GObject *object,
     {
     case PROP_FIND_CONTROLLER:
       gig_find_bar_set_find_controller (self, g_value_get_object (value));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-gig_find_bar_get_property (GObject *object,
-                           guint prop_id,
-                           GValue *value,
-                           GParamSpec *pspec)
-{
-  GigFindBar *self = GIG_FIND_BAR (object);
-
-  switch (prop_id)
-    {
-    case PROP_FIND_CONTROLLER:
-      g_value_set_object (value, gig_find_bar_get_find_controller (self));
       break;
 
     default:
@@ -150,14 +169,13 @@ gig_find_bar_class_init (GigFindBarClass *klass)
   object_class->constructed = gig_find_bar_constructed;
   object_class->dispose = gig_find_bar_dispose;
   object_class->set_property = gig_find_bar_set_property;
-  object_class->get_property = gig_find_bar_get_property;
   widget_class->grab_focus = gig_find_bar_grab_focus;
 
   properties[PROP_FIND_CONTROLLER] =
       g_param_spec_object ("find-controller",
                            NULL, NULL,
                            WEBKIT_TYPE_FIND_CONTROLLER,
-                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+                           G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
@@ -194,14 +212,6 @@ gig_find_bar_new (WebKitFindController *find_controller)
                        NULL);
 }
 
-WebKitFindController *
-gig_find_bar_get_find_controller (GigFindBar *self)
-{
-  g_return_val_if_fail (GIG_IS_FIND_BAR (self), NULL);
-
-  return self->find_controller;
-}
-
 static void
 gig_find_bar_set_find_controller (GigFindBar *self,
                                   WebKitFindController *find_controller)
@@ -209,12 +219,7 @@ gig_find_bar_set_find_controller (GigFindBar *self,
   g_assert (GIG_IS_FIND_BAR (self));
   g_assert (WEBKIT_IS_FIND_CONTROLLER (find_controller));
 
-  if (self->find_controller == find_controller)
-    return;
-
-  self->find_controller = find_controller;
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_FIND_CONTROLLER]);
+  g_set_object (&self->find_controller, find_controller);
 }
 
 void
@@ -226,10 +231,9 @@ gig_find_bar_search (GigFindBar *self)
   g_return_if_fail (GIG_IS_FIND_BAR (self));
   g_return_if_fail (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
-  search_text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
+  reset (self);
 
-  webkit_find_controller_count_matches (self->find_controller,
-                                        search_text, options, G_MAXUINT);
+  search_text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
 
   webkit_find_controller_search (self->find_controller,
                                  search_text, options, G_MAXUINT);
@@ -242,4 +246,6 @@ gig_find_bar_search_finish (GigFindBar *self)
   g_return_if_fail (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
   webkit_find_controller_search_finish (self->find_controller);
+
+  reset (self);
 }
