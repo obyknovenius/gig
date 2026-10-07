@@ -40,12 +40,21 @@ gig_sources += gnome.compile_resources(
 
 adwaita_dep = dependency('libadwaita-1')
 soup_dep = dependency('libsoup-3.0')
-webkit_dep = dependency('webkitgtk-6.0')
+webkitgtk_dep = dependency('webkitgtk-6.0')
+
+webkit_revision = webkitgtk_dep.get_variable(pkgconfig: 'revision', default_value: '')
+if webkit_revision not in ['', 'tarball']
+  webkit_revision = ' (@0@)'.format(webkit_revision)
+else
+  webkit_revision = ''
+endif
+
+config.set_quoted('WEBKIT_REVISION', webkit_revision)
 
 gig_deps = [
   adwaita_dep,
   soup_dep,
-  webkit_dep,
+  webkitgtk_dep,
 ]
 
 executable(
