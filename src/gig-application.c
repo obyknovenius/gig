@@ -64,6 +64,50 @@ gig_application_constructed (GObject *object)
   G_OBJECT_CLASS (gig_application_parent_class)->constructed (object);
 }
 
+static gint
+gig_application_handle_local_options (GApplication *application,
+                                      GVariantDict *options)
+{
+  g_assert (GIG_IS_APPLICATION (application));
+
+  if (g_variant_dict_contains (options, "version"))
+    {
+      g_print ("Side Gig %s\n", PACKAGE_VERSION);
+      g_print ("\n");
+      g_print ("WebKitGTK %d.%d.%d" WEBKIT_REVISION "\n",
+               webkit_get_major_version (),
+               webkit_get_minor_version (),
+               webkit_get_micro_version ());
+      g_print ("GTK %d.%d.%d\n",
+               gtk_get_major_version (),
+               gtk_get_minor_version (),
+               gtk_get_micro_version ());
+      g_print ("Libadwaita %d.%d.%d\n",
+               adw_get_major_version (),
+               adw_get_minor_version (),
+               adw_get_micro_version ());
+      return EXIT_SUCCESS;
+    }
+
+  return G_APPLICATION_CLASS (gig_application_parent_class)->handle_local_options (application, options);
+}
+
+static void
+gig_application_startup (GApplication *application)
+{
+  GigApplication *self = (GigApplication *) application;
+
+  g_assert (GIG_IS_APPLICATION (self));
+
+  g_application_set_resource_base_path (G_APPLICATION (self), "/com/github/obyknovenius/Gig");
+
+  G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
+
+  gig_application_init_actions (self);
+
+  gtk_window_set_default_icon_name (APP_ID);
+}
+
 static void
 gig_application_activate (GApplication *application)
 {
@@ -108,22 +152,6 @@ gig_application_open (GApplication *application,
 }
 
 static void
-gig_application_startup (GApplication *application)
-{
-  GigApplication *self = (GigApplication *) application;
-
-  g_assert (GIG_IS_APPLICATION (self));
-
-  g_application_set_resource_base_path (G_APPLICATION (self), "/com/github/obyknovenius/Gig");
-
-  G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
-
-  gig_application_init_actions (self);
-
-  gtk_window_set_default_icon_name (APP_ID);
-}
-
-static void
 gig_application_window_added (GtkApplication *application,
                               GtkWindow *window)
 {
@@ -149,9 +177,10 @@ gig_application_class_init (GigApplicationClass *klass)
 
   object_class->constructed = gig_application_constructed;
 
+  application_class->handle_local_options = gig_application_handle_local_options;
+  application_class->startup = gig_application_startup;
   application_class->activate = gig_application_activate;
   application_class->open = gig_application_open;
-  application_class->startup = gig_application_startup;
 
   gtk_application_class->window_added = gig_application_window_added;
 }
@@ -159,6 +188,12 @@ gig_application_class_init (GigApplicationClass *klass)
 static void
 gig_application_init (GigApplication *self)
 {
+  static const GOptionEntry entries[] = {
+    { "version", 0, 0, G_OPTION_ARG_NONE, NULL, "Print version information and exit" },
+    { 0 }
+  };
+
+  g_application_add_main_option_entries (G_APPLICATION (self), entries);
 }
 
 GigApplication *
