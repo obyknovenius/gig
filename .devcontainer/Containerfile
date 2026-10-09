@@ -1,6 +1,6 @@
 FROM fedora:45
 
-ARG WEBKIT_COMMIT=b3f79b3b2e5ca72e5979b191c89c7d5ce276e0f3
+ARG WEBKIT_COMMIT=e6eb9ebd41d6a54df8db2dc86603c3a8139abf5b
 ARG WEBKIT_CHECKOUT_DIR=/src/WebKit
 
 RUN --mount=type=cache,target=/var/cache/libdnf5 \
@@ -18,8 +18,7 @@ WORKDIR $WEBKIT_CHECKOUT_DIR
 
 # Install WebKit dependencies
 RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    Tools/gtk/install-dependencies && \
-    dnf -y install perl
+    Tools/gtk/install-dependencies
 
 # Build and install WebKit
 RUN --mount=type=cache,target=${WEBKIT_CHECKOUT_DIR}/WebKitBuild \
