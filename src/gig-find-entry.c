@@ -127,8 +127,10 @@ clear_pressed_cb (GigFindEntry *self,
 static void
 gig_find_entry_dispose (GObject *object)
 {
-  GigFindEntry *self = GIG_FIND_ENTRY (object);
+  GigFindEntry *self = (GigFindEntry *) object;
   GtkWidget *child;
+
+  g_assert (GIG_IS_FIND_ENTRY (self));
 
   g_clear_handle_id (&self->search_timeout_id, g_source_remove);
 
@@ -148,7 +150,9 @@ gig_find_entry_get_property (GObject *object,
                              GValue *value,
                              GParamSpec *pspec)
 {
-  GigFindEntry *self = GIG_FIND_ENTRY (object);
+  GigFindEntry *self = (GigFindEntry *) object;
+
+  g_assert (GIG_IS_FIND_ENTRY (self));
 
   if (gtk_editable_delegate_get_property (object, prop_id, value, pspec))
     return;
@@ -174,7 +178,9 @@ gig_find_entry_set_property (GObject *object,
                              const GValue *value,
                              GParamSpec *pspec)
 {
-  GigFindEntry *self = GIG_FIND_ENTRY (object);
+  GigFindEntry *self = (GigFindEntry *) object;
+
+  g_assert (GIG_IS_FIND_ENTRY (self));
 
   if (gtk_editable_delegate_set_property (object, prop_id, value, pspec))
     return;
@@ -197,7 +203,7 @@ gig_find_entry_set_property (GObject *object,
 static gboolean
 gig_find_entry_grab_focus (GtkWidget *widget)
 {
-  GigFindEntry *self = GIG_FIND_ENTRY (widget);
+  GigFindEntry *self = (GigFindEntry *) widget;
 
   g_assert (GIG_IS_FIND_ENTRY (self));
 

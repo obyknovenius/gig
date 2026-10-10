@@ -44,6 +44,8 @@ gig_application_init_actions (GigApplication *self)
     { "about", gig_application_actions_about_cb },
   };
 
+  g_assert (GIG_IS_APPLICATION (self));
+
   g_action_map_add_action_entries (G_ACTION_MAP (self),
                                    actions,
                                    G_N_ELEMENTS (actions),

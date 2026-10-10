@@ -93,7 +93,9 @@ web_view_leave_fullscreen_cb (GigTab *self,
 static void
 gig_tab_constructed (GObject *object)
 {
-  GigTab *self = GIG_TAB (object);
+  GigTab *self = (GigTab *) object;
+
+  g_assert (GIG_IS_TAB (self));
 
   G_OBJECT_CLASS (gig_tab_parent_class)->constructed (object);
 
@@ -143,7 +145,9 @@ gig_tab_constructed (GObject *object)
 static void
 gig_tab_dispose (GObject *object)
 {
-  GigTab *self = GIG_TAB (object);
+  GigTab *self = (GigTab *) object;
+
+  g_assert (GIG_IS_TAB (self));
 
   if (self->web_view)
     {
@@ -163,7 +167,9 @@ gig_tab_set_property (GObject *object,
                       const GValue *value,
                       GParamSpec *pspec)
 {
-  GigTab *self = GIG_TAB (object);
+  GigTab *self = (GigTab *) object;
+
+  g_assert (GIG_IS_TAB (self));
 
   switch (prop_id)
     {
@@ -182,7 +188,9 @@ gig_tab_get_property (GObject *object,
                       GValue *value,
                       GParamSpec *pspec)
 {
-  GigTab *self = GIG_TAB (object);
+  GigTab *self = (GigTab *) object;
+
+  g_assert (GIG_IS_TAB (self));
 
   switch (prop_id)
     {
@@ -210,7 +218,9 @@ gig_tab_get_property (GObject *object,
 static gboolean
 gig_tab_grab_focus (GtkWidget *widget)
 {
-  GigTab *self = GIG_TAB (widget);
+  GigTab *self = (GigTab *) widget;
+
+  g_assert (GIG_IS_TAB (self));
 
   if (!gig_web_view_is_empty (self->web_view))
     return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));

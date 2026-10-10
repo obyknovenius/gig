@@ -124,6 +124,9 @@ web_view_load_changed_cb (GigWebView *self,
                           WebKitLoadEvent load_event,
                           WebKitWebView *web_view)
 {
+  g_assert (GIG_IS_WEB_VIEW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
   switch (load_event)
     {
     case WEBKIT_LOAD_COMMITTED:
@@ -152,6 +155,9 @@ web_view_uri_changed_cb (GigWebView *self,
                          GParamSpec *pspec,
                          WebKitWebView *web_view)
 {
+  g_assert (GIG_IS_WEB_VIEW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
   g_clear_pointer (&self->pending_uri, g_free);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_DISPLAY_URI]);
@@ -173,9 +179,11 @@ back_forward_list_changed_cb (GigWebView *self,
 static void
 gig_web_view_constructed (GObject *object)
 {
-  GigWebView *self = GIG_WEB_VIEW (object);
+  GigWebView *self = (GigWebView *) object;
   WebKitWebView *web_view = WEBKIT_WEB_VIEW (self);
   WebKitBackForwardList *back_forward_list = NULL;
+
+  g_assert (GIG_IS_WEB_VIEW (self));
 
   G_OBJECT_CLASS (gig_web_view_parent_class)->constructed (object);
 
@@ -209,7 +217,9 @@ gig_web_view_constructed (GObject *object)
 static void
 gig_web_view_finalize (GObject *object)
 {
-  GigWebView *self = GIG_WEB_VIEW (object);
+  GigWebView *self = (GigWebView *) object;
+
+  g_assert (GIG_IS_WEB_VIEW (self));
 
   g_clear_pointer (&self->pending_uri, g_free);
 
@@ -222,7 +232,9 @@ gig_web_view_set_property (GObject *object,
                            const GValue *value,
                            GParamSpec *pspec)
 {
-  GigWebView *self = GIG_WEB_VIEW (object);
+  GigWebView *self = (GigWebView *) object;
+
+  g_assert (GIG_IS_WEB_VIEW (self));
 
   switch (prop_id)
     {
@@ -241,8 +253,10 @@ gig_web_view_get_property (GObject *object,
                            GValue *value,
                            GParamSpec *pspec)
 {
-  GigWebView *self = GIG_WEB_VIEW (object);
+  GigWebView *self = (GigWebView *) object;
   WebKitWebView *web_view = WEBKIT_WEB_VIEW (self);
+
+  g_assert (GIG_IS_WEB_VIEW (self));
 
   switch (prop_id)
     {
@@ -435,7 +449,7 @@ static void
 gig_web_view_set_is_empty (GigWebView *self,
                            gboolean is_empty)
 {
-  g_return_if_fail (GIG_IS_WEB_VIEW (self));
+  g_assert (GIG_IS_WEB_VIEW (self));
 
   if (self->is_empty == is_empty)
     return;
@@ -457,7 +471,7 @@ static void
 gig_web_view_set_connection_security_level (GigWebView *self,
                                             GigConnectionSecurityLevel connection_security_level)
 {
-  g_return_if_fail (GIG_IS_WEB_VIEW (self));
+  g_assert (GIG_IS_WEB_VIEW (self));
 
   if (self->connection_security_level == connection_security_level)
     return;

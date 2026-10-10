@@ -98,7 +98,9 @@ entry_stop_search_cb (GigFindBar *self,
 static void
 gig_find_bar_constructed (GObject *object)
 {
-  GigFindBar *self = GIG_FIND_BAR (object);
+  GigFindBar *self = (GigFindBar *) object;
+
+  g_assert (GIG_IS_FIND_BAR (self));
 
   G_OBJECT_CLASS (gig_find_bar_parent_class)->constructed (object);
 
@@ -120,7 +122,9 @@ gig_find_bar_constructed (GObject *object)
 static void
 gig_find_bar_dispose (GObject *object)
 {
-  GigFindBar *self = GIG_FIND_BAR (object);
+  GigFindBar *self = (GigFindBar *) object;
+
+  g_assert (GIG_IS_FIND_BAR (self));
 
   if (self->find_controller)
     g_signal_handlers_disconnect_by_data (self->find_controller, self);
@@ -137,7 +141,9 @@ gig_find_bar_set_property (GObject *object,
                            const GValue *value,
                            GParamSpec *pspec)
 {
-  GigFindBar *self = GIG_FIND_BAR (object);
+  GigFindBar *self = (GigFindBar *) object;
+
+  g_assert (GIG_IS_FIND_BAR (self));
 
   switch (prop_id)
     {
@@ -153,7 +159,7 @@ gig_find_bar_set_property (GObject *object,
 static gboolean
 gig_find_bar_grab_focus (GtkWidget *widget)
 {
-  GigFindBar *self = GIG_FIND_BAR (widget);
+  GigFindBar *self = (GigFindBar *) widget;
 
   g_assert (GIG_IS_FIND_BAR (self));
 

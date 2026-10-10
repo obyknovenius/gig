@@ -86,7 +86,7 @@ set_modified (GigAddressBar *self,
 static void
 update_attributes (GigAddressBar *self)
 {
-  const gchar *text = NULL;
+  const gchar *text;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
@@ -97,7 +97,7 @@ update_attributes (GigAddressBar *self)
   else
     {
       g_autoptr (PangoAttrList) attrs = pango_attr_list_new ();
-      PangoAttribute *attr = NULL;
+      PangoAttribute *attr;
       GdkRGBA color;
       gfloat dim_opacity = 0.55;
       g_autofree gchar *domain = NULL;
@@ -322,7 +322,9 @@ web_view_connection_security_level_changed_cb (GigAddressBar *self,
 static void
 gig_address_bar_dispose (GObject *object)
 {
-  GigAddressBar *self = GIG_ADDRESS_BAR (object);
+  GigAddressBar *self = (GigAddressBar *) object;
+
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   g_signal_group_set_target (self->web_view_signals, NULL);
 
@@ -336,7 +338,9 @@ gig_address_bar_dispose (GObject *object)
 static void
 gig_address_bar_finalize (GObject *object)
 {
-  GigAddressBar *self = GIG_ADDRESS_BAR (object);
+  GigAddressBar *self = (GigAddressBar *) object;
+
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   g_clear_object (&self->web_view_signals);
 
@@ -346,7 +350,7 @@ gig_address_bar_finalize (GObject *object)
 static gboolean
 gig_address_bar_grab_focus (GtkWidget *widget)
 {
-  GigAddressBar *self = GIG_ADDRESS_BAR (widget);
+  GigAddressBar *self = (GigAddressBar *) widget;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
@@ -357,11 +361,11 @@ static void
 gig_address_bar_css_changed (GtkWidget *widget,
                              GtkCssStyleChange *change)
 {
-  GigAddressBar *self = GIG_ADDRESS_BAR (widget);
-
-  GTK_WIDGET_CLASS (gig_address_bar_parent_class)->css_changed (widget, change);
+  GigAddressBar *self = (GigAddressBar *) widget;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  GTK_WIDGET_CLASS (gig_address_bar_parent_class)->css_changed (widget, change);
 
   update_attributes (self);
 }
@@ -374,6 +378,7 @@ gig_address_bar_class_init (GigAddressBarClass *klass)
 
   object_class->dispose = gig_address_bar_dispose;
   object_class->finalize = gig_address_bar_finalize;
+
   widget_class->grab_focus = gig_address_bar_grab_focus;
   widget_class->css_changed = gig_address_bar_css_changed;
 
@@ -458,7 +463,7 @@ gig_address_bar_reset (GigAddressBar *self)
 {
   const gchar *uri = NULL;
 
-  g_return_if_fail (GIG_IS_ADDRESS_BAR (self));
+  g_assert (GIG_IS_ADDRESS_BAR (self));
 
   set_modified (self, FALSE);
   set_editing (self, FALSE);

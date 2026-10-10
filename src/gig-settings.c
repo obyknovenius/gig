@@ -14,7 +14,9 @@ G_DEFINE_FINAL_TYPE (GigSettings, gig_settings, G_TYPE_OBJECT)
 static void
 gig_settings_finalize (GObject *object)
 {
-  GigSettings *self = GIG_SETTINGS (object);
+  GigSettings *self = (GigSettings *) object;
+
+  g_assert (GIG_IS_SETTINGS (self));
 
   g_clear_object (&self->settings);
 

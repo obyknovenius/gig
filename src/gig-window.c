@@ -215,7 +215,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 static void
 gig_window_dispose (GObject *object)
 {
-  GigWindow *self = GIG_WINDOW (object);
+  GigWindow *self = (GigWindow *) object;
 
   g_assert (GIG_IS_WINDOW (self));
 
@@ -241,7 +241,7 @@ gig_window_finalize (GObject *object)
 static gboolean
 gig_window_close_request (GtkWindow *window)
 {
-  GigWindow *self = GIG_WINDOW (window);
+  GigWindow *self = (GigWindow *) window;
   GigSettings *settings;
   gint width, height;
 

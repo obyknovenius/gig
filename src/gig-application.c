@@ -35,7 +35,7 @@ find_or_create_window (GigApplication *self)
 static void
 gig_application_constructed (GObject *object)
 {
-  GigApplication *self = GIG_APPLICATION (object);
+  GigApplication *self = (GigApplication *) object;
   WebKitNetworkSession *network_session;
   WebKitWebsiteDataManager *data_manager;
   WebKitCookieManager *cookie_manager;
@@ -68,7 +68,7 @@ gig_application_constructed (GObject *object)
 static void
 gig_application_finalize (GObject *object)
 {
-  GigApplication *self = GIG_APPLICATION (object);
+  GigApplication *self = (GigApplication *) object;
 
   g_assert (GIG_IS_APPLICATION (self));
 
@@ -81,7 +81,9 @@ static gint
 gig_application_handle_local_options (GApplication *application,
                                       GVariantDict *options)
 {
-  g_assert (GIG_IS_APPLICATION (application));
+  GigApplication *self = (GigApplication *) application;
+
+  g_assert (GIG_IS_APPLICATION (self));
 
   if (g_variant_dict_contains (options, "version"))
     {
@@ -124,12 +126,13 @@ gig_application_startup (GApplication *application)
 static void
 gig_application_activate (GApplication *application)
 {
+  GigApplication *self = (GigApplication *) application;
   GigWindow *window = NULL;
   GigTab *tab = NULL;
 
-  g_assert (GIG_IS_APPLICATION (application));
+  g_assert (GIG_IS_APPLICATION (self));
 
-  window = gig_window_new (GTK_APPLICATION (application));
+  window = gig_window_new (GTK_APPLICATION (self));
   tab = GIG_TAB (gig_tab_new ());
 
   gig_window_add_tab (window, tab, TRUE, NULL);
@@ -143,12 +146,13 @@ gig_application_open (GApplication *application,
                       gint n_files,
                       const gchar *hint)
 {
+  GigApplication *self = (GigApplication *) application;
   GigWindow *window = NULL;
   GigTab *tab = NULL;
 
-  g_assert (GIG_IS_APPLICATION (application));
+  g_assert (GIG_IS_APPLICATION (self));
 
-  window = find_or_create_window (GIG_APPLICATION (application));
+  window = find_or_create_window (self);
 
   for (gint i = 0; i < n_files; i++)
     {
@@ -168,7 +172,6 @@ static void
 gig_application_window_added (GtkApplication *application,
                               GtkWindow *window)
 {
-  g_assert (GIG_IS_APPLICATION (application));
   g_assert (GTK_IS_WINDOW (window));
 
   if (GIG_IS_WINDOW (window))
