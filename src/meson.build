@@ -5,6 +5,7 @@ gig_sources = [
   'gig-find-bar-actions.c',
   'gig-find-bar.c',
   'gig-find-entry.c',
+  'gig-settings.c',
   'gig-tab.c',
   'gig-uri-utils.c',
   'gig-web-view.c',

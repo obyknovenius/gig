@@ -2,6 +2,7 @@
 
 #include "gig-application-private.h"
 
+#include "gig-settings.h"
 #include "gig-tab.h"
 #include "gig-web-view.h"
 #include "gig-window.h"
@@ -62,6 +63,18 @@ gig_application_constructed (GObject *object)
                                                 WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE);
 
   G_OBJECT_CLASS (gig_application_parent_class)->constructed (object);
+}
+
+static void
+gig_application_finalize (GObject *object)
+{
+  GigApplication *self = GIG_APPLICATION (object);
+
+  g_assert (GIG_IS_APPLICATION (self));
+
+  g_clear_object (&self->settings);
+
+  G_OBJECT_CLASS (gig_application_parent_class)->finalize (object);
 }
 
 static gint
@@ -176,6 +189,7 @@ gig_application_class_init (GigApplicationClass *klass)
   GtkApplicationClass *gtk_application_class = GTK_APPLICATION_CLASS (klass);
 
   object_class->constructed = gig_application_constructed;
+  object_class->finalize = gig_application_finalize;
 
   application_class->handle_local_options = gig_application_handle_local_options;
   application_class->startup = gig_application_startup;
@@ -193,6 +207,8 @@ gig_application_init (GigApplication *self)
     { 0 }
   };
 
+  self->settings = gig_settings_new ();
+
   g_application_add_main_option_entries (G_APPLICATION (self), entries);
 }
 
@@ -200,6 +216,14 @@ GigApplication *
 gig_application_new (void)
 {
   return g_object_new (GIG_TYPE_APPLICATION, NULL);
+}
+
+GigSettings *
+gig_application_get_settings (GigApplication *self)
+{
+  g_return_val_if_fail (GIG_IS_APPLICATION (self), NULL);
+
+  return self->settings;
 }
 
 GigWindow *

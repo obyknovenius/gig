@@ -7,6 +7,8 @@ G_BEGIN_DECLS
 struct _GigApplication
 {
   AdwApplication parent_instance;
+
+  GigSettings *settings;
 };
 
 void gig_application_init_actions (GigApplication *self);

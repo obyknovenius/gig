@@ -1,6 +1,8 @@
 #include "gig-window-private.h"
 
 #include "gig-address-bar.h"
+#include "gig-application.h"
+#include "gig-settings.h"
 #include "gig-tab.h"
 #include "gig-web-view.h"
 
@@ -236,14 +238,34 @@ gig_window_finalize (GObject *object)
   G_OBJECT_CLASS (gig_window_parent_class)->finalize (object);
 }
 
+static gboolean
+gig_window_close_request (GtkWindow *window)
+{
+  GigWindow *self = GIG_WINDOW (window);
+  GigSettings *settings;
+  gint width, height;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  settings = gig_application_get_settings (GIG_APPLICATION_DEFAULT);
+
+  gtk_window_get_default_size (window, &width, &height);
+  gig_settings_set_default_window_size (settings, width, height);
+
+  return GTK_WINDOW_CLASS (gig_window_parent_class)->close_request (window);
+}
+
 static void
 gig_window_class_init (GigWindowClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GtkWindowClass *window_class = GTK_WINDOW_CLASS (klass);
 
   object_class->dispose = gig_window_dispose;
   object_class->finalize = gig_window_finalize;
+
+  window_class->close_request = gig_window_close_request;
 
   gig_window_class_actions_init (klass);
 
@@ -266,25 +288,13 @@ gig_window_class_init (GigWindowClass *klass)
 static void
 gig_window_init (GigWindow *self)
 {
-  GSettings *settings = g_settings_new ("com.github.obyknovenius.Gig.State");
-
-  g_settings_bind (settings, "width",
-                   self, "default-width",
-                   G_SETTINGS_BIND_DEFAULT);
-
-  g_settings_bind (settings, "height",
-                   self, "default-height",
-                   G_SETTINGS_BIND_DEFAULT);
-
-  g_settings_bind (settings, "is-maximized",
-                   self, "maximized",
-                   G_SETTINGS_BIND_DEFAULT);
-
-  g_settings_bind (settings, "is-fullscreen",
-                   self, "fullscreened",
-                   G_SETTINGS_BIND_DEFAULT);
+  GigSettings *settings = gig_application_get_settings (GIG_APPLICATION_DEFAULT);
+  gint width, height;
 
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  gig_settings_get_default_window_size (settings, &width, &height);
+  gtk_window_set_default_size (GTK_WINDOW (self), width, height);
 
   gig_window_actions_init (self);
 
