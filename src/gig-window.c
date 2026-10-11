@@ -344,9 +344,25 @@ gig_window_init (GigWindow *self)
 }
 
 GigWindow *
-gig_window_new (GtkApplication *application)
+gig_window_new (GigApplication *application)
 {
-  g_return_val_if_fail (G_APPLICATION (application), NULL);
+  GigWindow *self;
+  GigTab *tab;
+
+  g_return_val_if_fail (GIG_IS_APPLICATION (application), NULL);
+
+  self = gig_window_new_empty (application);
+  tab = GIG_TAB (gig_tab_new ());
+
+  gig_window_add_tab (self, tab, TRUE, NULL);
+
+  return self;
+}
+
+GigWindow *
+gig_window_new_empty (GigApplication *application)
+{
+  g_return_val_if_fail (GIG_IS_APPLICATION (application), NULL);
 
   return g_object_new (GIG_TYPE_WINDOW,
                        "application", application,

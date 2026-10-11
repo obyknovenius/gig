@@ -2,6 +2,23 @@
 
 #include "gig-application-private.h"
 
+#include "gig-window.h"
+
+static void
+gig_application_actions_new_window_cb (GSimpleAction *action,
+                                       GVariant *parameter,
+                                       gpointer user_data)
+{
+  GigApplication *self = user_data;
+  GigWindow *window;
+
+  g_assert (GIG_IS_APPLICATION (self));
+
+  window = gig_window_new (self);
+
+  gtk_window_present (GTK_WINDOW (window));
+}
+
 static void
 gig_application_actions_about_cb (GSimpleAction *action,
                                   GVariant *parameter,
@@ -41,8 +58,11 @@ void
 gig_application_init_actions (GigApplication *self)
 {
   static const GActionEntry actions[] = {
+    { "new-window", gig_application_actions_new_window_cb },
     { "about", gig_application_actions_about_cb },
   };
+
+  static const char *new_window_accels[] = { "<Control>n", NULL };
 
   g_assert (GIG_IS_APPLICATION (self));
 
@@ -50,4 +70,8 @@ gig_application_init_actions (GigApplication *self)
                                    actions,
                                    G_N_ELEMENTS (actions),
                                    self);
+
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self),
+                                         "app.new-window",
+                                         new_window_accels);
 }

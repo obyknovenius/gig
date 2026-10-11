@@ -8,7 +8,9 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GigWindow, gig_window, GIG, WINDOW, AdwApplicationWindow)
 
-GigWindow *gig_window_new (GtkApplication *app);
+GigWindow *gig_window_new (GigApplication *application);
+
+GigWindow *gig_window_new_empty (GigApplication *application);
 
 void gig_window_add_tab (GigWindow *self,
                          GigTab *tab,

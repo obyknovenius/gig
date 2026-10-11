@@ -29,7 +29,7 @@ find_or_create_window (GigApplication *self)
         return GIG_WINDOW (window);
     }
 
-  return gig_window_new (GTK_APPLICATION (self));
+  return gig_window_new_empty (self);
 }
 
 static void
@@ -127,15 +127,11 @@ static void
 gig_application_activate (GApplication *application)
 {
   GigApplication *self = (GigApplication *) application;
-  GigWindow *window = NULL;
-  GigTab *tab = NULL;
+  GigWindow *window;
 
   g_assert (GIG_IS_APPLICATION (self));
 
-  window = gig_window_new (GTK_APPLICATION (self));
-  tab = GIG_TAB (gig_tab_new ());
-
-  gig_window_add_tab (window, tab, TRUE, NULL);
+  window = gig_window_new (self);
 
   gtk_window_present (GTK_WINDOW (window));
 }
@@ -147,8 +143,8 @@ gig_application_open (GApplication *application,
                       const gchar *hint)
 {
   GigApplication *self = (GigApplication *) application;
-  GigWindow *window = NULL;
-  GigTab *tab = NULL;
+  GigWindow *window;
+  GigTab *tab;
 
   g_assert (GIG_IS_APPLICATION (self));
 
@@ -205,14 +201,14 @@ gig_application_class_init (GigApplicationClass *klass)
 static void
 gig_application_init (GigApplication *self)
 {
-  static const GOptionEntry entries[] = {
+  static const GOptionEntry options[] = {
     { "version", 0, 0, G_OPTION_ARG_NONE, NULL, "Print version information and exit" },
     { 0 }
   };
 
   self->settings = gig_settings_new ();
 
-  g_application_add_main_option_entries (G_APPLICATION (self), entries);
+  g_application_add_main_option_entries (G_APPLICATION (self), options);
 }
 
 GigApplication *
