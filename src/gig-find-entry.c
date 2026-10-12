@@ -241,7 +241,7 @@ gig_find_entry_class_init (GigFindEntryClass *klass)
 
   signals[SEARCH_CHANGED] =
       g_signal_new ("search-changed",
-                    G_OBJECT_CLASS_TYPE (object_class),
+                    G_TYPE_FROM_CLASS (klass),
                     G_SIGNAL_RUN_LAST,
                     0,
                     NULL, NULL,
@@ -250,7 +250,7 @@ gig_find_entry_class_init (GigFindEntryClass *klass)
 
   signals[STOP_SEARCH] =
       g_signal_new ("stop-search",
-                    G_OBJECT_CLASS_TYPE (object_class),
+                    G_TYPE_FROM_CLASS (klass),
                     G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
                     0,
                     NULL, NULL,

@@ -24,12 +24,62 @@ tab_overview_create_tab_cb (GigWindow *self,
   return adw_tab_view_get_page (self->tab_view, GTK_WIDGET (tab));
 }
 
+static void
+web_view_open_in_new_tab_cb (GigWindow *self,
+                             const gchar *uri,
+                             GigWebView *web_view)
+{
+  GigWebView *new_web_view;
+  GigTab *new_tab, *parent_tab;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
+
+  new_web_view = GIG_WEB_VIEW (gig_web_view_new ());
+  gig_web_view_load_uri (new_web_view, uri);
+
+  new_tab = GIG_TAB (gig_tab_new_with_web_view (new_web_view));
+  parent_tab = gig_window_get_selected_tab (self);
+  g_assert (GIG_IS_TAB (parent_tab));
+
+  gig_window_add_tab (self, new_tab, FALSE, parent_tab);
+}
+
+static void
+web_view_open_in_new_window_cb (GigWindow *self,
+                                const gchar *uri,
+                                GigWebView *web_view)
+{
+  GigApplication *application;
+  GigWindow *new_window;
+  GigWebView *new_web_view;
+  GigTab *new_tab;
+  gint width, height;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
+
+  new_web_view = GIG_WEB_VIEW (gig_web_view_new ());
+  gig_web_view_load_uri (new_web_view, uri);
+
+  new_tab = GIG_TAB (gig_tab_new_with_web_view (new_web_view));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  new_window = gig_window_new_empty (application);
+
+  gtk_window_get_default_size (GTK_WINDOW (self), &width, &height);
+  gtk_window_set_default_size (GTK_WINDOW (new_window), width, height);
+
+  gig_window_add_tab (new_window, new_tab, FALSE, NULL);
+  gtk_window_present (GTK_WINDOW (new_window));
+}
+
 static WebKitWebView *
 web_view_create_cb (GigWindow *self,
                     WebKitNavigationAction *navigation_action,
                     WebKitWebView *related_view)
 {
-  GtkWidget *web_view;
+  GigWebView *web_view;
   WebKitURIRequest *request;
   const gchar *pending_uri;
   GigTab *tab, *parent_tab;
@@ -40,10 +90,9 @@ web_view_create_cb (GigWindow *self,
   request = webkit_navigation_action_get_request (navigation_action);
   pending_uri = webkit_uri_request_get_uri (request);
 
-  web_view = gig_web_view_new_with_related_view (related_view,
-                                                 pending_uri);
-
-  tab = GIG_TAB (gig_tab_new_with_web_view (GIG_WEB_VIEW (web_view)));
+  web_view = GIG_WEB_VIEW (gig_web_view_new_with_related_view (related_view,
+                                                               pending_uri));
+  tab = GIG_TAB (gig_tab_new_with_web_view (web_view));
   parent_tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (parent_tab));
 
@@ -299,6 +348,18 @@ gig_window_init (GigWindow *self)
   gig_window_actions_init (self);
 
   self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
+
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "open-in-new-tab",
+                                 G_CALLBACK (web_view_open_in_new_tab_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->web_view_signals,
+                                 "open-in-new-window",
+                                 G_CALLBACK (web_view_open_in_new_window_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "create",

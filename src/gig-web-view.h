@@ -20,6 +20,7 @@ GType gig_connection_security_level_get_type (void) G_GNUC_CONST;
 
 WebKitSettings *gig_web_view_get_default_settings (void);
 
+// TODO: Take pending URI as a parameter
 GtkWidget *gig_web_view_new (void);
 
 GtkWidget *gig_web_view_new_with_related_view (WebKitWebView *related_view,

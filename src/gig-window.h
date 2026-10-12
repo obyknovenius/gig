@@ -8,6 +8,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GigWindow, gig_window, GIG, WINDOW, AdwApplicationWindow)
 
+// TODO: Return GtkWidget instead of GigWindow
 GigWindow *gig_window_new (GigApplication *application);
 
 GigWindow *gig_window_new_empty (GigApplication *application);
