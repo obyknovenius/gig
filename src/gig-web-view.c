@@ -513,13 +513,20 @@ gig_web_view_new (void)
 }
 
 GtkWidget *
-gig_web_view_new_with_related_view (WebKitWebView *related_view,
-                                    const gchar *pending_uri)
+gig_web_view_new_for_navigation_action (WebKitNavigationAction *navigation_action,
+                                        WebKitWebView *related_view)
 {
+  WebKitURIRequest *request;
+
+  g_return_val_if_fail (navigation_action != NULL, NULL);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (related_view), NULL);
+
+  request = webkit_navigation_action_get_request (navigation_action);
+
   return g_object_new (GIG_TYPE_WEB_VIEW,
                        "settings", gig_web_view_get_default_settings (),
                        "related-view", related_view,
-                       "pending-uri", pending_uri,
+                       "pending-uri", webkit_uri_request_get_uri (request),
                        NULL);
 }
 
