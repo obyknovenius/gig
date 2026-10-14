@@ -158,7 +158,7 @@ gig_application_open (GApplication *application,
       tab = GIG_TAB (gig_tab_new ());
       gig_web_view_load_uri (gig_tab_get_web_view (tab), uri);
 
-      gig_window_add_tab (window, tab, set_selected, NULL);
+      gig_window_add_tab (window, tab, NULL, set_selected);
     }
 
   gtk_window_present (GTK_WINDOW (window));

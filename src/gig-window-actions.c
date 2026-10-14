@@ -17,7 +17,7 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
 
   tab = GIG_TAB (gig_tab_new ());
 
-  gig_window_add_tab (self, tab, TRUE, NULL);
+  gig_window_add_tab (self, tab, NULL, TRUE);
 }
 
 static void
@@ -193,8 +193,9 @@ gig_window_actions_tab_duplicate_cb (GtkWidget *widget,
 {
   GigWindow *self = (GigWindow *) widget;
   AdwTabPage *tab_page;
-  GtkWidget *tab, *new_tab;
+  GigTab *tab, *new_tab;
   GigWebView *web_view, *new_view;
+  gint position;
 
   g_assert (GIG_IS_WINDOW (self));
 
@@ -202,13 +203,14 @@ gig_window_actions_tab_duplicate_cb (GtkWidget *widget,
   if (!tab_page)
     tab_page = adw_tab_view_get_selected_page (self->tab_view);
 
-  tab = adw_tab_page_get_child (tab_page);
-  web_view = gig_tab_get_web_view (GIG_TAB (tab));
+  tab = GIG_TAB (adw_tab_page_get_child (tab_page));
+  web_view = gig_tab_get_web_view (tab);
 
   new_view = gig_web_view_copy (web_view);
-  new_tab = gig_tab_new_with_web_view (new_view);
+  new_tab = GIG_TAB (gig_tab_new_with_web_view (new_view));
 
-  gig_window_add_tab (self, GIG_TAB (new_tab), TRUE, NULL);
+  position = adw_tab_view_get_page_position (self->tab_view, tab_page) + 1;
+  gig_window_insert_tab (self, new_tab, position, TRUE);
 }
 
 void

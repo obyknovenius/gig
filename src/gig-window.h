@@ -15,8 +15,13 @@ GigWindow *gig_window_new_empty (GigApplication *application);
 
 void gig_window_add_tab (GigWindow *self,
                          GigTab *tab,
-                         gboolean set_selected,
-                         GigTab *parent_tab);
+                         GigTab *parent_tab,
+                         gboolean set_selected);
+
+void gig_window_insert_tab (GigWindow *self,
+                            GigTab *tab,
+                            gint position,
+                            gboolean set_selected);
 
 GigTab *gig_window_get_selected_tab (GigWindow *self);
 
