@@ -1,6 +1,7 @@
 #include "gig-window-private.h"
 
 #include "gig-address-bar-private.h"
+#include "gig-application.h"
 #include "gig-find-bar.h"
 #include "gig-tab.h"
 #include "gig-web-view.h"
@@ -18,6 +19,27 @@ gig_window_actions_new_tab_cb (GtkWidget *widget,
   tab = GIG_TAB (gig_tab_new ());
 
   gig_window_add_tab (self, tab, NULL, TRUE);
+}
+
+static void
+gig_window_actions_new_window_cb (GtkWidget *widget,
+                                  const gchar *action_name,
+                                  GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+  GigApplication *application;
+  GigWindow *new_window;
+  gint width, height;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  new_window = gig_window_new (application);
+
+  gtk_window_get_default_size (GTK_WINDOW (self), &width, &height);
+  gtk_window_set_default_size (GTK_WINDOW (new_window), width, height);
+
+  gtk_window_present (GTK_WINDOW (new_window));
 }
 
 static void
@@ -221,6 +243,9 @@ gig_window_class_actions_init (GigWindowClass *klass)
   gtk_widget_class_install_action (widget_class, "win.new-tab", NULL,
                                    gig_window_actions_new_tab_cb);
 
+  gtk_widget_class_install_action (widget_class, "win.new-window", NULL,
+                                   gig_window_actions_new_window_cb);
+
   gtk_widget_class_install_action (widget_class, "win.stop-reload", NULL,
                                    gig_window_actions_stop_reload_cb);
 
@@ -254,6 +279,10 @@ gig_window_class_actions_init (GigWindowClass *klass)
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_t, GDK_CONTROL_MASK,
                                        "win.new-tab", NULL);
+
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_n, GDK_CONTROL_MASK,
+                                       "win.new-window", NULL);
 
   gtk_widget_class_add_binding_action (widget_class,
                                        GDK_KEY_f, GDK_CONTROL_MASK,
