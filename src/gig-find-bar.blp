@@ -20,6 +20,20 @@ template $GigFindBar: Gtk.Widget {
                         enter => $entry_focus_enter_cb() swapped;
                         leave => $entry_focus_leave_cb() swapped;
                     }
+
+                    Gtk.ShortcutController {
+                        propagation-phase: capture;
+
+                        Gtk.Shortcut {
+                            trigger: "Return|KP_Enter";
+                            action: "action(find.next)";
+                        }
+
+                        Gtk.Shortcut {
+                            trigger: "<Shift>Return|<Shift>KP_Enter";
+                            action: "action(find.previous)";
+                        }
+                    }
                 }
 
                 Gtk.Button {
