@@ -504,7 +504,7 @@ gig_web_view_get_default_settings (void)
   return settings;
 }
 
-GtkWidget *
+GigWebView *
 gig_web_view_new (void)
 {
   return g_object_new (GIG_TYPE_WEB_VIEW,
@@ -512,7 +512,7 @@ gig_web_view_new (void)
                        NULL);
 }
 
-GtkWidget *
+GigWebView *
 gig_web_view_new_for_navigation_action (WebKitNavigationAction *navigation_action,
                                         WebKitWebView *related_view)
 {
@@ -540,7 +540,7 @@ gig_web_view_copy (GigWebView *self)
 
   g_return_val_if_fail (GIG_IS_WEB_VIEW (self), NULL);
 
-  new_view = GIG_WEB_VIEW (gig_web_view_new ());
+  new_view = gig_web_view_new ();
 
   session_state = webkit_web_view_get_session_state (WEBKIT_WEB_VIEW (self));
 

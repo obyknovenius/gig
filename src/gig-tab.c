@@ -279,17 +279,17 @@ gig_tab_init (GigTab *self)
 }
 
 // TODO: Should it always take a new web view or allow creating an empty tab?
-GtkWidget *
+GigTab *
 gig_tab_new (void)
 {
-  GigWebView *web_view = GIG_WEB_VIEW (gig_web_view_new ());
+  GigWebView *web_view = gig_web_view_new ();
 
   return g_object_new (GIG_TYPE_TAB,
                        "web-view", web_view,
                        NULL);
 }
 
-GtkWidget *
+GigTab *
 gig_tab_new_with_web_view (GigWebView *web_view)
 {
   return g_object_new (GIG_TYPE_TAB,

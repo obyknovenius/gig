@@ -90,7 +90,7 @@ tab_overview_create_tab_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_OVERVIEW (tab_overview));
 
-  tab = GIG_TAB (gig_tab_new ());
+  tab = gig_tab_new ();
 
   gig_window_add_tab (self, tab, NULL, FALSE);
 
@@ -108,10 +108,10 @@ web_view_open_in_new_tab_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  new_web_view = GIG_WEB_VIEW (gig_web_view_new ());
+  new_web_view = gig_web_view_new ();
   gig_web_view_load_uri (new_web_view, uri);
 
-  new_tab = GIG_TAB (gig_tab_new_with_web_view (new_web_view));
+  new_tab = gig_tab_new_with_web_view (new_web_view);
   parent_tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (parent_tab));
 
@@ -131,10 +131,10 @@ web_view_open_in_new_window_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  new_web_view = GIG_WEB_VIEW (gig_web_view_new ());
+  new_web_view = gig_web_view_new ();
   gig_web_view_load_uri (new_web_view, uri);
 
-  new_tab = GIG_TAB (gig_tab_new_with_web_view (new_web_view));
+  new_tab = gig_tab_new_with_web_view (new_web_view);
 
   application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
   new_window = gig_window_new_empty (application);
@@ -156,9 +156,8 @@ web_view_create_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
-  new_web_view = GIG_WEB_VIEW (gig_web_view_new_for_navigation_action (navigation_action,
-                                                                       web_view));
-  new_tab = GIG_TAB (gig_tab_new_with_web_view (new_web_view));
+  new_web_view = gig_web_view_new_for_navigation_action (navigation_action, web_view);
+  new_tab = gig_tab_new_with_web_view (new_web_view);
 
   parent_tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (parent_tab));
@@ -469,7 +468,7 @@ gig_window_new (GigApplication *application)
   g_return_val_if_fail (GIG_IS_APPLICATION (application), NULL);
 
   self = gig_window_new_empty (application);
-  tab = GIG_TAB (gig_tab_new ());
+  tab = gig_tab_new ();
 
   gig_window_add_tab (self, tab, NULL, TRUE);
 

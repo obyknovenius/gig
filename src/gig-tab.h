@@ -8,9 +8,9 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GigTab, gig_tab, GIG, TAB, GtkWidget)
 
-GtkWidget *gig_tab_new (void);
+GigTab *gig_tab_new (void);
 
-GtkWidget *gig_tab_new_with_web_view (GigWebView *web_view);
+GigTab *gig_tab_new_with_web_view (GigWebView *web_view);
 
 GigWebView *gig_tab_get_web_view (GigTab *self);
 

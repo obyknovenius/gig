@@ -432,7 +432,7 @@ gig_address_bar_init (GigAddressBar *self)
                                  G_CONNECT_SWAPPED);
 }
 
-GtkWidget *
+GigAddressBar *
 gig_address_bar_new (void)
 {
   return g_object_new (GIG_TYPE_ADDRESS_BAR, NULL);
