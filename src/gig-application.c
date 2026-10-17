@@ -13,6 +13,7 @@ static GigWindow *
 find_or_create_window (GigApplication *self)
 {
   const GList *windows = NULL;
+  GigWindow *window;
 
   g_assert (GIG_IS_APPLICATION (self));
 
@@ -21,7 +22,7 @@ find_or_create_window (GigApplication *self)
   /* Try to find the most recent editor window displayed */
   for (const GList *iter = windows; iter; iter = iter->next)
     {
-      GtkWindow *window = iter->data;
+      window = iter->data;
 
       g_assert (GTK_IS_WINDOW (window));
 
@@ -29,7 +30,9 @@ find_or_create_window (GigApplication *self)
         return GIG_WINDOW (window);
     }
 
-  return gig_window_new_empty (self);
+  window = gig_window_new_empty (self);
+  gig_window_restore_state (window);
+  return window;
 }
 
 static void
@@ -132,6 +135,7 @@ gig_application_activate (GApplication *application)
   g_assert (GIG_IS_APPLICATION (self));
 
   window = gig_window_new (self);
+  gig_window_restore_state (window);
 
   gtk_window_present (GTK_WINDOW (window));
 }
@@ -172,6 +176,7 @@ gig_application_window_added (GtkApplication *application,
 
   if (GIG_IS_WINDOW (window))
     {
+      // TODO: Apply style in GigWindow constructor.
 #if DEVELOPMENT_BUILD
       gtk_widget_add_css_class (GTK_WIDGET (window), "devel");
 #endif

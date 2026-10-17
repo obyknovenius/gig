@@ -316,15 +316,10 @@ static gboolean
 gig_window_close_request (GtkWindow *window)
 {
   GigWindow *self = (GigWindow *) window;
-  GigSettings *settings;
-  gint width, height;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  settings = gig_application_get_settings (GIG_APPLICATION_DEFAULT);
-
-  gtk_window_get_default_size (window, &width, &height);
-  gig_settings_set_default_window_size (settings, width, height);
+  gig_window_save_state (self);
 
   return GTK_WINDOW_CLASS (gig_window_parent_class)->close_request (window);
 }
@@ -362,13 +357,7 @@ gig_window_class_init (GigWindowClass *klass)
 static void
 gig_window_init (GigWindow *self)
 {
-  GigSettings *settings = gig_application_get_settings (GIG_APPLICATION_DEFAULT);
-  gint width, height;
-
   gtk_widget_init_template (GTK_WIDGET (self));
-
-  gig_settings_get_default_window_size (settings, &width, &height);
-  gtk_window_set_default_size (GTK_WINDOW (self), width, height);
 
   gig_window_actions_init (self);
 
@@ -503,4 +492,50 @@ gig_window_get_selected_tab (GigWindow *self)
     return NULL;
 
   return GIG_TAB (adw_tab_page_get_child (tab_page));
+}
+
+void
+gig_window_save_state (GigWindow *self)
+{
+  GigApplication *application;
+  GigSettings *settings;
+  gint width, height;
+  gboolean maximized;
+
+  g_return_if_fail (GIG_IS_WINDOW (self));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  settings = gig_application_get_settings (application);
+
+  gtk_window_get_default_size (GTK_WINDOW (self), &width, &height);
+  maximized = gtk_window_is_maximized (GTK_WINDOW (self));
+
+  gig_settings_set_window_state (settings,
+                                 width,
+                                 height,
+                                 maximized);
+}
+
+void
+gig_window_restore_state (GigWindow *self)
+{
+  GigApplication *application;
+  GigSettings *settings;
+  gint width, height;
+  gboolean maximized;
+
+  g_return_if_fail (GIG_IS_WINDOW (self));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  settings = gig_application_get_settings (application);
+
+  gig_settings_get_window_state (settings,
+                                 &width,
+                                 &height,
+                                 &maximized);
+
+  gtk_window_set_default_size (GTK_WINDOW (self), width, height);
+
+  if (maximized)
+    gtk_window_maximize (GTK_WINDOW (self));
 }

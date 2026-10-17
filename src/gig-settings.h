@@ -10,12 +10,14 @@ G_DECLARE_FINAL_TYPE (GigSettings, gig_settings, GIG, SETTINGS, GObject)
 
 GigSettings *gig_settings_new (void);
 
-void gig_settings_get_default_window_size (GigSettings *self,
-                                           gint *width,
-                                           gint *height);
+void gig_settings_get_window_state (GigSettings *self,
+                                    gint *width,
+                                    gint *height,
+                                    gboolean *maximized);
 
-void gig_settings_set_default_window_size (GigSettings *self,
-                                           gint width,
-                                           gint height);
+void gig_settings_set_window_state (GigSettings *self,
+                                    gint width,
+                                    gint height,
+                                    gboolean maximized);
 
 G_END_DECLS

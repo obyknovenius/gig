@@ -25,4 +25,8 @@ void gig_window_insert_tab (GigWindow *self,
 
 GigTab *gig_window_get_selected_tab (GigWindow *self);
 
+void gig_window_save_state (GigWindow *self);
+
+void gig_window_restore_state (GigWindow *self);
+
 G_END_DECLS

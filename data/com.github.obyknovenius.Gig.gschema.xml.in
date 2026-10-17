@@ -2,8 +2,8 @@
 
   <schema id="@APP_SCHEMA_ID@" path="@APP_SCHEMA_PATH@">
 
-    <key name="default-window-size" type="(ii)">
-      <default>(1024, 768)</default>
+    <key name="window-state" type="(iib)">
+      <default>(1024, 768, false)</default>
     </key>
 
   </schema>

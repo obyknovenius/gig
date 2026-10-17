@@ -44,21 +44,27 @@ gig_settings_new (void)
 }
 
 void
-gig_settings_get_default_window_size (GigSettings *self,
-                                      gint *width,
-                                      gint *height)
+gig_settings_get_window_state (GigSettings *self,
+                               gint *width,
+                               gint *height,
+                               gboolean *maximized)
 {
   g_return_if_fail (GIG_IS_SETTINGS (self));
 
-  g_settings_get (self->settings, "default-window-size", "(ii)", width, height);
+  g_settings_get (self->settings,
+                  "window-state", "(iib)",
+                  width, height, maximized);
 }
 
 void
-gig_settings_set_default_window_size (GigSettings *self,
-                                      gint width,
-                                      gint height)
+gig_settings_set_window_state (GigSettings *self,
+                               gint width,
+                               gint height,
+                               gboolean maximized)
 {
   g_return_if_fail (GIG_IS_SETTINGS (self));
 
-  g_settings_set (self->settings, "default-window-size", "(ii)", width, height);
+  g_settings_set (self->settings,
+                  "window-state", "(iib)",
+                  width, height, maximized);
 }
