@@ -9,6 +9,18 @@
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void
+capture_state (GigWindow *self,
+               gint *width,
+               gint *height,
+               gboolean *maximized)
+{
+  g_assert (GIG_IS_WINDOW (self));
+
+  gtk_window_get_default_size (GTK_WINDOW (self), width, height);
+  *maximized = gtk_window_is_maximized (GTK_WINDOW (self));
+}
+
+static void
 apply_state (GigWindow *self,
              gint width,
              gint height,
@@ -20,6 +32,24 @@ apply_state (GigWindow *self,
 
   if (maximized)
     gtk_window_maximize (GTK_WINDOW (self));
+}
+
+static void
+save_state (GigWindow *self)
+{
+  GigApplication *application;
+  GigSettings *settings;
+  gint width, height;
+  gboolean maximized;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  settings = gig_application_get_settings (application);
+
+  capture_state (self, &width, &height, &maximized);
+
+  gig_settings_set_window_state (settings, width, height, maximized);
 }
 
 static void
@@ -331,7 +361,7 @@ gig_window_close_request (GtkWindow *window)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  gig_window_save_state (self);
+  save_state (self);
 
   return GTK_WINDOW_CLASS (gig_window_parent_class)->close_request (window);
 }
@@ -507,28 +537,6 @@ gig_window_get_selected_tab (GigWindow *self)
 }
 
 void
-gig_window_save_state (GigWindow *self)
-{
-  GigApplication *application;
-  GigSettings *settings;
-  gint width, height;
-  gboolean maximized;
-
-  g_return_if_fail (GIG_IS_WINDOW (self));
-
-  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
-  settings = gig_application_get_settings (application);
-
-  gtk_window_get_default_size (GTK_WINDOW (self), &width, &height);
-  maximized = gtk_window_is_maximized (GTK_WINDOW (self));
-
-  gig_settings_set_window_state (settings,
-                                 width,
-                                 height,
-                                 maximized);
-}
-
-void
 gig_window_restore_state (GigWindow *self)
 {
   GigApplication *application;
@@ -541,10 +549,7 @@ gig_window_restore_state (GigWindow *self)
   application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
   settings = gig_application_get_settings (application);
 
-  gig_settings_get_window_state (settings,
-                                 &width,
-                                 &height,
-                                 &maximized);
+  gig_settings_get_window_state (settings, &width, &height, &maximized);
 
   apply_state (self, width, height, maximized);
 }
@@ -559,8 +564,6 @@ gig_window_inherit_state (GigWindow *self,
   g_return_if_fail (GIG_IS_WINDOW (self));
   g_return_if_fail (GIG_IS_WINDOW (source));
 
-  gtk_window_get_default_size (GTK_WINDOW (source), &width, &height);
-  maximized = gtk_window_is_maximized (GTK_WINDOW (source));
-
+  capture_state (source, &width, &height, &maximized);
   apply_state (self, width, height, maximized);
 }
