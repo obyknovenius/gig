@@ -29,15 +29,13 @@ gig_window_actions_new_window_cb (GtkWidget *widget,
   GigWindow *self = (GigWindow *) widget;
   GigApplication *application;
   GigWindow *new_window;
-  gint width, height;
 
   g_assert (GIG_IS_WINDOW (self));
 
   application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
   new_window = gig_window_new (application);
 
-  gtk_window_get_default_size (GTK_WINDOW (self), &width, &height);
-  gtk_window_set_default_size (GTK_WINDOW (new_window), width, height);
+  gig_window_inherit_state (new_window, self);
 
   gtk_window_present (GTK_WINDOW (new_window));
 }

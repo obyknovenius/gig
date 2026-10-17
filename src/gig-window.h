@@ -29,4 +29,7 @@ void gig_window_save_state (GigWindow *self);
 
 void gig_window_restore_state (GigWindow *self);
 
+void gig_window_inherit_state (GigWindow *self,
+                               GigWindow *source);
+
 G_END_DECLS

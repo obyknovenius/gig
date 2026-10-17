@@ -9,6 +9,20 @@
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void
+apply_state (GigWindow *self,
+             gint width,
+             gint height,
+             gboolean maximized)
+{
+  g_assert (GIG_IS_WINDOW (self));
+
+  gtk_window_set_default_size (GTK_WINDOW (self), width, height);
+
+  if (maximized)
+    gtk_window_maximize (GTK_WINDOW (self));
+}
+
+static void
 setup_tab (GigWindow *self,
            GigTab *tab,
            gboolean set_selected)
@@ -83,7 +97,6 @@ web_view_open_in_new_window_cb (GigWindow *self,
   GigWindow *new_window;
   GigWebView *new_web_view;
   GigTab *new_tab;
-  gint width, height;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
@@ -96,8 +109,7 @@ web_view_open_in_new_window_cb (GigWindow *self,
   application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
   new_window = gig_window_new_empty (application);
 
-  gtk_window_get_default_size (GTK_WINDOW (self), &width, &height);
-  gtk_window_set_default_size (GTK_WINDOW (new_window), width, height);
+  gig_window_inherit_state (new_window, self);
 
   gig_window_add_tab (new_window, new_tab, NULL, FALSE);
   gtk_window_present (GTK_WINDOW (new_window));
@@ -534,8 +546,21 @@ gig_window_restore_state (GigWindow *self)
                                  &height,
                                  &maximized);
 
-  gtk_window_set_default_size (GTK_WINDOW (self), width, height);
+  apply_state (self, width, height, maximized);
+}
 
-  if (maximized)
-    gtk_window_maximize (GTK_WINDOW (self));
+void
+gig_window_inherit_state (GigWindow *self,
+                          GigWindow *source)
+{
+  gint width, height;
+  gboolean maximized;
+
+  g_return_if_fail (GIG_IS_WINDOW (self));
+  g_return_if_fail (GIG_IS_WINDOW (source));
+
+  gtk_window_get_default_size (GTK_WINDOW (source), &width, &height);
+  maximized = gtk_window_is_maximized (GTK_WINDOW (source));
+
+  apply_state (self, width, height, maximized);
 }

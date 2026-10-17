@@ -22,12 +22,12 @@ find_or_create_window (GigApplication *self)
   /* Try to find the most recent editor window displayed */
   for (const GList *iter = windows; iter; iter = iter->next)
     {
-      window = iter->data;
+      GtkWindow *candidate = iter->data;
 
-      g_assert (GTK_IS_WINDOW (window));
+      g_assert (GTK_IS_WINDOW (candidate));
 
-      if (GIG_IS_WINDOW (window))
-        return GIG_WINDOW (window);
+      if (GIG_IS_WINDOW (candidate))
+        return GIG_WINDOW (candidate);
     }
 
   window = gig_window_new_empty (self);
