@@ -278,7 +278,6 @@ gig_tab_init (GigTab *self)
   gtk_widget_init_template (GTK_WIDGET (self));
 }
 
-// TODO: Should it always take a new web view or allow creating an empty tab?
 GigTab *
 gig_tab_new (void)
 {

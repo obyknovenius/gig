@@ -148,7 +148,6 @@ gig_application_open (GApplication *application,
 {
   GigApplication *self = (GigApplication *) application;
   GigWindow *window;
-  GigTab *tab;
 
   g_assert (GIG_IS_APPLICATION (self));
 
@@ -156,11 +155,12 @@ gig_application_open (GApplication *application,
 
   for (gint i = 0; i < n_files; i++)
     {
+      GigWebView *web_view = gig_web_view_new ();
+      GigTab *tab = gig_tab_new_with_web_view (web_view);
       g_autofree gchar *uri = g_file_get_uri (files[i]);
       gboolean set_selected = (i == n_files - 1);
 
-      tab = gig_tab_new ();
-      gig_web_view_load_uri (gig_tab_get_web_view (tab), uri);
+      gig_web_view_load_uri (web_view, uri);
 
       gig_window_add_tab (window, tab, NULL, set_selected);
     }
