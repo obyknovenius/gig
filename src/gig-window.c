@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "gig-window-private.h"
 
 #include "gig-address-bar.h"
@@ -399,6 +401,10 @@ static void
 gig_window_init (GigWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
+
+#if DEVELOPMENT_BUILD
+  gtk_widget_add_css_class (GTK_WIDGET (self), "devel");
+#endif
 
   gig_window_actions_init (self);
 
