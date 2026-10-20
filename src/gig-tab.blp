@@ -10,9 +10,19 @@ template $GigTab: Gtk.Widget {
             transition-type: crossfade;
 
             Gtk.StackPage {
-                child: Adw.StatusPage status_page {
+                child: Adw.StatusPage new_tab_page {
                     title: "New Tab";
                     description: "Search the web or enter a website address";
+                };
+            }
+
+            Gtk.StackPage {
+                child: Adw.StatusPage loading_page {
+                    paintable: Adw.SpinnerPaintable {
+                        widget: loading_page;
+                    };
+
+                    title: "Loading…";
                 };
             }
         };
