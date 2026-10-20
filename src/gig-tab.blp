@@ -5,5 +5,16 @@ template $GigTab: Gtk.Widget {
     Adw.ToolbarView toolbar_view {
         bottom-bar-style: raised_border;
         reveal-bottom-bars: false;
+
+        content: Gtk.Stack stack {
+            transition-type: crossfade;
+
+            Gtk.StackPage {
+                child: Adw.StatusPage status_page {
+                    title: "New Tab";
+                    description: "Search the web or enter a website address";
+                };
+            }
+        };
     }
 }
