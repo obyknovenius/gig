@@ -552,8 +552,12 @@ gig_web_view_copy (GigWebView *self)
   if (item)
     webkit_web_view_go_to_back_forward_list_item (WEBKIT_WEB_VIEW (new_view), item);
   else
-    webkit_web_view_load_uri (WEBKIT_WEB_VIEW (new_view),
-                              webkit_web_view_get_uri (WEBKIT_WEB_VIEW (self)));
+    {
+      const gchar *uri = gig_web_view_get_display_uri (self);
+
+      if (uri)
+        webkit_web_view_load_uri (WEBKIT_WEB_VIEW (new_view), uri);
+    }
 
   return GIG_WEB_VIEW (new_view);
 }
