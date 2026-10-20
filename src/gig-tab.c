@@ -268,11 +268,10 @@ gig_tab_grab_focus (GtkWidget *widget)
 
   g_assert (GIG_IS_TAB (self));
 
-  if (!gig_web_view_is_empty (self->web_view))
-    return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
+  if (gig_web_view_is_empty (self->web_view))
+    return FALSE;
 
-  gtk_root_set_focus (gtk_widget_get_root (widget), widget);
-  return TRUE;
+  return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
 }
 
 static void
