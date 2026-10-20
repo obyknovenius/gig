@@ -12,7 +12,6 @@ struct _GigTab
   AdwToolbarView *toolbar_view;
   GtkStack *stack;
   AdwStatusPage *new_tab_page;
-  AdwStatusPage *loading_page;
   GigWebView *web_view;
   GigFindBar *find_bar;
 };
@@ -34,38 +33,13 @@ static GParamSpec *properties[N_PROPS];
 static void gig_tab_set_web_view (GigTab *self, GigWebView *web_view);
 
 static void
-update_visible_page (GigTab *self)
-{
-  GtkWidget *visible_child;
-
-  g_assert (GIG_IS_TAB (self));
-
-  if (!gig_web_view_is_empty (self->web_view))
-    visible_child = GTK_WIDGET (self->web_view);
-  else if (webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view)))
-    visible_child = GTK_WIDGET (self->loading_page);
-  else
-    visible_child = GTK_WIDGET (self->new_tab_page);
-
-  gtk_stack_set_visible_child (self->stack, visible_child);
-}
-
-static void
-web_view_is_empty_changed_cb (GigTab *self,
-                              GParamSpec *pspec,
-                              GigWebView *web_view)
-{
-  g_assert (GIG_IS_TAB (self));
-
-  update_visible_page (self);
-}
-
-static void
 web_view_uri_changed_cb (GigTab *self,
                          GParamSpec *pspec,
                          GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
+
+  gtk_stack_set_visible_child (self->stack, GTK_WIDGET (self->web_view));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TITLE]);
 }
@@ -96,8 +70,6 @@ web_view_is_loading_changed_cb (GigTab *self,
                                 GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
-
-  update_visible_page (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
 }
@@ -144,13 +116,8 @@ gig_tab_constructed (GObject *object)
 
   gtk_stack_add_child (self->stack, GTK_WIDGET (self->web_view));
 
-  update_visible_page (self);
-
-  g_signal_connect_object (self->web_view,
-                           "notify::is-empty",
-                           G_CALLBACK (web_view_is_empty_changed_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
+  if (gig_web_view_get_display_uri (self->web_view))
+    gtk_stack_set_visible_child (self->stack, GTK_WIDGET (self->web_view));
 
   g_signal_connect_object (self->web_view,
                            "notify::uri",
@@ -268,7 +235,7 @@ gig_tab_grab_focus (GtkWidget *widget)
 
   g_assert (GIG_IS_TAB (self));
 
-  if (gig_web_view_is_empty (self->web_view))
+  if (!gig_web_view_get_display_uri (self->web_view))
     return FALSE;
 
   return gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
@@ -317,7 +284,6 @@ gig_tab_class_init (GigTabClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigTab, toolbar_view);
   gtk_widget_class_bind_template_child (widget_class, GigTab, stack);
   gtk_widget_class_bind_template_child (widget_class, GigTab, new_tab_page);
-  gtk_widget_class_bind_template_child (widget_class, GigTab, loading_page);
 }
 
 static void
