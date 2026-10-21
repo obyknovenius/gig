@@ -106,8 +106,21 @@ menu primary_menu {
 menu tab_menu {
     section {
         item {
+            label: "Pin";
+            action: "tab.pin";
+            hidden-when: "action-disabled";
+        }
+
+        item {
+            label: "Unpin";
+            action: "tab.unpin";
+            hidden-when: "action-disabled";
+        }
+
+        item {
             label: "Duplicate";
             action: "tab.duplicate";
+            hidden-when: "action-disabled";
         }
     }
 

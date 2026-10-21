@@ -313,20 +313,40 @@ tab_view_setup_menu_cb (GigWindow *self,
                         AdwTabPage *page,
                         AdwTabView *tab_view)
 {
-  gint n_pages = -1;
-  gint position = -1;
+  gboolean can_close_others = FALSE;
+  gboolean can_close_before = FALSE;
+  gboolean can_close_after = FALSE;
+  gboolean can_duplicate = FALSE;
+  gboolean can_pin = FALSE;
+  gboolean can_unpin = FALSE;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
   if (page)
     {
-      n_pages = adw_tab_view_get_n_pages (tab_view);
-      position = adw_tab_view_get_page_position (tab_view, page);
+      GigTab *tab = GIG_TAB (adw_tab_page_get_child (page));
+
+      gint n_pages = adw_tab_view_get_n_pages (tab_view);
+      gint n_pinned_pages = adw_tab_view_get_n_pinned_pages (tab_view);
+      gint position = adw_tab_view_get_page_position (tab_view, page);
+      gboolean pinned = adw_tab_page_get_pinned (page);
+      gboolean is_empty = gig_web_view_is_empty (gig_tab_get_web_view (tab));
+
+      can_close_others = n_pages - n_pinned_pages > (pinned ? 0 : 1);
+      can_close_before = position > n_pinned_pages;
+      can_close_after = position < n_pages - 1 && n_pinned_pages < n_pages;
+      can_duplicate = !is_empty;
+      can_pin = !is_empty && !pinned;
+      can_unpin = !is_empty && pinned;
     }
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-before", page && position > 0);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-after", page && position < n_pages - 1);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-others", can_close_others);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-before", can_close_before);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-after", can_close_after);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.duplicate", can_duplicate);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.pin", can_pin);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.unpin", can_unpin);
 
   self->menu_page = page;
 }
@@ -521,15 +541,10 @@ close_other_tabs_action (GtkWidget *widget,
                          GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  AdwTabPage *tab_page;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = self->menu_page;
-  if (!tab_page)
-    tab_page = adw_tab_view_get_selected_page (self->tab_view);
-
-  adw_tab_view_close_other_pages (self->tab_view, tab_page);
+  adw_tab_view_close_other_pages (self->tab_view, self->menu_page);
 }
 
 static void
@@ -538,15 +553,10 @@ close_tabs_before_action (GtkWidget *widget,
                           GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  AdwTabPage *tab_page;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = self->menu_page;
-  if (!tab_page)
-    tab_page = adw_tab_view_get_selected_page (self->tab_view);
-
-  adw_tab_view_close_pages_before (self->tab_view, tab_page);
+  adw_tab_view_close_pages_before (self->tab_view, self->menu_page);
 }
 
 static void
@@ -555,15 +565,10 @@ close_tabs_after_action (GtkWidget *widget,
                          GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  AdwTabPage *tab_page;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = self->menu_page;
-  if (!tab_page)
-    tab_page = adw_tab_view_get_selected_page (self->tab_view);
-
-  adw_tab_view_close_pages_after (self->tab_view, tab_page);
+  adw_tab_view_close_pages_after (self->tab_view, self->menu_page);
 }
 
 static void
@@ -572,25 +577,44 @@ duplicate_tab_action (GtkWidget *widget,
                       GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  AdwTabPage *tab_page;
   GigTab *tab, *new_tab;
   GigWebView *web_view, *new_view;
   gint position;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  tab_page = self->menu_page;
-  if (!tab_page)
-    tab_page = adw_tab_view_get_selected_page (self->tab_view);
-
-  tab = GIG_TAB (adw_tab_page_get_child (tab_page));
+  tab = GIG_TAB (adw_tab_page_get_child (self->menu_page));
   web_view = gig_tab_get_web_view (tab);
 
   new_view = gig_web_view_copy (web_view);
   new_tab = gig_tab_new_with_web_view (new_view);
 
-  position = adw_tab_view_get_page_position (self->tab_view, tab_page) + 1;
+  position = adw_tab_view_get_page_position (self->tab_view, self->menu_page) + 1;
   gig_window_insert_tab (self, new_tab, position, TRUE);
+}
+
+static void
+pin_tab_action (GtkWidget *widget,
+                const gchar *action_name,
+                GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  adw_tab_view_set_page_pinned (self->tab_view, self->menu_page, TRUE);
+}
+
+static void
+unpin_tab_action (GtkWidget *widget,
+                  const gchar *action_name,
+                  GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  adw_tab_view_set_page_pinned (self->tab_view, self->menu_page, FALSE);
 }
 
 static void
@@ -668,6 +692,8 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_install_action (widget_class, "tab.close-before", NULL, close_tabs_before_action);
   gtk_widget_class_install_action (widget_class, "tab.close-after", NULL, close_tabs_after_action);
   gtk_widget_class_install_action (widget_class, "tab.duplicate", NULL, duplicate_tab_action);
+  gtk_widget_class_install_action (widget_class, "tab.pin", NULL, pin_tab_action);
+  gtk_widget_class_install_action (widget_class, "tab.unpin", NULL, unpin_tab_action);
 
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_t, GDK_CONTROL_MASK, "win.new-tab", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_n, GDK_CONTROL_MASK, "win.new-window", NULL);
