@@ -1,11 +1,18 @@
 #include "config.h"
 
-#include "gig-application-private.h"
+#include "gig-application.h"
 
 #include "gig-settings.h"
 #include "gig-tab.h"
 #include "gig-web-view.h"
 #include "gig-window.h"
+
+struct _GigApplication
+{
+  AdwApplication parent_instance;
+
+  GigSettings *settings;
+};
 
 G_DEFINE_TYPE (GigApplication, gig_application, ADW_TYPE_APPLICATION)
 
@@ -33,6 +40,41 @@ find_or_create_window (GigApplication *self)
   window = gig_window_new_empty (self);
   gig_window_restore_state (window);
   return window;
+}
+
+static void
+about_action (GSimpleAction *action,
+              GVariant *parameter,
+              gpointer user_data)
+{
+  GigApplication *self = user_data;
+  GigWindow *window;
+  g_autofree gchar *debug_info = NULL;
+
+  g_assert (GIG_IS_APPLICATION (self));
+
+  window = gig_application_get_current_window (self);
+
+  debug_info = g_strdup_printf ("WebKitGTK %d.%d.%d" WEBKIT_REVISION "\n"
+                                "GTK %d.%d.%d\n"
+                                "Libadwaita %d.%d.%d",
+                                webkit_get_major_version (),
+                                webkit_get_minor_version (),
+                                webkit_get_micro_version (),
+                                gtk_get_major_version (),
+                                gtk_get_minor_version (),
+                                gtk_get_micro_version (),
+                                adw_get_major_version (),
+                                adw_get_minor_version (),
+                                adw_get_micro_version ());
+
+  adw_show_about_dialog (GTK_WIDGET (window),
+                         "application-name", "Side Gig",
+                         "application-icon", APP_ID,
+                         "version", PACKAGE_VERSION,
+                         "developer-name", "Vitaly Dyachkov",
+                         "debug-info", debug_info,
+                         NULL);
 }
 
 static void
@@ -121,8 +163,6 @@ gig_application_startup (GApplication *application)
 
   G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
 
-  gig_application_init_actions (self);
-
   gtk_window_set_default_icon_name (APP_ID);
 }
 
@@ -191,9 +231,15 @@ gig_application_init (GigApplication *self)
     { 0 }
   };
 
+  static const GActionEntry actions[] = {
+    { "about", about_action },
+  };
+
   self->settings = gig_settings_new ();
 
   g_application_add_main_option_entries (G_APPLICATION (self), options);
+
+  g_action_map_add_action_entries (G_ACTION_MAP (self), actions, G_N_ELEMENTS (actions), self);
 }
 
 GigApplication *

@@ -231,11 +231,9 @@ web_view_load_changed_cb (GigWebView *self,
         GTlsCertificateFlags tls_errors = 0;
 
         if (webkit_web_view_get_tls_info (web_view, &certificate, &tls_errors) && tls_errors == 0)
-          gig_web_view_set_connection_security_level (self,
-                                                      GIG_CONNECTION_SECURITY_LEVEL_SECURE);
+          gig_web_view_set_connection_security_level (self, GIG_CONNECTION_SECURITY_LEVEL_SECURE);
         else
-          gig_web_view_set_connection_security_level (self,
-                                                      GIG_CONNECTION_SECURITY_LEVEL_INSECURE);
+          gig_web_view_set_connection_security_level (self, GIG_CONNECTION_SECURITY_LEVEL_INSECURE);
 
         gig_web_view_set_is_empty (self, FALSE);
         break;

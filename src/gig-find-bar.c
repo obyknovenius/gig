@@ -1,7 +1,16 @@
-#include "gig-find-bar-private.h"
+#include "gig-find-bar.h"
 
 #include "gig-find-entry.h"
 #include "gig-web-view.h"
+
+struct _GigFindBar
+{
+  GtkWidget parent_instance;
+
+  GtkCenterBox *center_box;
+  GigFindEntry *entry;
+  WebKitFindController *find_controller;
+};
 
 G_DEFINE_FINAL_TYPE (GigFindBar, gig_find_bar, GTK_TYPE_WIDGET)
 
@@ -41,13 +50,8 @@ find_controller_found_text_cb (GigFindBar *self,
   if (gig_find_entry_get_occurrence_position (self->entry) == 0 && match_count > 0)
     gig_find_entry_set_occurrence_position (self->entry, 1);
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self),
-                                 "find.previous",
-                                 match_count > 1);
-
-  gtk_widget_action_set_enabled (GTK_WIDGET (self),
-                                 "find.next",
-                                 match_count > 1);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.previous", match_count > 1);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.next", match_count > 1);
 }
 
 static void
@@ -93,6 +97,42 @@ entry_stop_search_cb (GigFindBar *self,
   g_assert (GIG_IS_FIND_BAR (self));
 
   gtk_widget_activate_action (GTK_WIDGET (self), "tab.find-finish", NULL);
+}
+
+static void
+find_next_action (GtkWidget *widget,
+                  const gchar *action_name,
+                  GVariant *param)
+{
+  GigFindBar *self = (GigFindBar *) widget;
+  guint count, position;
+
+  g_assert (GIG_IS_FIND_BAR (self));
+
+  webkit_find_controller_search_next (self->find_controller);
+
+  count = gig_find_entry_get_occurrence_count (self->entry);
+  position = gig_find_entry_get_occurrence_position (self->entry);
+
+  gig_find_entry_set_occurrence_position (self->entry, position == count ? 1 : position + 1);
+}
+
+static void
+find_previous_action (GtkWidget *widget,
+                      const gchar *action_name,
+                      GVariant *param)
+{
+  GigFindBar *self = (GigFindBar *) widget;
+  guint count, position;
+
+  g_assert (GIG_IS_FIND_BAR (self));
+
+  webkit_find_controller_search_previous (self->find_controller);
+
+  count = gig_find_entry_get_occurrence_count (self->entry);
+  position = gig_find_entry_get_occurrence_position (self->entry);
+
+  gig_find_entry_set_occurrence_position (self->entry, position == 1 ? count : position - 1);
 }
 
 static void
@@ -185,8 +225,6 @@ gig_find_bar_class_init (GigFindBarClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
-  gig_find_bar_class_actions_init (klass);
-
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-find-bar.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name (widget_class, "findbar");
@@ -199,6 +237,9 @@ gig_find_bar_class_init (GigFindBarClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, entry_focus_enter_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_focus_leave_cb);
 
+  gtk_widget_class_install_action (widget_class, "find.next", NULL, find_next_action);
+  gtk_widget_class_install_action (widget_class, "find.previous", NULL, find_previous_action);
+
   g_type_ensure (GIG_TYPE_FIND_ENTRY);
 }
 
@@ -207,7 +248,8 @@ gig_find_bar_init (GigFindBar *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  gig_find_bar_actions_init (self);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.previous", FALSE);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "find.next", FALSE);
 }
 
 GigFindBar *
@@ -240,9 +282,7 @@ gig_find_bar_search (GigFindBar *self)
   reset (self);
 
   search_text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
-
-  webkit_find_controller_search (self->find_controller,
-                                 search_text, options, G_MAXUINT);
+  webkit_find_controller_search (self->find_controller, search_text, options, G_MAXUINT);
 }
 
 void
