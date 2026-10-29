@@ -1,10 +1,10 @@
 FROM fedora:45
 
-ARG WEBKIT_COMMIT=e6eb9ebd41d6a54df8db2dc86603c3a8139abf5b
-ARG WEBKIT_CHECKOUT_DIR=/src/WebKit
-
 RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    dnf -y install git
+    dnf -y install git ccache lld
+
+ARG WEBKIT_COMMIT=0efe41e94b436c859ea0bf7765f720b735d3dacd
+ARG WEBKIT_CHECKOUT_DIR=/src/WebKit
 
 # Fetch WebKit sources
 RUN git init --initial-branch=main "$WEBKIT_CHECKOUT_DIR" && \
@@ -21,15 +21,22 @@ RUN --mount=type=cache,target=/var/cache/libdnf5 \
     Tools/gtk/install-dependencies
 
 # Build and install WebKit
-RUN --mount=type=cache,target=${WEBKIT_CHECKOUT_DIR}/WebKitBuild \
+ARG CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+ARG CCACHE_MAXSIZE=15G
+
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    ccache --zero-stats && \
     cmake --preset gtk-release \
         -DUSE_LIBBACKTRACE=OFF \
         -DENABLE_DOCUMENTATION=OFF \
         -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_LINKER_TYPE=LLD \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_INSTALL_LIBDIR=lib64 && \
-    cmake --build --preset gtk-release --target install
+    cmake --build --preset gtk-release --target install && \
+    ccache --show-stats && \
+    rm -rf WebKitBuild
 
 WORKDIR /
 
