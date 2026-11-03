@@ -1,9 +1,6 @@
-FROM fedora:45
+FROM ghcr.io/igalia/wkdev-sdk:2.55-v3-a507ffd
 
-RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    dnf -y install git ccache lld
-
-ARG WEBKIT_COMMIT=0efe41e94b436c859ea0bf7765f720b735d3dacd
+ARG WEBKIT_COMMIT=0187bc1e328bd3f3c6b21cbe3b6b0dd0bdb8535c
 ARG WEBKIT_CHECKOUT_DIR=/src/WebKit
 
 # Fetch WebKit sources
@@ -16,48 +13,21 @@ RUN git init --initial-branch=main "$WEBKIT_CHECKOUT_DIR" && \
 
 WORKDIR $WEBKIT_CHECKOUT_DIR
 
-# Install WebKit dependencies
-RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    Tools/gtk/install-dependencies
-
-# Build and install WebKit
-ARG CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
-ARG CCACHE_MAXSIZE=15G
-
-RUN --mount=type=cache,target=/root/.cache/ccache \
-    ccache --zero-stats && \
-    cmake --preset gtk-release \
-        -DUSE_LIBBACKTRACE=OFF \
-        -DENABLE_DOCUMENTATION=OFF \
-        -DCMAKE_C_COMPILER=clang \
-        -DCMAKE_CXX_COMPILER=clang++ \
-        -DCMAKE_LINKER_TYPE=LLD \
+RUN cmake --preset gtk-release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_INSTALL_LIBDIR=lib64 && \
-    cmake --build --preset gtk-release --target install && \
-    ccache --show-stats && \
+        -DCMAKE_INSTALL_LIBDIR=lib && \
+        cmake --build --preset gtk-release --target install && \
     rm -rf WebKitBuild
 
 WORKDIR /
 
-# Install Free and Nonfree RPM Fusion Repositories
-RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    dnf -y install \
-        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-45.noarch.rpm \
-        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-45.noarch.rpm
-
-# Install additional codec
-RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    dnf -y install \
-        @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
-
 # Install gig dependencies
-RUN --mount=type=cache,target=/var/cache/libdnf5 \
-    dnf -y install \
+RUN apt update && \
+    apt install --yes --no-install-recommends \
+        adwaita-icon-theme \
         blueprint-compiler \
-        clang-tools-extra \
         desktop-file-utils \
-        gtk4-devel \
-        libadwaita-devel \
-        meson \
-        yaru-theme
+        libadwaita-1-dev \
+        libgtk-4-dev \
+        meson && \
+    rm -rf /var/lib/apt/lists/*

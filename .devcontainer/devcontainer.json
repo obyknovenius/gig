@@ -1,10 +1,10 @@
 {
-	"name": "Fedora 45",
+	"name": "WebKit Container SDK",
 	"build": {
 		"dockerfile": "Containerfile"
 	},
 	"runArgs": [
-		"--hostname=fedora-45",
+		"--hostname=wkdev-sdk",
 		"--device=/dev/dri"
 	],
 	"capAdd": [
