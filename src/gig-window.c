@@ -308,6 +308,19 @@ web_view_leave_fullscreen_cb (GigWindow *self,
   return FALSE;
 }
 
+static gboolean
+tab_view_close_page_cb (GigWindow *self,
+                        AdwTabPage *page,
+                        AdwTabView *tab_view)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (ADW_IS_TAB_VIEW (tab_view));
+
+  adw_tab_view_close_page_finish (tab_view, page, TRUE);
+
+  return GDK_EVENT_STOP;
+}
+
 static void
 tab_view_setup_menu_cb (GigWindow *self,
                         AdwTabPage *page,
@@ -671,6 +684,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
+  gtk_widget_class_bind_template_callback (widget_class, tab_view_close_page_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_setup_menu_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
