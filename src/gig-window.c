@@ -316,7 +316,6 @@ tab_view_setup_menu_cb (GigWindow *self,
   gboolean can_close_others = FALSE;
   gboolean can_close_before = FALSE;
   gboolean can_close_after = FALSE;
-  gboolean can_duplicate = FALSE;
   gboolean can_pin = FALSE;
   gboolean can_unpin = FALSE;
 
@@ -325,26 +324,21 @@ tab_view_setup_menu_cb (GigWindow *self,
 
   if (page)
     {
-      GigTab *tab = GIG_TAB (adw_tab_page_get_child (page));
-
       gint n_pages = adw_tab_view_get_n_pages (tab_view);
       gint n_pinned_pages = adw_tab_view_get_n_pinned_pages (tab_view);
       gint position = adw_tab_view_get_page_position (tab_view, page);
       gboolean pinned = adw_tab_page_get_pinned (page);
-      gboolean is_empty = gig_web_view_is_empty (gig_tab_get_web_view (tab));
 
       can_close_others = n_pages - n_pinned_pages > (pinned ? 0 : 1);
       can_close_before = position > n_pinned_pages;
       can_close_after = position < n_pages - 1 && n_pinned_pages < n_pages;
-      can_duplicate = !is_empty;
-      can_pin = !is_empty && !pinned;
-      can_unpin = !is_empty && pinned;
+      can_pin = !pinned;
+      can_unpin = pinned;
     }
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-others", can_close_others);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-before", can_close_before);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-after", can_close_after);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.duplicate", can_duplicate);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.pin", can_pin);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.unpin", can_unpin);
 
