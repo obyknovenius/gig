@@ -24,7 +24,8 @@
 		"GSETTINGS_BACKEND": "keyfile",
 		"DISPLAY": "${localEnv:DISPLAY}",
 		"XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
-		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}"
+		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
+		"XDG_CURRENT_DESKTOP": "${localEnv:XDG_CURRENT_DESKTOP}"
 	},
 	"features": {
 		"ghcr.io/obyknovenius/devcontainer-features/add-user:1": {}

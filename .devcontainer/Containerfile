@@ -28,7 +28,11 @@ RUN apt update && \
         blueprint-compiler \
         desktop-file-utils \
         fonts-adwaita \
+        fonts-ubuntu \
         libadwaita-1-dev \
         libgtk-4-dev \
-        meson && \
+        meson \
+        ubuntu-settings \
+        yaru-theme-gtk \
+        yaru-theme-icon && \
     rm -rf /var/lib/apt/lists/*
