@@ -358,6 +358,39 @@ tab_view_setup_menu_cb (GigWindow *self,
   self->menu_page = page;
 }
 
+static AdwTabView *
+tab_view_create_window_cb (GigWindow *self,
+                           AdwTabView *tab_view)
+{
+  GigApplication *application;
+  GigWindow *new_window;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (ADW_IS_TAB_VIEW (tab_view));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  new_window = gig_window_new_empty (application);
+
+  inherit_state (new_window, self);
+
+  gtk_window_present (GTK_WINDOW (new_window));
+
+  return new_window->tab_view;
+}
+
+static void
+tab_view_page_detached_cb (GigWindow *self,
+                           AdwTabPage *page,
+                           gint position,
+                           AdwTabView *tab_view)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (ADW_IS_TAB_VIEW (tab_view));
+
+  if (adw_tab_view_get_n_pages (tab_view) == 0)
+    gtk_window_close (GTK_WINDOW (self));
+}
+
 static void
 tab_view_selected_page_changed_cb (GigWindow *self,
                                    GParamSpec *pspec,
@@ -686,6 +719,8 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_close_page_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_setup_menu_cb);
+  gtk_widget_class_bind_template_callback (widget_class, tab_view_create_window_cb);
+  gtk_widget_class_bind_template_callback (widget_class, tab_view_page_detached_cb);
   gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
 
   gtk_widget_class_install_action (widget_class, "win.new-tab", NULL, new_tab_action);

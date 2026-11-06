@@ -70,6 +70,8 @@ template $GigWindow: Adw.ApplicationWindow {
                 menu-model: tab_menu;
                 close-page => $tab_view_close_page_cb() swapped;
                 setup-menu => $tab_view_setup_menu_cb() swapped;
+                create-window => $tab_view_create_window_cb() swapped;
+                page-detached => $tab_view_page_detached_cb() swapped;
                 notify::selected-page => $tab_view_selected_page_changed_cb() swapped;
             }
         };
