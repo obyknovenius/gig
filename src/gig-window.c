@@ -84,6 +84,22 @@ inherit_state (GigWindow *self,
   apply_state (self, width, height, maximized);
 }
 
+static GigWindow *
+gig_window_new_sibling (GigWindow *self)
+{
+  GigApplication *application;
+  GigWindow *new_window;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+  new_window = gig_window_new (application);
+
+  inherit_state (new_window, self);
+
+  return new_window;
+}
+
 static void
 update_actions (GigWindow *self)
 {
@@ -181,7 +197,6 @@ web_view_open_in_new_window_cb (GigWindow *self,
                                 const gchar *uri,
                                 GigWebView *web_view)
 {
-  GigApplication *application;
   GigWindow *new_window;
   GigWebView *new_web_view;
   GigTab *new_tab;
@@ -193,11 +208,7 @@ web_view_open_in_new_window_cb (GigWindow *self,
   gig_web_view_load_uri (new_web_view, uri);
 
   new_tab = gig_tab_new_with_web_view (new_web_view);
-
-  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
-  new_window = gig_window_new_empty (application);
-
-  inherit_state (new_window, self);
+  new_window = gig_window_new_sibling (self);
 
   gig_window_add_tab (new_window, new_tab, NULL, FALSE);
   gtk_window_present (GTK_WINDOW (new_window));
@@ -362,16 +373,12 @@ static AdwTabView *
 tab_view_create_window_cb (GigWindow *self,
                            AdwTabView *tab_view)
 {
-  GigApplication *application;
   GigWindow *new_window;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
-  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
-  new_window = gig_window_new_empty (application);
-
-  inherit_state (new_window, self);
+  new_window = gig_window_new_sibling (self);
 
   gtk_window_present (GTK_WINDOW (new_window));
 
@@ -447,15 +454,15 @@ new_window_action (GtkWidget *widget,
                    GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
-  GigApplication *application;
   GigWindow *new_window;
+  GigTab *new_tab;
 
   g_assert (GIG_IS_WINDOW (self));
 
-  application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
-  new_window = gig_window_new (application);
+  new_window = gig_window_new_sibling (self);
+  new_tab = gig_tab_new ();
 
-  inherit_state (new_window, self);
+  gig_window_add_tab (new_window, new_tab, NULL, TRUE);
 
   gtk_window_present (GTK_WINDOW (new_window));
 }
@@ -817,22 +824,6 @@ gig_window_init (GigWindow *self)
 
 GigWindow *
 gig_window_new (GigApplication *application)
-{
-  GigWindow *self;
-  GigTab *tab;
-
-  g_return_val_if_fail (GIG_IS_APPLICATION (application), NULL);
-
-  self = gig_window_new_empty (application);
-  tab = gig_tab_new ();
-
-  gig_window_add_tab (self, tab, NULL, TRUE);
-
-  return self;
-}
-
-GigWindow *
-gig_window_new_empty (GigApplication *application)
 {
   g_return_val_if_fail (GIG_IS_APPLICATION (application), NULL);
 

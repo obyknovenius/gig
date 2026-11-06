@@ -37,7 +37,7 @@ find_or_create_window (GigApplication *self)
         return GIG_WINDOW (candidate);
     }
 
-  window = gig_window_new_empty (self);
+  window = gig_window_new (self);
   gig_window_restore_state (window);
   return window;
 }
@@ -171,10 +171,15 @@ gig_application_activate (GApplication *application)
 {
   GigApplication *self = (GigApplication *) application;
   GigWindow *window;
+  GigTab *tab;
 
   g_assert (GIG_IS_APPLICATION (self));
 
   window = gig_window_new (self);
+  tab = gig_tab_new ();
+
+  gig_window_add_tab (window, tab, NULL, TRUE);
+
   gig_window_restore_state (window);
 
   gtk_window_present (GTK_WINDOW (window));
