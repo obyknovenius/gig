@@ -27,7 +27,7 @@ static void gig_find_bar_set_find_controller (GigFindBar *self,
                                               WebKitFindController *find_controller);
 
 static void
-reset (GigFindBar *self)
+gig_find_bar_reset (GigFindBar *self)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -39,9 +39,9 @@ reset (GigFindBar *self)
 }
 
 static void
-find_controller_found_text_cb (GigFindBar *self,
-                               guint match_count,
-                               WebKitFindController *find_controller)
+gig_find_bar_find_controller_found_text_cb (GigFindBar *self,
+                                            guint match_count,
+                                            WebKitFindController *find_controller)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -55,17 +55,17 @@ find_controller_found_text_cb (GigFindBar *self,
 }
 
 static void
-find_controller_failed_to_find_text_cb (GigFindBar *self,
-                                        WebKitFindController *find_controller)
+gig_find_bar_find_controller_failed_to_find_text_cb (GigFindBar *self,
+                                                     WebKitFindController *find_controller)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
-  reset (self);
+  gig_find_bar_reset (self);
 }
 
 static void
-entry_focus_enter_cb (GigFindBar *self,
-                      GtkEventControllerFocus *controller)
+gig_find_bar_entry_focus_enter_cb (GigFindBar *self,
+                                   GtkEventControllerFocus *controller)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -73,8 +73,8 @@ entry_focus_enter_cb (GigFindBar *self,
 }
 
 static void
-entry_focus_leave_cb (GigFindBar *self,
-                      GtkEventControllerFocus *controller)
+gig_find_bar_entry_focus_leave_cb (GigFindBar *self,
+                                   GtkEventControllerFocus *controller)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -82,8 +82,8 @@ entry_focus_leave_cb (GigFindBar *self,
 }
 
 static void
-entry_search_changed_cb (GigFindBar *self,
-                         GigFindEntry *entry)
+gig_find_bar_entry_search_changed_cb (GigFindBar *self,
+                                      GigFindEntry *entry)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -91,8 +91,8 @@ entry_search_changed_cb (GigFindBar *self,
 }
 
 static void
-entry_stop_search_cb (GigFindBar *self,
-                      GigFindEntry *entry)
+gig_find_bar_entry_stop_search_cb (GigFindBar *self,
+                                   GigFindEntry *entry)
 {
   g_assert (GIG_IS_FIND_BAR (self));
 
@@ -100,9 +100,9 @@ entry_stop_search_cb (GigFindBar *self,
 }
 
 static void
-find_next_action (GtkWidget *widget,
-                  const gchar *action_name,
-                  GVariant *param)
+gig_find_bar_find_next_action (GtkWidget *widget,
+                               const gchar *action_name,
+                               GVariant *param)
 {
   GigFindBar *self = (GigFindBar *) widget;
   guint count, position;
@@ -118,9 +118,9 @@ find_next_action (GtkWidget *widget,
 }
 
 static void
-find_previous_action (GtkWidget *widget,
-                      const gchar *action_name,
-                      GVariant *param)
+gig_find_bar_find_previous_action (GtkWidget *widget,
+                                   const gchar *action_name,
+                                   GVariant *param)
 {
   GigFindBar *self = (GigFindBar *) widget;
   guint count, position;
@@ -148,13 +148,13 @@ gig_find_bar_constructed (GObject *object)
 
   g_signal_connect_object (self->find_controller,
                            "found-text",
-                           G_CALLBACK (find_controller_found_text_cb),
+                           G_CALLBACK (gig_find_bar_find_controller_found_text_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->find_controller,
                            "failed-to-find-text",
-                           G_CALLBACK (find_controller_failed_to_find_text_cb),
+                           G_CALLBACK (gig_find_bar_find_controller_failed_to_find_text_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
@@ -232,13 +232,13 @@ gig_find_bar_class_init (GigFindBarClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, center_box);
   gtk_widget_class_bind_template_child (widget_class, GigFindBar, entry);
 
-  gtk_widget_class_bind_template_callback (widget_class, entry_search_changed_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_stop_search_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_focus_enter_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_focus_leave_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_find_bar_entry_search_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_find_bar_entry_stop_search_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_find_bar_entry_focus_enter_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_find_bar_entry_focus_leave_cb);
 
-  gtk_widget_class_install_action (widget_class, "find.next", NULL, find_next_action);
-  gtk_widget_class_install_action (widget_class, "find.previous", NULL, find_previous_action);
+  gtk_widget_class_install_action (widget_class, "find.next", NULL, gig_find_bar_find_next_action);
+  gtk_widget_class_install_action (widget_class, "find.previous", NULL, gig_find_bar_find_previous_action);
 
   g_type_ensure (GIG_TYPE_FIND_ENTRY);
 }
@@ -279,7 +279,7 @@ gig_find_bar_search (GigFindBar *self)
   g_return_if_fail (GIG_IS_FIND_BAR (self));
   g_return_if_fail (WEBKIT_IS_FIND_CONTROLLER (self->find_controller));
 
-  reset (self);
+  gig_find_bar_reset (self);
 
   search_text = gtk_editable_get_text (GTK_EDITABLE (self->entry));
   webkit_find_controller_search (self->find_controller, search_text, options, G_MAXUINT);
@@ -293,5 +293,5 @@ gig_find_bar_search_finish (GigFindBar *self)
 
   webkit_find_controller_search_finish (self->find_controller);
 
-  reset (self);
+  gig_find_bar_reset (self);
 }

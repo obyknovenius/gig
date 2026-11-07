@@ -13,12 +13,12 @@ template $GigFindBar: Gtk.Widget {
 
                 $GigFindEntry entry {
                     hexpand: true;
-                    search-changed => $entry_search_changed_cb() swapped;
-                    stop-search => $entry_stop_search_cb() swapped;
+                    search-changed => $gig_find_bar_entry_search_changed_cb() swapped;
+                    stop-search => $gig_find_bar_entry_stop_search_cb() swapped;
 
                     Gtk.EventControllerFocus {
-                        enter => $entry_focus_enter_cb() swapped;
-                        leave => $entry_focus_leave_cb() swapped;
+                        enter => $gig_find_bar_entry_focus_enter_cb() swapped;
+                        leave => $gig_find_bar_entry_focus_leave_cb() swapped;
                     }
 
                     Gtk.ShortcutController {

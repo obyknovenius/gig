@@ -15,9 +15,9 @@ struct _GigFindEntry
   guint occurrence_position;
 };
 
-static void editable_iface_init (GtkEditableInterface *iface);
+static void gig_find_entry_editable_iface_init (GtkEditableInterface *iface);
 
-G_DEFINE_FINAL_TYPE_WITH_CODE (GigFindEntry, gig_find_entry, GTK_TYPE_WIDGET, G_IMPLEMENT_INTERFACE (GTK_TYPE_EDITABLE, editable_iface_init))
+G_DEFINE_FINAL_TYPE_WITH_CODE (GigFindEntry, gig_find_entry, GTK_TYPE_WIDGET, G_IMPLEMENT_INTERFACE (GTK_TYPE_EDITABLE, gig_find_entry_editable_iface_init))
 
 enum
 {
@@ -37,20 +37,20 @@ enum
 static GParamSpec *properties[N_PROPS];
 static guint signals[N_SIGNALS];
 
-static void search_timeout_cb (gpointer user_data);
+static void gig_find_entry_search_timeout_cb (gpointer user_data);
 
 static void
-reset_timeout (GigFindEntry *self)
+gig_find_entry_reset_timeout (GigFindEntry *self)
 {
   g_clear_handle_id (&self->search_timeout_id, g_source_remove);
 
   self->search_timeout_id = g_timeout_add_once (self->search_delay,
-                                                search_timeout_cb,
+                                                gig_find_entry_search_timeout_cb,
                                                 self);
 }
 
 static void
-update_occurrence_label (GigFindEntry *self)
+gig_find_entry_update_occurrence_label (GigFindEntry *self)
 {
   g_assert (GIG_IS_FIND_ENTRY (self));
 
@@ -67,7 +67,7 @@ update_occurrence_label (GigFindEntry *self)
 }
 
 static void
-search_timeout_cb (gpointer user_data)
+gig_find_entry_search_timeout_cb (gpointer user_data)
 {
   GigFindEntry *self = user_data;
 
@@ -79,8 +79,8 @@ search_timeout_cb (gpointer user_data)
 }
 
 static void
-text_changed_cb (GigFindEntry *self,
-                 GtkText *text)
+gig_find_entry_text_changed_cb (GigFindEntry *self,
+                                GtkText *text)
 {
 #if GTK_CHECK_VERSION(4, 24, 0)
   g_autofree char *str = NULL;
@@ -108,16 +108,16 @@ text_changed_cb (GigFindEntry *self,
     {
       gtk_widget_set_visible (GTK_WIDGET (self->clear_image), TRUE);
 
-      reset_timeout (self);
+      gig_find_entry_reset_timeout (self);
     }
 }
 
 static void
-clear_pressed_cb (GigFindEntry *self,
-                  int n_press,
-                  double x,
-                  double y,
-                  GtkGestureClick *click)
+gig_find_entry_clear_pressed_cb (GigFindEntry *self,
+                                 int n_press,
+                                 double x,
+                                 double y,
+                                 GtkGestureClick *click)
 {
   g_assert (GIG_IS_FIND_ENTRY (self));
 
@@ -271,8 +271,8 @@ gig_find_entry_class_init (GigFindEntryClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigFindEntry, occurrence_label);
   gtk_widget_class_bind_template_child (widget_class, GigFindEntry, clear_image);
 
-  gtk_widget_class_bind_template_callback (widget_class, text_changed_cb);
-  gtk_widget_class_bind_template_callback (widget_class, clear_pressed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_find_entry_text_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_find_entry_clear_pressed_cb);
 }
 
 static void
@@ -292,7 +292,7 @@ gig_find_entry_get_delegate (GtkEditable *editable)
 }
 
 static void
-editable_iface_init (GtkEditableInterface *iface)
+gig_find_entry_editable_iface_init (GtkEditableInterface *iface)
 {
   iface->get_delegate = gig_find_entry_get_delegate;
 }
@@ -316,7 +316,7 @@ gig_find_entry_set_occurrence_count (GigFindEntry *self,
 
   self->occurrence_count = occurrence_count;
 
-  update_occurrence_label (self);
+  gig_find_entry_update_occurrence_label (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_OCCURRENCE_COUNT]);
 }
@@ -340,7 +340,7 @@ gig_find_entry_set_occurrence_position (GigFindEntry *self,
 
   self->occurrence_position = occurrence_position;
 
-  update_occurrence_label (self);
+  gig_find_entry_update_occurrence_label (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_OCCURRENCE_POSITION]);
 }

@@ -17,7 +17,7 @@ struct _GigApplication
 G_DEFINE_TYPE (GigApplication, gig_application, ADW_TYPE_APPLICATION)
 
 static GigWindow *
-find_or_create_window (GigApplication *self)
+gig_application_find_or_create_window (GigApplication *self)
 {
   const GList *windows = NULL;
   GigWindow *window;
@@ -43,9 +43,9 @@ find_or_create_window (GigApplication *self)
 }
 
 static void
-about_action (GSimpleAction *action,
-              GVariant *parameter,
-              gpointer user_data)
+gig_application_about_action (GSimpleAction *action,
+                              GVariant *parameter,
+                              gpointer user_data)
 {
   GigApplication *self = user_data;
   GigWindow *window;
@@ -196,7 +196,7 @@ gig_application_open (GApplication *application,
 
   g_assert (GIG_IS_APPLICATION (self));
 
-  window = find_or_create_window (self);
+  window = gig_application_find_or_create_window (self);
 
   for (gint i = 0; i < n_files; i++)
     {
@@ -237,7 +237,7 @@ gig_application_init (GigApplication *self)
   };
 
   static const GActionEntry actions[] = {
-    { "about", about_action },
+    { "about", gig_application_about_action },
   };
 
   self->settings = gig_settings_new ();

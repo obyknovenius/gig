@@ -33,9 +33,9 @@ static GParamSpec *properties[N_PROPS];
 static void gig_tab_set_web_view (GigTab *self, GigWebView *web_view);
 
 static void
-web_view_uri_changed_cb (GigTab *self,
-                         GParamSpec *pspec,
-                         GigWebView *web_view)
+gig_tab_notify_web_view_uri_cb (GigTab *self,
+                                GParamSpec *pspec,
+                                GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
 
@@ -45,9 +45,9 @@ web_view_uri_changed_cb (GigTab *self,
 }
 
 static void
-web_view_title_changed_cb (GigTab *self,
-                           GParamSpec *pspec,
-                           GigWebView *web_view)
+gig_tab_notify_web_view_title_cb (GigTab *self,
+                                  GParamSpec *pspec,
+                                  GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
 
@@ -55,9 +55,9 @@ web_view_title_changed_cb (GigTab *self,
 }
 
 static void
-web_view_favicon_changed_cb (GigTab *self,
-                             GParamSpec *pspec,
-                             GigWebView *web_view)
+gig_tab_notify_web_view_favicon_cb (GigTab *self,
+                                    GParamSpec *pspec,
+                                    GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
 
@@ -65,9 +65,9 @@ web_view_favicon_changed_cb (GigTab *self,
 }
 
 static void
-web_view_is_loading_changed_cb (GigTab *self,
-                                GParamSpec *pspec,
-                                GigWebView *web_view)
+gig_tab_notify_web_view_is_loading_cb (GigTab *self,
+                                       GParamSpec *pspec,
+                                       GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
 
@@ -75,8 +75,8 @@ web_view_is_loading_changed_cb (GigTab *self,
 }
 
 static gboolean
-web_view_enter_fullscreen_cb (GigTab *self,
-                              GigWebView *web_view)
+gig_tab_web_view_enter_fullscreen_cb (GigTab *self,
+                                      GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
 
@@ -86,8 +86,8 @@ web_view_enter_fullscreen_cb (GigTab *self,
 }
 
 static gboolean
-web_view_leave_fullscreen_cb (GigTab *self,
-                              GigWebView *web_view)
+gig_tab_web_view_leave_fullscreen_cb (GigTab *self,
+                                      GigWebView *web_view)
 {
   g_assert (GIG_IS_TAB (self));
 
@@ -121,37 +121,37 @@ gig_tab_constructed (GObject *object)
 
   g_signal_connect_object (self->web_view,
                            "notify::uri",
-                           G_CALLBACK (web_view_uri_changed_cb),
+                           G_CALLBACK (gig_tab_notify_web_view_uri_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::title",
-                           G_CALLBACK (web_view_title_changed_cb),
+                           G_CALLBACK (gig_tab_notify_web_view_title_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::favicon",
-                           G_CALLBACK (web_view_favicon_changed_cb),
+                           G_CALLBACK (gig_tab_notify_web_view_favicon_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "notify::is-loading",
-                           G_CALLBACK (web_view_is_loading_changed_cb),
+                           G_CALLBACK (gig_tab_notify_web_view_is_loading_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "enter-fullscreen",
-                           G_CALLBACK (web_view_enter_fullscreen_cb),
+                           G_CALLBACK (gig_tab_web_view_enter_fullscreen_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
                            "leave-fullscreen",
-                           G_CALLBACK (web_view_leave_fullscreen_cb),
+                           G_CALLBACK (gig_tab_web_view_leave_fullscreen_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }

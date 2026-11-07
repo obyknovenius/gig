@@ -27,10 +27,10 @@ struct _GigWindow
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void
-capture_state (GigWindow *self,
-               gint *width,
-               gint *height,
-               gboolean *maximized)
+gig_window_capture_state (GigWindow *self,
+                          gint *width,
+                          gint *height,
+                          gboolean *maximized)
 {
   g_assert (GIG_IS_WINDOW (self));
 
@@ -39,10 +39,10 @@ capture_state (GigWindow *self,
 }
 
 static void
-apply_state (GigWindow *self,
-             gint width,
-             gint height,
-             gboolean maximized)
+gig_window_apply_state (GigWindow *self,
+                        gint width,
+                        gint height,
+                        gboolean maximized)
 {
   g_assert (GIG_IS_WINDOW (self));
 
@@ -53,7 +53,7 @@ apply_state (GigWindow *self,
 }
 
 static void
-save_state (GigWindow *self)
+gig_window_save_state (GigWindow *self)
 {
   GigApplication *application;
   GigSettings *settings;
@@ -65,14 +65,14 @@ save_state (GigWindow *self)
   application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
   settings = gig_application_get_settings (application);
 
-  capture_state (self, &width, &height, &maximized);
+  gig_window_capture_state (self, &width, &height, &maximized);
 
   gig_settings_set_window_state (settings, width, height, maximized);
 }
 
 static void
-inherit_state (GigWindow *self,
-               GigWindow *source)
+gig_window_inherit_state (GigWindow *self,
+                          GigWindow *source)
 {
   gint width, height;
   gboolean maximized;
@@ -80,8 +80,8 @@ inherit_state (GigWindow *self,
   g_return_if_fail (GIG_IS_WINDOW (self));
   g_return_if_fail (GIG_IS_WINDOW (source));
 
-  capture_state (source, &width, &height, &maximized);
-  apply_state (self, width, height, maximized);
+  gig_window_capture_state (source, &width, &height, &maximized);
+  gig_window_apply_state (self, width, height, maximized);
 }
 
 static GigWindow *
@@ -95,13 +95,13 @@ gig_window_new_sibling (GigWindow *self)
   application = GIG_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
   new_window = gig_window_new (application);
 
-  inherit_state (new_window, self);
+  gig_window_inherit_state (new_window, self);
 
   return new_window;
 }
 
 static void
-update_actions (GigWindow *self)
+gig_window_update_actions (GigWindow *self)
 {
   GigTab *tab = NULL;
   gboolean is_empty = TRUE;
@@ -127,9 +127,9 @@ update_actions (GigWindow *self)
 }
 
 static void
-setup_tab (GigWindow *self,
-           GigTab *tab,
-           gboolean set_selected)
+gig_window_setup_tab (GigWindow *self,
+                      GigTab *tab,
+                      gboolean set_selected)
 {
   AdwTabPage *tab_page;
 
@@ -156,8 +156,8 @@ setup_tab (GigWindow *self,
 }
 
 static AdwTabPage *
-tab_overview_create_tab_cb (GigWindow *self,
-                            AdwTabOverview *tab_overview)
+gig_window_tab_overview_create_tab_cb (GigWindow *self,
+                                       AdwTabOverview *tab_overview)
 {
   GigTab *tab = NULL;
 
@@ -172,9 +172,9 @@ tab_overview_create_tab_cb (GigWindow *self,
 }
 
 static void
-web_view_open_in_new_tab_cb (GigWindow *self,
-                             const gchar *uri,
-                             GigWebView *web_view)
+gig_window_web_view_open_in_new_tab_cb (GigWindow *self,
+                                        const gchar *uri,
+                                        GigWebView *web_view)
 {
   GigWebView *new_web_view;
   GigTab *new_tab, *parent_tab;
@@ -193,9 +193,9 @@ web_view_open_in_new_tab_cb (GigWindow *self,
 }
 
 static void
-web_view_open_in_new_window_cb (GigWindow *self,
-                                const gchar *uri,
-                                GigWebView *web_view)
+gig_window_web_view_open_in_new_window_cb (GigWindow *self,
+                                           const gchar *uri,
+                                           GigWebView *web_view)
 {
   GigWindow *new_window;
   GigWebView *new_web_view;
@@ -215,9 +215,9 @@ web_view_open_in_new_window_cb (GigWindow *self,
 }
 
 static WebKitWebView *
-web_view_create_cb (GigWindow *self,
-                    WebKitNavigationAction *navigation_action,
-                    WebKitWebView *web_view)
+gig_window_web_view_create_cb (GigWindow *self,
+                               WebKitNavigationAction *navigation_action,
+                               WebKitWebView *web_view)
 {
   GigWebView *new_web_view;
   GigTab *new_tab, *parent_tab;
@@ -237,9 +237,9 @@ web_view_create_cb (GigWindow *self,
 }
 
 static void
-web_view_is_empty_changed_cb (GigWindow *self,
-                              GParamSpec *pspec,
-                              GigWebView *web_view)
+gig_window_notify_web_view_is_empty_cb (GigWindow *self,
+                                        GParamSpec *pspec,
+                                        GigWebView *web_view)
 {
   gboolean is_empty;
   gboolean is_loading;
@@ -255,9 +255,9 @@ web_view_is_empty_changed_cb (GigWindow *self,
 }
 
 static void
-web_view_is_loading_changed_cb (GigWindow *self,
-                                GParamSpec *pspec,
-                                GigWebView *web_view)
+gig_window_notify_web_view_is_loading_cb (GigWindow *self,
+                                          GParamSpec *pspec,
+                                          GigWebView *web_view)
 {
   gboolean is_empty;
   gboolean is_loading;
@@ -274,9 +274,9 @@ web_view_is_loading_changed_cb (GigWindow *self,
 }
 
 static void
-web_view_can_go_back_changed_cb (GigWindow *self,
-                                 GParamSpec *pspec,
-                                 GigWebView *web_view)
+gig_window_notify_web_view_can_go_back_cb (GigWindow *self,
+                                           GParamSpec *pspec,
+                                           GigWebView *web_view)
 {
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
@@ -285,9 +285,9 @@ web_view_can_go_back_changed_cb (GigWindow *self,
 }
 
 static void
-web_view_can_go_forward_changed_cb (GigWindow *self,
-                                    GParamSpec *pspec,
-                                    GigWebView *web_view)
+gig_window_notify_web_view_can_go_forward_cb (GigWindow *self,
+                                              GParamSpec *pspec,
+                                              GigWebView *web_view)
 {
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
@@ -296,8 +296,8 @@ web_view_can_go_forward_changed_cb (GigWindow *self,
 }
 
 static gboolean
-web_view_enter_fullscreen_cb (GigWindow *self,
-                              GigWebView *web_view)
+gig_window_web_view_enter_fullscreen_cb (GigWindow *self,
+                                         GigWebView *web_view)
 {
   g_assert (GIG_IS_WINDOW (self));
 
@@ -308,8 +308,8 @@ web_view_enter_fullscreen_cb (GigWindow *self,
 }
 
 static gboolean
-web_view_leave_fullscreen_cb (GigWindow *self,
-                              GigWebView *web_view)
+gig_window_web_view_leave_fullscreen_cb (GigWindow *self,
+                                         GigWebView *web_view)
 {
   g_assert (GIG_IS_WINDOW (self));
 
@@ -320,9 +320,9 @@ web_view_leave_fullscreen_cb (GigWindow *self,
 }
 
 static gboolean
-tab_view_close_page_cb (GigWindow *self,
-                        AdwTabPage *page,
-                        AdwTabView *tab_view)
+gig_window_tab_view_close_page_cb (GigWindow *self,
+                                   AdwTabPage *page,
+                                   AdwTabView *tab_view)
 {
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
@@ -333,9 +333,9 @@ tab_view_close_page_cb (GigWindow *self,
 }
 
 static void
-tab_view_setup_menu_cb (GigWindow *self,
-                        AdwTabPage *page,
-                        AdwTabView *tab_view)
+gig_window_tab_view_setup_menu_cb (GigWindow *self,
+                                   AdwTabPage *page,
+                                   AdwTabView *tab_view)
 {
   gboolean can_close_others = FALSE;
   gboolean can_close_before = FALSE;
@@ -370,8 +370,8 @@ tab_view_setup_menu_cb (GigWindow *self,
 }
 
 static AdwTabView *
-tab_view_create_window_cb (GigWindow *self,
-                           AdwTabView *tab_view)
+gig_window_tab_view_create_window_cb (GigWindow *self,
+                                      AdwTabView *tab_view)
 {
   GigWindow *new_window;
 
@@ -386,10 +386,10 @@ tab_view_create_window_cb (GigWindow *self,
 }
 
 static void
-tab_view_page_detached_cb (GigWindow *self,
-                           AdwTabPage *page,
-                           gint position,
-                           AdwTabView *tab_view)
+gig_window_tab_view_page_detached_cb (GigWindow *self,
+                                      AdwTabPage *page,
+                                      gint position,
+                                      AdwTabView *tab_view)
 {
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
@@ -399,9 +399,9 @@ tab_view_page_detached_cb (GigWindow *self,
 }
 
 static void
-tab_view_selected_page_changed_cb (GigWindow *self,
-                                   GParamSpec *pspec,
-                                   AdwTabView *tab_view)
+gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
+                                             GParamSpec *pspec,
+                                             AdwTabView *tab_view)
 {
   GigTab *tab = NULL;
   GigWebView *web_view = NULL;
@@ -420,7 +420,7 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 
   gig_address_bar_set_web_view (GIG_ADDRESS_BAR (self->address_bar), web_view);
 
-  update_actions (self);
+  gig_window_update_actions (self);
 
   g_signal_group_set_target (self->web_view_signals, web_view);
 
@@ -434,9 +434,9 @@ tab_view_selected_page_changed_cb (GigWindow *self,
 }
 
 static void
-new_tab_action (GtkWidget *widget,
-                const gchar *action_name,
-                GVariant *param)
+gig_window_new_tab_action (GtkWidget *widget,
+                           const gchar *action_name,
+                           GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab = NULL;
@@ -449,9 +449,9 @@ new_tab_action (GtkWidget *widget,
 }
 
 static void
-new_window_action (GtkWidget *widget,
-                   const gchar *action_name,
-                   GVariant *param)
+gig_window_new_window_action (GtkWidget *widget,
+                              const gchar *action_name,
+                              GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigWindow *new_window;
@@ -468,9 +468,9 @@ new_window_action (GtkWidget *widget,
 }
 
 static void
-stop_reload_action (GtkWidget *widget,
-                    const gchar *action_name,
-                    GVariant *param)
+gig_window_stop_reload_action (GtkWidget *widget,
+                               const gchar *action_name,
+                               GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
@@ -494,9 +494,9 @@ stop_reload_action (GtkWidget *widget,
 }
 
 static void
-go_back_action (GtkWidget *widget,
-                const gchar *action_name,
-                GVariant *param)
+gig_window_go_back_action (GtkWidget *widget,
+                           const gchar *action_name,
+                           GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
@@ -514,9 +514,9 @@ go_back_action (GtkWidget *widget,
 }
 
 static void
-go_forward_action (GtkWidget *widget,
-                   const gchar *action_name,
-                   GVariant *param)
+gig_window_go_forward_action (GtkWidget *widget,
+                              const gchar *action_name,
+                              GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
@@ -534,9 +534,9 @@ go_forward_action (GtkWidget *widget,
 }
 
 static void
-find_action (GtkWidget *widget,
-             const gchar *action_name,
-             GVariant *param)
+gig_window_find_action (GtkWidget *widget,
+                        const gchar *action_name,
+                        GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
@@ -550,9 +550,9 @@ find_action (GtkWidget *widget,
 }
 
 static void
-find_finish_action (GtkWidget *widget,
-                    const gchar *action_name,
-                    GVariant *param)
+gig_window_find_finish_action (GtkWidget *widget,
+                               const gchar *action_name,
+                               GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
@@ -566,9 +566,9 @@ find_finish_action (GtkWidget *widget,
 }
 
 static void
-close_tab_action (GtkWidget *widget,
-                  const gchar *action_name,
-                  GVariant *param)
+gig_window_close_tab_action (GtkWidget *widget,
+                             const gchar *action_name,
+                             GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   AdwTabPage *tab_page;
@@ -583,9 +583,9 @@ close_tab_action (GtkWidget *widget,
 }
 
 static void
-close_other_tabs_action (GtkWidget *widget,
-                         const gchar *action_name,
-                         GVariant *param)
+gig_window_close_other_tabs_action (GtkWidget *widget,
+                                    const gchar *action_name,
+                                    GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -595,9 +595,9 @@ close_other_tabs_action (GtkWidget *widget,
 }
 
 static void
-close_tabs_before_action (GtkWidget *widget,
-                          const gchar *action_name,
-                          GVariant *param)
+gig_window_close_tabs_before_action (GtkWidget *widget,
+                                     const gchar *action_name,
+                                     GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -607,9 +607,9 @@ close_tabs_before_action (GtkWidget *widget,
 }
 
 static void
-close_tabs_after_action (GtkWidget *widget,
-                         const gchar *action_name,
-                         GVariant *param)
+gig_window_close_tabs_after_action (GtkWidget *widget,
+                                    const gchar *action_name,
+                                    GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -619,9 +619,9 @@ close_tabs_after_action (GtkWidget *widget,
 }
 
 static void
-duplicate_tab_action (GtkWidget *widget,
-                      const gchar *action_name,
-                      GVariant *param)
+gig_window_duplicate_tab_action (GtkWidget *widget,
+                                 const gchar *action_name,
+                                 GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab, *new_tab;
@@ -641,9 +641,9 @@ duplicate_tab_action (GtkWidget *widget,
 }
 
 static void
-pin_tab_action (GtkWidget *widget,
-                const gchar *action_name,
-                GVariant *param)
+gig_window_pin_tab_action (GtkWidget *widget,
+                           const gchar *action_name,
+                           GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -653,9 +653,9 @@ pin_tab_action (GtkWidget *widget,
 }
 
 static void
-unpin_tab_action (GtkWidget *widget,
-                  const gchar *action_name,
-                  GVariant *param)
+gig_window_unpin_tab_action (GtkWidget *widget,
+                             const gchar *action_name,
+                             GVariant *param)
 {
   GigWindow *self = (GigWindow *) widget;
 
@@ -697,7 +697,7 @@ gig_window_close_request (GtkWindow *window)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  save_state (self);
+  gig_window_save_state (self);
 
   return GTK_WINDOW_CLASS (gig_window_parent_class)->close_request (window);
 }
@@ -723,27 +723,27 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigWindow, address_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
-  gtk_widget_class_bind_template_callback (widget_class, tab_overview_create_tab_cb);
-  gtk_widget_class_bind_template_callback (widget_class, tab_view_close_page_cb);
-  gtk_widget_class_bind_template_callback (widget_class, tab_view_setup_menu_cb);
-  gtk_widget_class_bind_template_callback (widget_class, tab_view_create_window_cb);
-  gtk_widget_class_bind_template_callback (widget_class, tab_view_page_detached_cb);
-  gtk_widget_class_bind_template_callback (widget_class, tab_view_selected_page_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_overview_create_tab_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_close_page_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_setup_menu_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_create_window_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_page_detached_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_notify_tab_view_selected_page_cb);
 
-  gtk_widget_class_install_action (widget_class, "win.new-tab", NULL, new_tab_action);
-  gtk_widget_class_install_action (widget_class, "win.new-window", NULL, new_window_action);
-  gtk_widget_class_install_action (widget_class, "win.stop-reload", NULL, stop_reload_action);
-  gtk_widget_class_install_action (widget_class, "win.go-back", NULL, go_back_action);
-  gtk_widget_class_install_action (widget_class, "win.go-forward", NULL, go_forward_action);
-  gtk_widget_class_install_action (widget_class, "tab.find", NULL, find_action);
-  gtk_widget_class_install_action (widget_class, "tab.find-finish", NULL, find_finish_action);
-  gtk_widget_class_install_action (widget_class, "tab.close", NULL, close_tab_action);
-  gtk_widget_class_install_action (widget_class, "tab.close-others", NULL, close_other_tabs_action);
-  gtk_widget_class_install_action (widget_class, "tab.close-before", NULL, close_tabs_before_action);
-  gtk_widget_class_install_action (widget_class, "tab.close-after", NULL, close_tabs_after_action);
-  gtk_widget_class_install_action (widget_class, "tab.duplicate", NULL, duplicate_tab_action);
-  gtk_widget_class_install_action (widget_class, "tab.pin", NULL, pin_tab_action);
-  gtk_widget_class_install_action (widget_class, "tab.unpin", NULL, unpin_tab_action);
+  gtk_widget_class_install_action (widget_class, "win.new-tab", NULL, gig_window_new_tab_action);
+  gtk_widget_class_install_action (widget_class, "win.new-window", NULL, gig_window_new_window_action);
+  gtk_widget_class_install_action (widget_class, "win.stop-reload", NULL, gig_window_stop_reload_action);
+  gtk_widget_class_install_action (widget_class, "win.go-back", NULL, gig_window_go_back_action);
+  gtk_widget_class_install_action (widget_class, "win.go-forward", NULL, gig_window_go_forward_action);
+  gtk_widget_class_install_action (widget_class, "tab.find", NULL, gig_window_find_action);
+  gtk_widget_class_install_action (widget_class, "tab.find-finish", NULL, gig_window_find_finish_action);
+  gtk_widget_class_install_action (widget_class, "tab.close", NULL, gig_window_close_tab_action);
+  gtk_widget_class_install_action (widget_class, "tab.close-others", NULL, gig_window_close_other_tabs_action);
+  gtk_widget_class_install_action (widget_class, "tab.close-before", NULL, gig_window_close_tabs_before_action);
+  gtk_widget_class_install_action (widget_class, "tab.close-after", NULL, gig_window_close_tabs_after_action);
+  gtk_widget_class_install_action (widget_class, "tab.duplicate", NULL, gig_window_duplicate_tab_action);
+  gtk_widget_class_install_action (widget_class, "tab.pin", NULL, gig_window_pin_tab_action);
+  gtk_widget_class_install_action (widget_class, "tab.unpin", NULL, gig_window_unpin_tab_action);
 
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_t, GDK_CONTROL_MASK, "win.new-tab", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_n, GDK_CONTROL_MASK, "win.new-window", NULL);
@@ -763,61 +763,61 @@ gig_window_init (GigWindow *self)
   gtk_widget_add_css_class (GTK_WIDGET (self), "devel");
 #endif
 
-  update_actions (self);
+  gig_window_update_actions (self);
 
   self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "open-in-new-tab",
-                                 G_CALLBACK (web_view_open_in_new_tab_cb),
+                                 G_CALLBACK (gig_window_web_view_open_in_new_tab_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "open-in-new-window",
-                                 G_CALLBACK (web_view_open_in_new_window_cb),
+                                 G_CALLBACK (gig_window_web_view_open_in_new_window_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "create",
-                                 G_CALLBACK (web_view_create_cb),
+                                 G_CALLBACK (gig_window_web_view_create_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "enter-fullscreen",
-                                 G_CALLBACK (web_view_enter_fullscreen_cb),
+                                 G_CALLBACK (gig_window_web_view_enter_fullscreen_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "leave-fullscreen",
-                                 G_CALLBACK (web_view_leave_fullscreen_cb),
+                                 G_CALLBACK (gig_window_web_view_leave_fullscreen_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::is-empty",
-                                 G_CALLBACK (web_view_is_empty_changed_cb),
+                                 G_CALLBACK (gig_window_notify_web_view_is_empty_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::is-loading",
-                                 G_CALLBACK (web_view_is_loading_changed_cb),
+                                 G_CALLBACK (gig_window_notify_web_view_is_loading_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::can-go-back",
-                                 G_CALLBACK (web_view_can_go_back_changed_cb),
+                                 G_CALLBACK (gig_window_notify_web_view_can_go_back_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::can-go-forward",
-                                 G_CALLBACK (web_view_can_go_forward_changed_cb),
+                                 G_CALLBACK (gig_window_notify_web_view_can_go_forward_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 }
@@ -850,7 +850,7 @@ gig_window_add_tab (GigWindow *self,
 
   adw_tab_view_add_page (self->tab_view, GTK_WIDGET (tab), parent_tab_page);
 
-  setup_tab (self, tab, set_selected);
+  gig_window_setup_tab (self, tab, set_selected);
 }
 
 void
@@ -864,7 +864,7 @@ gig_window_insert_tab (GigWindow *self,
 
   adw_tab_view_insert (self->tab_view, GTK_WIDGET (tab), position);
 
-  setup_tab (self, tab, set_selected);
+  gig_window_setup_tab (self, tab, set_selected);
 }
 
 GigTab *
@@ -897,5 +897,5 @@ gig_window_restore_state (GigWindow *self)
 
   gig_settings_get_window_state (settings, &width, &height, &maximized);
 
-  apply_state (self, width, height, maximized);
+  gig_window_apply_state (self, width, height, maximized);
 }

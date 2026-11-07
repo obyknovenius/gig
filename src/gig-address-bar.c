@@ -20,39 +20,39 @@ struct _GigAddressBar
 
 G_DEFINE_FINAL_TYPE (GigAddressBar, gig_address_bar, GTK_TYPE_WIDGET)
 
-static void update_attributes (GigAddressBar *self);
+static void gig_address_bar_update_attributes (GigAddressBar *self);
 
-static void update_primary_icon (GigAddressBar *self);
+static void gig_address_bar_update_primary_icon (GigAddressBar *self);
 
-static void update_secondary_icon (GigAddressBar *self);
+static void gig_address_bar_update_secondary_icon (GigAddressBar *self);
 
-static void update_progress (GigAddressBar *self);
+static void gig_address_bar_update_progress (GigAddressBar *self);
 
-static void entry_changed_cb (GigAddressBar *self,
-                              GtkEntry *entry);
+static void gig_address_bar_entry_changed_cb (GigAddressBar *self,
+                                              GtkEntry *entry);
 
 static void
-set_text (GigAddressBar *self,
-          const gchar *text)
+gig_address_bar_set_text (GigAddressBar *self,
+                          const gchar *text)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
   g_signal_handlers_block_by_func (self->entry,
-                                   G_CALLBACK (entry_changed_cb),
+                                   G_CALLBACK (gig_address_bar_entry_changed_cb),
                                    self);
 
   gtk_editable_set_text (GTK_EDITABLE (self->entry), text ? text : "");
 
-  update_attributes (self);
+  gig_address_bar_update_attributes (self);
 
   g_signal_handlers_unblock_by_func (self->entry,
-                                     G_CALLBACK (entry_changed_cb),
+                                     G_CALLBACK (gig_address_bar_entry_changed_cb),
                                      self);
 }
 
 static void
-set_editing (GigAddressBar *self,
-             gboolean editing)
+gig_address_bar_set_editing (GigAddressBar *self,
+                             gboolean editing)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
@@ -61,15 +61,15 @@ set_editing (GigAddressBar *self,
 
   self->editing = editing;
 
-  update_attributes (self);
-  update_primary_icon (self);
-  update_secondary_icon (self);
-  update_progress (self);
+  gig_address_bar_update_attributes (self);
+  gig_address_bar_update_primary_icon (self);
+  gig_address_bar_update_secondary_icon (self);
+  gig_address_bar_update_progress (self);
 }
 
 static void
-set_modified (GigAddressBar *self,
-              gboolean modified)
+gig_address_bar_set_modified (GigAddressBar *self,
+                              gboolean modified)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
@@ -78,13 +78,13 @@ set_modified (GigAddressBar *self,
 
   self->modified = modified;
 
-  update_attributes (self);
-  update_primary_icon (self);
-  update_progress (self);
+  gig_address_bar_update_attributes (self);
+  gig_address_bar_update_primary_icon (self);
+  gig_address_bar_update_progress (self);
 }
 
 static void
-update_attributes (GigAddressBar *self)
+gig_address_bar_update_attributes (GigAddressBar *self)
 {
   const gchar *text;
 
@@ -122,7 +122,7 @@ update_attributes (GigAddressBar *self)
 }
 
 static void
-update_primary_icon (GigAddressBar *self)
+gig_address_bar_update_primary_icon (GigAddressBar *self)
 {
   const gchar *icon_name = NULL;
   const gchar *uri = NULL;
@@ -148,7 +148,7 @@ update_primary_icon (GigAddressBar *self)
 }
 
 static void
-update_secondary_icon (GigAddressBar *self)
+gig_address_bar_update_secondary_icon (GigAddressBar *self)
 {
   const gchar *icon_name = NULL;
   const gchar *text = NULL;
@@ -165,7 +165,7 @@ update_secondary_icon (GigAddressBar *self)
 }
 
 static void
-update_progress (GigAddressBar *self)
+gig_address_bar_update_progress (GigAddressBar *self)
 {
   WebKitWebView *web_view = NULL;
   gdouble progress = 0.0;
@@ -181,28 +181,28 @@ update_progress (GigAddressBar *self)
 }
 
 static void
-entry_changed_cb (GigAddressBar *self,
-                  GtkEntry *entry)
+gig_address_bar_entry_changed_cb (GigAddressBar *self,
+                                  GtkEntry *entry)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  set_modified (self, TRUE);
+  gig_address_bar_set_modified (self, TRUE);
 
-  update_secondary_icon (self);
+  gig_address_bar_update_secondary_icon (self);
 }
 
 static void
-entry_focus_enter_cb (GigAddressBar *self,
-                      GtkEventControllerFocus *controller)
+gig_address_bar_entry_focus_enter_cb (GigAddressBar *self,
+                                      GtkEventControllerFocus *controller)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  set_editing (self, TRUE);
+  gig_address_bar_set_editing (self, TRUE);
 }
 
 static void
-entry_focus_leave_cb (GigAddressBar *self,
-                      GtkEventControllerFocus *controller)
+gig_address_bar_entry_focus_leave_cb (GigAddressBar *self,
+                                      GtkEventControllerFocus *controller)
 {
   GtkRoot *root = NULL;
 
@@ -217,8 +217,8 @@ entry_focus_leave_cb (GigAddressBar *self,
 }
 
 static void
-entry_activate_cb (GigAddressBar *self,
-                   GtkEntry *entry)
+gig_address_bar_entry_activate_cb (GigAddressBar *self,
+                                   GtkEntry *entry)
 {
   const gchar *text;
 
@@ -230,7 +230,7 @@ entry_activate_cb (GigAddressBar *self,
   if (!text || text[0] == '\0')
     return;
 
-  set_modified (self, FALSE);
+  gig_address_bar_set_modified (self, FALSE);
 
   gig_web_view_load_uri (self->web_view, text);
 
@@ -238,9 +238,9 @@ entry_activate_cb (GigAddressBar *self,
 }
 
 static void
-entry_icon_release_cb (GigAddressBar *self,
-                       GtkEntryIconPosition icon_pos,
-                       GtkEntry *entry)
+gig_address_bar_entry_icon_release_cb (GigAddressBar *self,
+                                       GtkEntryIconPosition icon_pos,
+                                       GtkEntry *entry)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
@@ -249,10 +249,10 @@ entry_icon_release_cb (GigAddressBar *self,
 }
 
 static gboolean
-web_view_decide_policy_cb (GigAddressBar *self,
-                           WebKitPolicyDecision *decision,
-                           WebKitPolicyDecisionType decision_type,
-                           GigWebView *web_view)
+gig_address_bar_web_view_decide_policy_cb (GigAddressBar *self,
+                                           WebKitPolicyDecision *decision,
+                                           WebKitPolicyDecisionType decision_type,
+                                           GigWebView *web_view)
 {
   WebKitNavigationAction *navigation_action;
 
@@ -271,9 +271,9 @@ web_view_decide_policy_cb (GigAddressBar *self,
 }
 
 static void
-web_view_display_uri_changed_cb (GigAddressBar *self,
-                                 GParamSpec *pspec,
-                                 GigWebView *web_view)
+gig_address_bar_notify_web_view_display_uri_cb (GigAddressBar *self,
+                                                GParamSpec *pspec,
+                                                GigWebView *web_view)
 {
   const gchar *uri;
 
@@ -284,39 +284,39 @@ web_view_display_uri_changed_cb (GigAddressBar *self,
     return;
 
   uri = gig_web_view_get_display_uri (web_view);
-  set_text (self, uri);
+  gig_address_bar_set_text (self, uri);
 
-  update_primary_icon (self);
+  gig_address_bar_update_primary_icon (self);
 }
 
 static void
-web_view_is_loading_changed_cb (GigAddressBar *self,
-                                GParamSpec *pspec,
-                                GigWebView *web_view)
-{
-  g_assert (GIG_IS_ADDRESS_BAR (self));
-
-  update_progress (self);
-}
-
-static void
-web_view_estimated_load_progress_changed_cb (GigAddressBar *self,
-                                             GParamSpec *pspec,
-                                             GigWebView *web_view)
-{
-  g_assert (GIG_IS_ADDRESS_BAR (self));
-
-  update_progress (self);
-}
-
-static void
-web_view_connection_security_level_changed_cb (GigAddressBar *self,
+gig_address_bar_notify_web_view_is_loading_cb (GigAddressBar *self,
                                                GParamSpec *pspec,
                                                GigWebView *web_view)
 {
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  update_primary_icon (self);
+  gig_address_bar_update_progress (self);
+}
+
+static void
+gig_address_bar_notify_web_view_estimated_load_progress_cb (GigAddressBar *self,
+                                                            GParamSpec *pspec,
+                                                            GigWebView *web_view)
+{
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  gig_address_bar_update_progress (self);
+}
+
+static void
+gig_address_bar_notify_web_view_connection_security_level_cb (GigAddressBar *self,
+                                                              GParamSpec *pspec,
+                                                              GigWebView *web_view)
+{
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  gig_address_bar_update_primary_icon (self);
 }
 
 static void
@@ -367,7 +367,7 @@ gig_address_bar_css_changed (GtkWidget *widget,
 
   GTK_WIDGET_CLASS (gig_address_bar_parent_class)->css_changed (widget, change);
 
-  update_attributes (self);
+  gig_address_bar_update_attributes (self);
 }
 
 static void
@@ -387,11 +387,11 @@ gig_address_bar_class_init (GigAddressBarClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class, GigAddressBar, entry);
 
-  gtk_widget_class_bind_template_callback (widget_class, entry_changed_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_activate_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_icon_release_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_focus_enter_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_focus_leave_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_activate_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_icon_release_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_focus_enter_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_focus_leave_cb);
 }
 
 static void
@@ -403,31 +403,31 @@ gig_address_bar_init (GigAddressBar *self)
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "decide-policy",
-                                 G_CALLBACK (web_view_decide_policy_cb),
+                                 G_CALLBACK (gig_address_bar_web_view_decide_policy_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::display-uri",
-                                 G_CALLBACK (web_view_display_uri_changed_cb),
+                                 G_CALLBACK (gig_address_bar_notify_web_view_display_uri_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::is-loading",
-                                 G_CALLBACK (web_view_is_loading_changed_cb),
+                                 G_CALLBACK (gig_address_bar_notify_web_view_is_loading_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::estimated-load-progress",
-                                 G_CALLBACK (web_view_estimated_load_progress_changed_cb),
+                                 G_CALLBACK (gig_address_bar_notify_web_view_estimated_load_progress_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::connection-security-level",
-                                 G_CALLBACK (web_view_connection_security_level_changed_cb),
+                                 G_CALLBACK (gig_address_bar_notify_web_view_connection_security_level_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 }
@@ -454,8 +454,8 @@ gig_address_bar_set_web_view (GigAddressBar *self,
 
   gig_address_bar_reset (self);
 
-  update_primary_icon (self);
-  update_progress (self);
+  gig_address_bar_update_primary_icon (self);
+  gig_address_bar_update_progress (self);
 }
 
 void
@@ -465,11 +465,11 @@ gig_address_bar_reset (GigAddressBar *self)
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
 
-  set_modified (self, FALSE);
-  set_editing (self, FALSE);
+  gig_address_bar_set_modified (self, FALSE);
+  gig_address_bar_set_editing (self, FALSE);
 
   if (self->web_view)
     uri = gig_web_view_get_display_uri (self->web_view);
 
-  set_text (self, uri);
+  gig_address_bar_set_text (self, uri);
 }
