@@ -7,11 +7,15 @@
 #include "gig-web-view.h"
 #include "gig-window.h"
 
+#include "history/gig-history-service.h"
+
 struct _GigApplication
 {
   AdwApplication parent_instance;
 
   GigSettings *settings;
+
+  GigHistoryService *history_service;
 };
 
 G_DEFINE_TYPE (GigApplication, gig_application, ADW_TYPE_APPLICATION)
@@ -118,6 +122,7 @@ gig_application_finalize (GObject *object)
   g_assert (GIG_IS_APPLICATION (self));
 
   g_clear_object (&self->settings);
+  g_clear_object (&self->history_service);
 
   G_OBJECT_CLASS (gig_application_parent_class)->finalize (object);
 }
@@ -156,6 +161,8 @@ static void
 gig_application_startup (GApplication *application)
 {
   GigApplication *self = (GigApplication *) application;
+  g_autofree gchar *history_path = NULL;
+  g_autoptr (GError) error = NULL;
 
   g_assert (GIG_IS_APPLICATION (self));
 
@@ -164,6 +171,11 @@ gig_application_startup (GApplication *application)
   G_APPLICATION_CLASS (gig_application_parent_class)->startup (application);
 
   gtk_window_set_default_icon_name (APP_ID);
+
+  history_path = g_build_filename (g_get_user_data_dir (), APP_ID, "history.sqlite", NULL);
+
+  if (!(self->history_service = gig_history_service_new (history_path, &error)))
+    g_warning ("History is disabled: %s", error->message);
 }
 
 static void

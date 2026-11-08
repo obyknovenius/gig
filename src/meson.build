@@ -8,6 +8,7 @@ gig_sources = [
   'gig-uri-utils.c',
   'gig-web-view.c',
   'gig-window.c',
+  'history/gig-history-service.c',
   'main.c',
 ]
 
@@ -38,6 +39,7 @@ gig_sources += gnome.compile_resources(
 
 adwaita_dep = dependency('libadwaita-1')
 soup_dep = dependency('libsoup-3.0')
+sqlite_dep = dependency('sqlite3')
 webkitgtk_dep = dependency('webkitgtk-6.0')
 
 webkit_revision = webkitgtk_dep.get_variable(pkgconfig: 'revision', default_value: '')
@@ -52,6 +54,7 @@ config.set_quoted('WEBKIT_REVISION', webkit_revision)
 gig_deps = [
   adwaita_dep,
   soup_dep,
+  sqlite_dep,
   webkitgtk_dep,
 ]
 
