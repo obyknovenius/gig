@@ -273,6 +273,14 @@ gig_application_get_settings (GigApplication *self)
   return self->settings;
 }
 
+GigHistoryService *
+gig_application_get_history_service (GigApplication *self)
+{
+  g_return_val_if_fail (GIG_IS_APPLICATION (self), NULL);
+
+  return self->history_service;
+}
+
 GigWindow *
 gig_application_get_current_window (GigApplication *self)
 {

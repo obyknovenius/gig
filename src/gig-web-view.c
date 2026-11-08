@@ -1,6 +1,9 @@
 #include "gig-web-view.h"
 
+#include "gig-application.h"
 #include "gig-uri-utils.h"
+
+#include "history/gig-history-service.h"
 
 struct _GigWebView
 {
@@ -215,6 +218,72 @@ gig_web_view_web_view_context_menu_cb (GigWebView *self,
   return FALSE;
 }
 
+static gboolean
+should_record_in_history (const gchar *uri)
+{
+  const gchar *scheme;
+
+  if (!uri || !(scheme = g_uri_peek_scheme (uri)))
+    return FALSE;
+
+  /* TODO: Decide whether to record file:// URIs; Epiphany does. */
+  return g_str_equal (scheme, "http") || g_str_equal (scheme, "https");
+}
+
+static void
+gig_web_view_record_visit (GigWebView *self)
+{
+  GigHistoryService *history_service;
+  const gchar *uri;
+  g_autoptr (GError) error = NULL;
+
+  g_assert (GIG_IS_WEB_VIEW (self));
+
+  history_service = gig_application_get_history_service (GIG_APPLICATION_DEFAULT);
+  uri = webkit_web_view_get_uri (WEBKIT_WEB_VIEW (self));
+
+  if (!history_service || !should_record_in_history (uri))
+    return;
+
+  /* TODO: Don't record WebKit's error pages, which commit under the
+   * failed URI. See how Epiphany freezes history in load_error_page.
+   *
+   * TODO: Reloads and back/forward navigations are recorded as regular
+   * visits, so detaching a tab (which reloads the page) adds one too.
+   *
+   * TODO: Same-document navigations (pushState, fragment changes) don't
+   * emit load-changed and are not recorded. They do notify::uri. */
+  if (!gig_history_service_add_visit (history_service, uri, &error))
+    g_warning ("Could not record visit to %s: %s", uri, error->message);
+}
+
+static void
+gig_web_view_update_history_title (GigWebView *self)
+{
+  GigHistoryService *history_service;
+  const gchar *uri;
+  const gchar *title;
+  g_autoptr (GError) error = NULL;
+
+  g_assert (GIG_IS_WEB_VIEW (self));
+
+  history_service = gig_application_get_history_service (GIG_APPLICATION_DEFAULT);
+  uri = webkit_web_view_get_uri (WEBKIT_WEB_VIEW (self));
+  title = webkit_web_view_get_title (WEBKIT_WEB_VIEW (self));
+
+  if (!history_service || !should_record_in_history (uri) || !title || title[0] == '\0')
+    return;
+
+  /* TODO: notify::title fires on every change, so pages that update their
+   * title from JavaScript (unread counters and the like) cause a write each
+   * time, and the last title wins. Firefox does the same, but skips unchanged
+   * titles and error pages and writes asynchronously. Chromium only stores
+   * titles set while loading or within 5 seconds after, at most 10 times per
+   * navigation (HistoryTabHelper::TitleWasSet). */
+  if (!gig_history_service_set_title (history_service, uri, title, &error))
+    g_warning ("Could not update title of %s: %s", uri, error->message);
+}
+
 static void
 gig_web_view_web_view_load_changed_cb (GigWebView *self,
                                        WebKitLoadEvent load_event,
@@ -236,6 +305,8 @@ gig_web_view_web_view_load_changed_cb (GigWebView *self,
           gig_web_view_set_connection_security_level (self, GIG_CONNECTION_SECURITY_LEVEL_INSECURE);
 
         gig_web_view_set_is_empty (self, FALSE);
+
+        gig_web_view_record_visit (self);
         break;
       }
 
@@ -255,6 +326,17 @@ gig_web_view_notify_web_view_uri_cb (GigWebView *self,
   g_clear_pointer (&self->pending_uri, g_free);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_DISPLAY_URI]);
+}
+
+static void
+gig_web_view_notify_web_view_title_cb (GigWebView *self,
+                                       GParamSpec *pspec,
+                                       WebKitWebView *web_view)
+{
+  g_assert (GIG_IS_WEB_VIEW (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  gig_web_view_update_history_title (self);
 }
 
 static void
@@ -296,6 +378,12 @@ gig_web_view_constructed (GObject *object)
   g_signal_connect_object (web_view,
                            "notify::uri",
                            G_CALLBACK (gig_web_view_notify_web_view_uri_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (web_view,
+                           "notify::title",
+                           G_CALLBACK (gig_web_view_notify_web_view_title_cb),
                            self,
                            G_CONNECT_SWAPPED);
 

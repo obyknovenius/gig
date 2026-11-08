@@ -11,6 +11,8 @@ struct _GigHistoryService
 
 G_DEFINE_FINAL_TYPE (GigHistoryService, gig_history_service, G_TYPE_OBJECT)
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (sqlite3_stmt, sqlite3_finalize)
+
 static const gchar *migrations[] = {
   "/com/github/obyknovenius/Gig/history/001-create-tables.sql",
 };
@@ -45,29 +47,42 @@ gig_history_service_exec (GigHistoryService *self,
   return TRUE;
 }
 
+static sqlite3_stmt *
+gig_history_service_prepare (GigHistoryService *self,
+                             const gchar *sql,
+                             GError **error)
+{
+  sqlite3_stmt *stmt = NULL;
+
+  g_assert (GIG_IS_HISTORY_SERVICE (self));
+
+  if (sqlite3_prepare_v2 (self->db, sql, -1, &stmt, NULL) != SQLITE_OK)
+    {
+      gig_history_service_set_error (self, error, "Could not prepare statement");
+      return NULL;
+    }
+
+  return stmt;
+}
+
 static gint
 gig_history_service_get_user_version (GigHistoryService *self,
                                       GError **error)
 {
-  sqlite3_stmt *stmt = NULL;
-  gint version = -1;
+  g_autoptr (sqlite3_stmt) stmt = NULL;
 
   g_assert (GIG_IS_HISTORY_SERVICE (self));
 
-  if (sqlite3_prepare_v2 (self->db, "PRAGMA user_version", -1, &stmt, NULL) != SQLITE_OK)
+  if (!(stmt = gig_history_service_prepare (self, "PRAGMA user_version", error)))
+    return -1;
+
+  if (sqlite3_step (stmt) != SQLITE_ROW)
     {
       gig_history_service_set_error (self, error, "Could not read schema version");
       return -1;
     }
 
-  if (sqlite3_step (stmt) == SQLITE_ROW)
-    version = sqlite3_column_int (stmt, 0);
-  else
-    gig_history_service_set_error (self, error, "Could not read schema version");
-
-  sqlite3_finalize (stmt);
-
-  return version;
+  return sqlite3_column_int (stmt, 0);
 }
 
 static gboolean
@@ -197,4 +212,96 @@ gig_history_service_new (const gchar *path,
     return NULL;
 
   return g_steal_pointer (&self);
+}
+
+gboolean
+gig_history_service_add_visit (GigHistoryService *self,
+                               const gchar *uri,
+                               GError **error)
+{
+  g_autoptr (sqlite3_stmt) upsert_page = NULL;
+  g_autoptr (sqlite3_stmt) insert_visit = NULL;
+  gint64 now = g_get_real_time ();
+  sqlite3_int64 page_id;
+
+  g_return_val_if_fail (GIG_IS_HISTORY_SERVICE (self), FALSE);
+  g_return_val_if_fail (uri != NULL, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  if (!(upsert_page = gig_history_service_prepare (self,
+                                                   "INSERT INTO pages (uri, visit_count, last_visit_time) "
+                                                   "VALUES (?, 1, ?) "
+                                                   "ON CONFLICT (uri) DO UPDATE SET "
+                                                   "  visit_count = visit_count + 1, "
+                                                   "  last_visit_time = excluded.last_visit_time "
+                                                   "RETURNING id",
+                                                   error)))
+    return FALSE;
+
+  if (!(insert_visit = gig_history_service_prepare (self,
+                                                    "INSERT INTO visits (page_id, time) VALUES (?, ?)",
+                                                    error)))
+    return FALSE;
+
+  if (!gig_history_service_exec (self, "BEGIN", error))
+    return FALSE;
+
+  sqlite3_bind_text (upsert_page, 1, uri, -1, SQLITE_STATIC);
+  sqlite3_bind_int64 (upsert_page, 2, now);
+
+  if (sqlite3_step (upsert_page) != SQLITE_ROW)
+    {
+      gig_history_service_set_error (self, error, "Could not update page");
+      goto rollback;
+    }
+
+  page_id = sqlite3_column_int64 (upsert_page, 0);
+  sqlite3_reset (upsert_page);
+
+  sqlite3_bind_int64 (insert_visit, 1, page_id);
+  sqlite3_bind_int64 (insert_visit, 2, now);
+
+  if (sqlite3_step (insert_visit) != SQLITE_DONE)
+    {
+      gig_history_service_set_error (self, error, "Could not insert visit");
+      goto rollback;
+    }
+
+  if (!gig_history_service_exec (self, "COMMIT", error))
+    goto rollback;
+
+  return TRUE;
+
+rollback:
+  gig_history_service_exec (self, "ROLLBACK", NULL);
+  return FALSE;
+}
+
+gboolean
+gig_history_service_set_title (GigHistoryService *self,
+                               const gchar *uri,
+                               const gchar *title,
+                               GError **error)
+{
+  g_autoptr (sqlite3_stmt) stmt = NULL;
+
+  g_return_val_if_fail (GIG_IS_HISTORY_SERVICE (self), FALSE);
+  g_return_val_if_fail (uri != NULL, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  if (!(stmt = gig_history_service_prepare (self,
+                                            "UPDATE pages SET title = ? WHERE uri = ?",
+                                            error)))
+    return FALSE;
+
+  sqlite3_bind_text (stmt, 1, title, -1, SQLITE_STATIC);
+  sqlite3_bind_text (stmt, 2, uri, -1, SQLITE_STATIC);
+
+  if (sqlite3_step (stmt) != SQLITE_DONE)
+    {
+      gig_history_service_set_error (self, error, "Could not update title");
+      return FALSE;
+    }
+
+  return TRUE;
 }
