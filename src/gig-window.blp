@@ -2,16 +2,19 @@ using Gtk 4.0;
 using Adw 1;
 
 template $GigWindow: Adw.ApplicationWindow {
+    notify::fullscreened => $gig_window_notify_fullscreened_cb();
+
     Adw.TabOverview {
         view: tab_view;
         enable-new-tab: true;
         create-tab => $gig_window_tab_overview_create_tab_cb() swapped;
 
-        child: Adw.ToolbarView toolbar_view {
+        child: Adw.ToolbarView {
             top-bar-style: raised_border;
+            reveal-top-bars: bind template.fullscreened inverted;
 
             [top]
-            Adw.HeaderBar header_bar {
+            Adw.HeaderBar {
                 [start]
                 Gtk.Box {
                     spacing: 6;
@@ -62,7 +65,7 @@ template $GigWindow: Adw.ApplicationWindow {
             }
 
             [top]
-            Adw.TabBar tab_bar {
+            Adw.TabBar {
                 view: tab_view;
             }
 
@@ -95,6 +98,20 @@ menu primary_menu {
         item {
             label: "Find";
             action: "tab.find";
+        }
+    }
+
+    section {
+        item {
+            label: "Fullscreen";
+            action: "win.fullscreen";
+            hidden-when: "action-disabled";
+        }
+
+        item {
+            label: "Leave Fullscreen";
+            action: "win.unfullscreen";
+            hidden-when: "action-disabled";
         }
     }
 

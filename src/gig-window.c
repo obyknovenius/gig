@@ -12,9 +12,6 @@ struct _GigWindow
 {
   AdwApplicationWindow parent_instance;
 
-  AdwToolbarView *toolbar_view;
-  AdwHeaderBar *header_bar;
-  AdwTabBar *tab_bar;
   GtkButton *stop_reload_button;
   GigAddressBar *address_bar;
   AdwTabView *tab_view;
@@ -155,6 +152,21 @@ gig_window_setup_tab (GigWindow *self,
     adw_tab_view_set_selected_page (self->tab_view, tab_page);
 }
 
+static void
+gig_window_notify_fullscreened_cb (GigWindow *self,
+                                   GParamSpec *pspec,
+                                   gpointer user_data)
+{
+  gboolean is_fullscreen;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  is_fullscreen = gtk_window_is_fullscreen (GTK_WINDOW (self));
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.fullscreen", !is_fullscreen);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.unfullscreen", is_fullscreen);
+}
+
 static AdwTabPage *
 gig_window_tab_overview_create_tab_cb (GigWindow *self,
                                        AdwTabOverview *tab_overview)
@@ -293,30 +305,6 @@ gig_window_notify_web_view_can_go_forward_cb (GigWindow *self,
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)));
-}
-
-static gboolean
-gig_window_web_view_enter_fullscreen_cb (GigWindow *self,
-                                         GigWebView *web_view)
-{
-  g_assert (GIG_IS_WINDOW (self));
-
-  gtk_widget_set_visible (GTK_WIDGET (self->header_bar), FALSE);
-  gtk_widget_set_visible (GTK_WIDGET (self->tab_bar), FALSE);
-
-  return FALSE;
-}
-
-static gboolean
-gig_window_web_view_leave_fullscreen_cb (GigWindow *self,
-                                         GigWebView *web_view)
-{
-  g_assert (GIG_IS_WINDOW (self));
-
-  gtk_widget_set_visible (GTK_WIDGET (self->header_bar), TRUE);
-  gtk_widget_set_visible (GTK_WIDGET (self->tab_bar), TRUE);
-
-  return FALSE;
 }
 
 static gboolean
@@ -534,6 +522,30 @@ gig_window_go_forward_action (GtkWidget *widget,
 }
 
 static void
+gig_window_fullscreen_action (GtkWidget *widget,
+                              const gchar *action_name,
+                              GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  gtk_window_fullscreen (GTK_WINDOW (self));
+}
+
+static void
+gig_window_unfullscreen_action (GtkWidget *widget,
+                                const gchar *action_name,
+                                GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  gtk_window_unfullscreen (GTK_WINDOW (self));
+}
+
+static void
 gig_window_find_action (GtkWidget *widget,
                         const gchar *action_name,
                         GVariant *param)
@@ -716,13 +728,11 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-window.ui");
 
-  gtk_widget_class_bind_template_child (widget_class, GigWindow, toolbar_view);
-  gtk_widget_class_bind_template_child (widget_class, GigWindow, header_bar);
-  gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, stop_reload_button);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, address_bar);
   gtk_widget_class_bind_template_child (widget_class, GigWindow, tab_view);
 
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_notify_fullscreened_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_overview_create_tab_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_close_page_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_setup_menu_cb);
@@ -735,6 +745,9 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_install_action (widget_class, "win.stop-reload", NULL, gig_window_stop_reload_action);
   gtk_widget_class_install_action (widget_class, "win.go-back", NULL, gig_window_go_back_action);
   gtk_widget_class_install_action (widget_class, "win.go-forward", NULL, gig_window_go_forward_action);
+  gtk_widget_class_install_action (widget_class, "win.fullscreen", NULL, gig_window_fullscreen_action);
+  gtk_widget_class_install_action (widget_class, "win.unfullscreen", NULL, gig_window_unfullscreen_action);
+
   gtk_widget_class_install_action (widget_class, "tab.find", NULL, gig_window_find_action);
   gtk_widget_class_install_action (widget_class, "tab.find-finish", NULL, gig_window_find_finish_action);
   gtk_widget_class_install_action (widget_class, "tab.close", NULL, gig_window_close_tab_action);
@@ -747,6 +760,9 @@ gig_window_class_init (GigWindowClass *klass)
 
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_t, GDK_CONTROL_MASK, "win.new-tab", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_n, GDK_CONTROL_MASK, "win.new-window", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_F11, GDK_NO_MODIFIER_MASK, "win.fullscreen", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_F11, GDK_NO_MODIFIER_MASK, "win.unfullscreen", NULL);
+
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_f, GDK_CONTROL_MASK, "tab.find", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_Escape, GDK_NO_MODIFIER_MASK, "tab.find-finish", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_w, GDK_CONTROL_MASK, "tab.close", NULL);
@@ -762,6 +778,8 @@ gig_window_init (GigWindow *self)
 #if DEVELOPMENT_BUILD
   gtk_widget_add_css_class (GTK_WIDGET (self), "devel");
 #endif
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.unfullscreen", FALSE);
 
   gig_window_update_actions (self);
 
@@ -782,18 +800,6 @@ gig_window_init (GigWindow *self)
   g_signal_group_connect_object (self->web_view_signals,
                                  "create",
                                  G_CALLBACK (gig_window_web_view_create_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "enter-fullscreen",
-                                 G_CALLBACK (gig_window_web_view_enter_fullscreen_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "leave-fullscreen",
-                                 G_CALLBACK (gig_window_web_view_leave_fullscreen_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 
