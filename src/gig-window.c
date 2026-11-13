@@ -412,13 +412,8 @@ gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
 
   g_signal_group_set_target (self->web_view_signals, web_view);
 
-  if (web_view)
-    {
-      if (!gig_web_view_get_display_uri (web_view))
-        gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
-      else
-        gtk_widget_grab_focus (GTK_WIDGET (tab));
-    }
+  if (tab && !gtk_widget_grab_focus (GTK_WIDGET (tab)))
+    gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
 }
 
 static void
