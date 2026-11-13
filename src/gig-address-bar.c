@@ -12,6 +12,7 @@ struct _GigAddressBar
 
   gboolean editing;
   gboolean modified;
+  gboolean select_all;
 
   GigWebView *web_view;
 
@@ -189,6 +190,43 @@ gig_address_bar_entry_changed_cb (GigAddressBar *self,
   gig_address_bar_set_modified (self, TRUE);
 
   gig_address_bar_update_secondary_icon (self);
+}
+
+static gboolean
+gig_address_bar_entry_event_cb (GigAddressBar *self,
+                                GdkEvent *event,
+                                GtkEventControllerLegacy *controller)
+{
+  GdkEventType event_type;
+
+  g_assert (GIG_IS_ADDRESS_BAR (self));
+
+  event_type = gdk_event_get_event_type (event);
+
+  if (event_type != GDK_BUTTON_PRESS && event_type != GDK_BUTTON_RELEASE)
+    return GDK_EVENT_PROPAGATE;
+
+  if (gdk_button_event_get_button (event) != GDK_BUTTON_PRIMARY)
+    return GDK_EVENT_PROPAGATE;
+
+  if (event_type == GDK_BUTTON_PRESS)
+    {
+      GtkWidget *focus = gtk_root_get_focus (gtk_widget_get_root (GTK_WIDGET (self)));
+      gboolean has_focus = focus && gtk_widget_is_ancestor (focus, GTK_WIDGET (self->entry));
+
+      self->select_all = !has_focus;
+    }
+  else
+    {
+      gboolean has_selection = gtk_editable_get_selection_bounds (GTK_EDITABLE (self->entry), NULL, NULL);
+
+      if (self->select_all && !has_selection)
+        gtk_editable_select_region (GTK_EDITABLE (self->entry), -1, 0);
+
+      self->select_all = FALSE;
+    }
+
+  return GDK_EVENT_PROPAGATE;
 }
 
 static void
@@ -390,6 +428,7 @@ gig_address_bar_class_init (GigAddressBarClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_icon_release_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_event_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_focus_enter_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_address_bar_entry_focus_leave_cb);
 }

@@ -10,6 +10,11 @@ template $GigAddressBar: Gtk.Widget {
         activate => $gig_address_bar_entry_activate_cb() swapped;
         icon-release => $gig_address_bar_entry_icon_release_cb() swapped;
 
+        Gtk.EventControllerLegacy {
+            propagation-phase: capture;
+            event => $gig_address_bar_entry_event_cb() swapped;
+        }
+
         Gtk.EventControllerFocus {
             enter => $gig_address_bar_entry_focus_enter_cb() swapped;
             leave => $gig_address_bar_entry_focus_leave_cb() swapped;
