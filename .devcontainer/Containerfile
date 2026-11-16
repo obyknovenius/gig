@@ -1,38 +1,5 @@
-FROM ghcr.io/igalia/wkdev-sdk:2.55-v3-a507ffd
+FROM quay.io/gnome_infrastructure/gnome-build-meta:sdk-51
 
-ARG WEBKIT_COMMIT=0187bc1e328bd3f3c6b21cbe3b6b0dd0bdb8535c
-ARG WEBKIT_CHECKOUT_DIR=/src/WebKit
+ARG USERNAME
 
-# Fetch WebKit sources
-RUN git init --initial-branch=main "$WEBKIT_CHECKOUT_DIR" && \
-    cd "$WEBKIT_CHECKOUT_DIR" && \
-    git remote add origin https://github.com/WebKit/WebKit.git && \
-    git sparse-checkout set Source Tools && \
-    git fetch --depth=1 --filter=blob:none origin "$WEBKIT_COMMIT" && \
-    git switch --detach FETCH_HEAD
-
-WORKDIR $WEBKIT_CHECKOUT_DIR
-
-RUN cmake --preset gtk-release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_INSTALL_LIBDIR=lib && \
-        cmake --build --preset gtk-release --target install && \
-    rm -rf WebKitBuild
-
-WORKDIR /
-
-# Install gig dependencies
-RUN apt update && \
-    apt install --yes --no-install-recommends \
-        adwaita-icon-theme \
-        blueprint-compiler \
-        desktop-file-utils \
-        fonts-adwaita \
-        fonts-ubuntu \
-        libadwaita-1-dev \
-        libgtk-4-dev \
-        meson \
-        ubuntu-settings \
-        yaru-theme-gtk \
-        yaru-theme-icon && \
-    rm -rf /var/lib/apt/lists/*
+RUN useradd --create-home --groups wheel "$USERNAME"
