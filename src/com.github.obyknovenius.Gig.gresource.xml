@@ -8,5 +8,9 @@
     <file preprocess="xml-stripblanks">gig-window.ui</file>
 
     <file>style.css</file>
+
+    <file preprocess="xml-stripblanks">history/gig-history-dialog.ui</file>
+
+    <file>history/001-create-tables.sql</file>
   </gresource>
 </gresources>

@@ -97,7 +97,7 @@ gig_find_entry_text_changed_cb (GigFindEntry *self,
   str = gtk_editable_get_text (GTK_EDITABLE (self));
 #endif
 
-  if (str == NULL || str[0] == '\0')
+  if (!str || str[0] == '\0')
     {
       gtk_widget_set_visible (GTK_WIDGET (self->clear_image), FALSE);
 

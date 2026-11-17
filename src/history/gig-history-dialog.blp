@@ -1,0 +1,80 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $GigHistoryDialog: Adw.Dialog {
+    content-width: 640;
+    content-height: 580;
+    title: "History";
+
+    Adw.ToolbarView {
+        [top]
+        Adw.HeaderBar {
+            [start]
+            Gtk.ToggleButton {
+                icon-name: "edit-find-symbolic";
+                tooltip-text: "Search";
+                active: bind search_bar.search-mode-enabled bidirectional;
+            }
+        }
+
+        [top]
+        Gtk.SearchBar search_bar {
+            key-capture-widget: template;
+
+            Adw.Clamp {
+                hexpand: true;
+                maximum-size: 400;
+
+                Gtk.SearchEntry search_entry {
+                    placeholder-text: "Search history";
+                    search-changed => $gig_history_dialog_search_entry_search_changed_cb() swapped;
+                }
+            }
+        }
+
+        content: Gtk.Stack stack {
+            vexpand: true;
+
+            Gtk.StackPage {
+                name: "results";
+
+                child: Gtk.ScrolledWindow {
+                    hscrollbar-policy: never;
+
+                    Adw.Clamp {
+                        maximum-size: 1024;
+                        margin-start: 12;
+                        margin-end: 12;
+
+                        Gtk.Box days_box {
+                            orientation: vertical;
+                            spacing: 24;
+                            margin-top: 12;
+                            margin-bottom: 12;
+                        }
+                    }
+                };
+            }
+
+            Gtk.StackPage {
+                name: "empty";
+
+                child: Adw.StatusPage {
+                    icon-name: "document-open-recent-symbolic";
+                    title: "No History Found";
+                    description: "Visited pages will be listed here";
+                };
+            }
+
+            Gtk.StackPage {
+                name: "no-results";
+
+                child: Adw.StatusPage {
+                    icon-name: "edit-find-symbolic";
+                    title: "No Results Found";
+                    description: "Try a different search";
+                };
+            }
+        };
+    }
+}

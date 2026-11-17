@@ -8,6 +8,8 @@
 #include "gig-tab.h"
 #include "gig-web-view.h"
 
+#include "history/gig-history-dialog.h"
+
 struct _GigWindow
 {
   AdwApplicationWindow parent_instance;
@@ -108,7 +110,9 @@ gig_window_update_actions (GigWindow *self)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  if ((tab = gig_window_get_selected_tab (self)))
+  tab = gig_window_get_selected_tab (self);
+
+  if (tab)
     {
       GigWebView *web_view = gig_tab_get_web_view (tab);
       is_empty = gig_web_view_is_empty (web_view);
@@ -398,7 +402,9 @@ gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
-  if ((tab = gig_window_get_selected_tab (self)))
+  tab = gig_window_get_selected_tab (self);
+
+  if (tab)
     {
       web_view = gig_tab_get_web_view (tab);
       is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
@@ -710,6 +716,21 @@ gig_window_close_request (GtkWindow *window)
 }
 
 static void
+gig_window_show_history_action (GtkWidget *widget,
+                                const gchar *action_name,
+                                GVariant *param)
+{
+  GigWindow *self = (GigWindow *) widget;
+  GigHistoryDialog *dialog;
+
+  g_assert (GIG_IS_WINDOW (self));
+
+  dialog = gig_history_dialog_new (gig_application_get_history_service (GIG_APPLICATION_DEFAULT));
+
+  adw_dialog_present (ADW_DIALOG (dialog), GTK_WIDGET (self));
+}
+
+static void
 gig_window_class_init (GigWindowClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -742,6 +763,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_install_action (widget_class, "win.go-forward", NULL, gig_window_go_forward_action);
   gtk_widget_class_install_action (widget_class, "win.fullscreen", NULL, gig_window_fullscreen_action);
   gtk_widget_class_install_action (widget_class, "win.unfullscreen", NULL, gig_window_unfullscreen_action);
+  gtk_widget_class_install_action (widget_class, "win.show-history", NULL, gig_window_show_history_action);
 
   gtk_widget_class_install_action (widget_class, "tab.find", NULL, gig_window_find_action);
   gtk_widget_class_install_action (widget_class, "tab.find-finish", NULL, gig_window_find_finish_action);
@@ -757,6 +779,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_n, GDK_CONTROL_MASK, "win.new-window", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_F11, GDK_NO_MODIFIER_MASK, "win.fullscreen", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_F11, GDK_NO_MODIFIER_MASK, "win.unfullscreen", NULL);
+  gtk_widget_class_add_binding_action (widget_class, GDK_KEY_h, GDK_CONTROL_MASK, "win.show-history", NULL);
 
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_f, GDK_CONTROL_MASK, "tab.find", NULL);
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_Escape, GDK_NO_MODIFIER_MASK, "tab.find-finish", NULL);
@@ -775,6 +798,8 @@ gig_window_init (GigWindow *self)
 #endif
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.unfullscreen", FALSE);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.show-history",
+                                 gig_application_get_history_service (GIG_APPLICATION_DEFAULT) != NULL);
 
   gig_window_update_actions (self);
 

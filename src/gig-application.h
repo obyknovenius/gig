@@ -13,6 +13,8 @@ GigApplication *gig_application_new ();
 
 GigSettings *gig_application_get_settings (GigApplication *self);
 
+GigHistoryService *gig_application_get_history_service (GigApplication *self);
+
 GigWindow *gig_application_get_current_window (GigApplication *self);
 
 G_END_DECLS

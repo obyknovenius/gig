@@ -110,7 +110,8 @@ gig_address_bar_update_attributes (GigAddressBar *self)
           CLAMP (color.alpha * dim_opacity * 65535. + 0.5, 0, 65535));
       pango_attr_list_insert (attrs, attr);
 
-      if ((domain = gig_get_base_domain (text, &start_index, &end_index)))
+      domain = gig_get_base_domain (text, &start_index, &end_index);
+      if (domain)
         {
           attr = pango_attr_foreground_alpha_new (0);
           attr->start_index = start_index;
