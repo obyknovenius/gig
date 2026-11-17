@@ -221,7 +221,7 @@ gig_address_bar_entry_event_cb (GigAddressBar *self,
       gboolean has_selection = gtk_editable_get_selection_bounds (GTK_EDITABLE (self->entry), NULL, NULL);
 
       if (self->select_all && !has_selection)
-        gtk_editable_select_region (GTK_EDITABLE (self->entry), -1, 0);
+        gtk_editable_select_region (GTK_EDITABLE (self->entry), 0, -1);
 
       self->select_all = FALSE;
     }
