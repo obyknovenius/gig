@@ -22,6 +22,17 @@ jobs:
           manifest-path: ${{ env.MANIFEST }}
           bundle: ${{ env.BUNDLE }}
           artifact-name: ${{ env.BUNDLE }}
+          repo-dir: repo
+      - name: Prepare Flatpak repository
+        run: |
+          flatpak build-update-repo --generate-static-deltas --prune \
+            --title=Gig --default-branch=master repo
+          mkdir site
+          mv repo site/repo
+          cp build-aux/flatpak/gig.flatpakrepo site/
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
   publish:
     name: Publish
     needs: build
@@ -39,3 +50,16 @@ jobs:
         run: |
           gh release delete latest --cleanup-tag --yes || true
           gh release create latest "$BUNDLE" --prerelease
+  pages:
+    name: Deploy repository
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5
