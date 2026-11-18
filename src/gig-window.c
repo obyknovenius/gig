@@ -423,6 +423,44 @@ gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
 }
 
 static void
+gig_window_click_pressed_cb (GigWindow *self,
+                             int n_press,
+                             double x,
+                             double y,
+                             GtkGestureClick *click)
+{
+  GigTab *tab;
+  GigWebView *web_view;
+  guint button;
+  const gchar *action_name = NULL;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GTK_IS_GESTURE_CLICK (click));
+
+  tab = gig_window_get_selected_tab (self);
+  g_assert (GIG_IS_TAB (tab));
+
+  web_view = gig_tab_get_web_view (tab);
+  g_assert (GIG_IS_WEB_VIEW (web_view));
+
+  button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (click));
+
+  if (button == 8 && webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view)))
+    action_name = "win.go-back";
+  else if (button == 9 && webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)))
+    action_name = "win.go-forward";
+
+  if (action_name)
+    {
+      gtk_gesture_set_state (GTK_GESTURE (click), GTK_EVENT_SEQUENCE_CLAIMED);
+      gtk_widget_activate_action (GTK_WIDGET (self), action_name, NULL);
+      return;
+    }
+
+  gtk_gesture_set_state (GTK_GESTURE (click), GTK_EVENT_SEQUENCE_DENIED);
+}
+
+static void
 gig_window_new_tab_action (GtkWidget *widget,
                            const gchar *action_name,
                            GVariant *param)
@@ -755,6 +793,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_create_window_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_page_detached_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_notify_tab_view_selected_page_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_click_pressed_cb);
 
   gtk_widget_class_install_action (widget_class, "win.new-tab", NULL, gig_window_new_tab_action);
   gtk_widget_class_install_action (widget_class, "win.new-window", NULL, gig_window_new_window_action);

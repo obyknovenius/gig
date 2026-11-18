@@ -79,6 +79,12 @@ template $GigWindow: Adw.ApplicationWindow {
             }
         };
     }
+
+    Gtk.GestureClick {
+        button: 0;
+        propagation-phase: capture;
+        pressed => $gig_window_click_pressed_cb() swapped;
+    }
 }
 
 menu primary_menu {
