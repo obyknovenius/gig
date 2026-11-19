@@ -3,6 +3,7 @@
 #include "gig-tab.h"
 
 #include "gig-find-bar.h"
+#include "gig-floating-bar.h"
 #include "gig-web-view.h"
 
 struct _GigTab
@@ -13,6 +14,7 @@ struct _GigTab
   GtkStack *stack;
   AdwStatusPage *new_tab_page;
   GigWebView *web_view;
+  GigFloatingBar *floating_bar;
   GigFindBar *find_bar;
 };
 
@@ -97,6 +99,18 @@ gig_tab_web_view_leave_fullscreen_cb (GigTab *self,
 }
 
 static void
+gig_tab_web_view_mouse_target_changed_cb (GigTab *self,
+                                          WebKitHitTestResult *hit_test_result,
+                                          guint modifiers,
+                                          GigWebView *web_view)
+{
+  g_assert (GIG_IS_TAB (self));
+
+  gig_floating_bar_set_text (self->floating_bar,
+                             webkit_hit_test_result_get_link_uri (hit_test_result));
+}
+
+static void
 gig_tab_constructed (GObject *object)
 {
   GigTab *self = (GigTab *) object;
@@ -152,6 +166,12 @@ gig_tab_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "leave-fullscreen",
                            G_CALLBACK (gig_tab_web_view_leave_fullscreen_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "mouse-target-changed",
+                           G_CALLBACK (gig_tab_web_view_mouse_target_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
@@ -284,6 +304,9 @@ gig_tab_class_init (GigTabClass *klass)
   gtk_widget_class_bind_template_child (widget_class, GigTab, toolbar_view);
   gtk_widget_class_bind_template_child (widget_class, GigTab, stack);
   gtk_widget_class_bind_template_child (widget_class, GigTab, new_tab_page);
+  gtk_widget_class_bind_template_child (widget_class, GigTab, floating_bar);
+
+  g_type_ensure (GIG_TYPE_FLOATING_BAR);
 }
 
 static void

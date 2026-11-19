@@ -10,6 +10,7 @@ typedef struct _GigAddressBar GigAddressBar;
 typedef struct _GigApplication GigApplication;
 typedef struct _GigFindBar GigFindBar;
 typedef struct _GigFindEntry GigFindEntry;
+typedef struct _GigFloatingBar GigFloatingBar;
 typedef struct _GigHistoryDialog GigHistoryDialog;
 typedef struct _GigHistoryService GigHistoryService;
 typedef struct _GigHistoryVisit GigHistoryVisit;

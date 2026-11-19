@@ -3,6 +3,7 @@ gig_sources = [
   'gig-application.c',
   'gig-find-bar.c',
   'gig-find-entry.c',
+  'gig-floating-bar.c',
   'gig-settings.c',
   'gig-tab.c',
   'gig-uri-utils.c',
@@ -17,12 +18,13 @@ gig_sources = [
 blueprints = custom_target(
   'blueprints',
   input: files(
+    'history/gig-history-dialog.blp',
     'gig-address-bar.blp',
     'gig-find-bar.blp',
     'gig-find-entry.blp',
+    'gig-floating-bar.blp',
     'gig-tab.blp',
     'gig-window.blp',
-    'history/gig-history-dialog.blp',
   ),
   output: '.',
   command: [

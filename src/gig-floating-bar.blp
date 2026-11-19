@@ -1,0 +1,14 @@
+using Gtk 4.0;
+
+template $GigFloatingBar: Gtk.Widget {
+    can-target: false;
+
+    Gtk.Revealer revealer {
+        transition-type: fade_slide_down;
+
+        Gtk.Label label {
+            single-line-mode: true;
+            ellipsize: middle;
+        }
+    }
+}

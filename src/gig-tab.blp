@@ -6,17 +6,25 @@ template $GigTab: Gtk.Widget {
         bottom-bar-style: raised_border;
         reveal-bottom-bars: false;
 
-        content: Gtk.Stack stack {
-            Gtk.StackPage {
-                child: Adw.StatusPage new_tab_page {
-                    title: "New Tab";
-                    description: "Search the web or enter a website address";
-                };
+        content: Gtk.Overlay {
+            Gtk.Stack stack {
+                Gtk.StackPage {
+                    child: Adw.StatusPage new_tab_page {
+                        title: "New Tab";
+                        description: "Search the web or enter a website address";
+                    };
+                }
+
+                styles [
+                    "view",
+                ]
             }
 
-            styles [
-                "view",
-            ]
+            [overlay]
+            $GigFloatingBar floating_bar {
+                halign: start;
+                valign: end;
+            }
         };
     }
 }
