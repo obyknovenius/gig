@@ -139,6 +139,11 @@ menu primary_menu {
 menu tab_menu {
     section {
         item {
+            label: "Reload";
+            action: "tab.reload";
+        }
+
+        item {
             label: "Pin";
             action: "tab.pin";
             hidden-when: "action-disabled";
