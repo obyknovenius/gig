@@ -42,7 +42,8 @@ gig_sources += gnome.compile_resources(
   dependencies: blueprints,
 )
 
-adwaita_dep = dependency('libadwaita-1')
+gtk_dep = dependency('gtk4', version: '>= 4.24')
+adwaita_dep = dependency('libadwaita-1', version: '>= 1.10')
 soup_dep = dependency('libsoup-3.0')
 sqlite_dep = dependency('sqlite3')
 webkitgtk_dep = dependency('webkitgtk-6.0')
@@ -57,6 +58,7 @@ endif
 config.set_quoted('WEBKIT_REVISION', webkit_revision)
 
 gig_deps = [
+  gtk_dep,
   adwaita_dep,
   soup_dep,
   sqlite_dep,

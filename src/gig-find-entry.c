@@ -82,20 +82,12 @@ static void
 gig_find_entry_text_changed_cb (GigFindEntry *self,
                                 GtkText *text)
 {
-#if GTK_CHECK_VERSION(4, 24, 0)
   g_autofree char *str = NULL;
-#else
-  const char *str;
-#endif
 
   g_assert (GIG_IS_FIND_ENTRY (self));
   g_assert (GTK_IS_TEXT (text));
 
-#if GTK_CHECK_VERSION(4, 24, 0)
   str = gtk_editable_get_complete_text (GTK_EDITABLE (self));
-#else
-  str = gtk_editable_get_text (GTK_EDITABLE (self));
-#endif
 
   if (!str || str[0] == '\0')
     {
