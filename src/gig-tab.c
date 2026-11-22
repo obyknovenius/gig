@@ -240,7 +240,7 @@ gig_tab_get_property (GObject *object,
       break;
 
     case PROP_IS_LOADING:
-      g_value_set_boolean (value, gig_tab_get_is_loading (self));
+      g_value_set_boolean (value, gig_tab_is_loading (self));
       break;
 
     default:
@@ -388,7 +388,7 @@ gig_tab_get_icon (GigTab *self)
 }
 
 gboolean
-gig_tab_get_is_loading (GigTab *self)
+gig_tab_is_loading (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
 
