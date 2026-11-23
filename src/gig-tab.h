@@ -18,6 +18,8 @@ const gchar *gig_tab_get_title (GigTab *self);
 
 GdkTexture *gig_tab_get_icon (GigTab *self);
 
+gboolean gig_tab_is_empty (GigTab *self);
+
 gboolean gig_tab_is_loading (GigTab *self);
 
 gboolean gig_tab_can_reload (GigTab *self);

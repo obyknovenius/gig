@@ -9,7 +9,6 @@ struct _GigWebView
 {
   WebKitWebView parent_instance;
 
-  gboolean is_empty;
   gchar *pending_uri;
 
   GigConnectionSecurityLevel connection_security_level;
@@ -35,7 +34,6 @@ G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
 enum
 {
   PROP_0,
-  PROP_IS_EMPTY,
   PROP_PENDING_URI,
   PROP_DISPLAY_URI,
   PROP_CONNECTION_SECURITY_LEVEL,
@@ -51,12 +49,6 @@ enum
 
 static GParamSpec *properties[N_PROPS];
 static guint signals[N_SIGNALS];
-
-static void gig_web_view_set_is_empty (GigWebView *self,
-                                       gboolean is_empty);
-
-static void gig_web_view_set_connection_security_level (GigWebView *self,
-                                                        GigConnectionSecurityLevel connection_security_level);
 
 static WebKitContextMenuItem *
 find_item_in_context_menu (WebKitContextMenu *context_menu,
@@ -140,6 +132,20 @@ gig_web_view_prepend_action_to_context_menu (GigWebView *self,
   item = webkit_context_menu_item_new_from_gaction (action, label, target);
 
   webkit_context_menu_prepend (context_menu, item);
+}
+
+static void
+gig_web_view_set_connection_security_level (GigWebView *self,
+                                            GigConnectionSecurityLevel connection_security_level)
+{
+  g_assert (GIG_IS_WEB_VIEW (self));
+
+  if (self->connection_security_level == connection_security_level)
+    return;
+
+  self->connection_security_level = connection_security_level;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CONNECTION_SECURITY_LEVEL]);
 }
 
 static void
@@ -290,8 +296,6 @@ gig_web_view_web_view_load_changed_cb (GigWebView *self,
         else
           gig_web_view_set_connection_security_level (self, GIG_CONNECTION_SECURITY_LEVEL_INSECURE);
 
-        gig_web_view_set_is_empty (self, FALSE);
-
         gig_web_view_record_visit (self);
         break;
       }
@@ -407,10 +411,6 @@ gig_web_view_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_IS_EMPTY:
-      g_value_set_boolean (value, gig_web_view_is_empty (self));
-      break;
-
     case PROP_DISPLAY_URI:
       g_value_set_string (value, gig_web_view_get_display_uri (self));
       break;
@@ -451,12 +451,6 @@ gig_web_view_class_init (GigWebViewClass *klass)
   object_class->set_property = gig_web_view_set_property;
   object_class->get_property = gig_web_view_get_property;
   object_class->finalize = gig_web_view_finalize;
-
-  properties[PROP_IS_EMPTY] =
-      g_param_spec_boolean ("is-empty",
-                            NULL, NULL,
-                            TRUE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_PENDING_URI] =
       g_param_spec_string ("pending-uri",
@@ -505,7 +499,6 @@ gig_web_view_class_init (GigWebViewClass *klass)
 static void
 gig_web_view_init (GigWebView *self)
 {
-  self->is_empty = TRUE;
   self->connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
 
   self->action_group = g_simple_action_group_new ();
@@ -605,48 +598,12 @@ gig_web_view_get_display_uri (GigWebView *self)
   return self->pending_uri;
 }
 
-gboolean
-gig_web_view_is_empty (GigWebView *self)
-{
-  g_return_val_if_fail (GIG_IS_WEB_VIEW (self), FALSE);
-
-  return self->is_empty;
-}
-
-static void
-gig_web_view_set_is_empty (GigWebView *self,
-                           gboolean is_empty)
-{
-  g_assert (GIG_IS_WEB_VIEW (self));
-
-  if (self->is_empty == is_empty)
-    return;
-
-  self->is_empty = is_empty;
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_EMPTY]);
-}
-
 GigConnectionSecurityLevel
 gig_web_view_get_connection_security_level (GigWebView *self)
 {
   g_return_val_if_fail (GIG_IS_WEB_VIEW (self), GIG_CONNECTION_SECURITY_LEVEL_TBD);
 
   return self->connection_security_level;
-}
-
-static void
-gig_web_view_set_connection_security_level (GigWebView *self,
-                                            GigConnectionSecurityLevel connection_security_level)
-{
-  g_assert (GIG_IS_WEB_VIEW (self));
-
-  if (self->connection_security_level == connection_security_level)
-    return;
-
-  self->connection_security_level = connection_security_level;
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CONNECTION_SECURITY_LEVEL]);
 }
 
 void

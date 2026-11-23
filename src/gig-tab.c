@@ -16,6 +16,8 @@ struct _GigTab
   GigWebView *web_view;
   GigFloatingBar *floating_bar;
   GigFindBar *find_bar;
+
+  gboolean is_empty;
 };
 
 G_DEFINE_FINAL_TYPE (GigTab, gig_tab, GTK_TYPE_WIDGET)
@@ -26,6 +28,7 @@ enum
   PROP_WEB_VIEW,
   PROP_TITLE,
   PROP_ICON,
+  PROP_IS_EMPTY,
   PROP_IS_LOADING,
   PROP_CAN_RELOAD,
   PROP_CAN_GO_BACK,
@@ -35,7 +38,40 @@ enum
 
 static GParamSpec *properties[N_PROPS];
 
-static void gig_tab_set_web_view (GigTab *self, GigWebView *web_view);
+static void
+gig_tab_set_web_view (GigTab *self,
+                      GigWebView *web_view)
+{
+  WebKitFindController *find_controller;
+
+  g_assert (GIG_IS_TAB (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  if (self->web_view == web_view)
+    return;
+
+  self->web_view = web_view;
+
+  find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (web_view));
+  self->find_bar = gig_find_bar_new (find_controller);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_WEB_VIEW]);
+}
+
+static void
+gig_tab_set_is_empty (GigTab *self,
+                      gboolean is_empty)
+{
+  g_assert (GIG_IS_TAB (self));
+
+  if (self->is_empty == is_empty)
+    return;
+
+  self->is_empty = is_empty;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_EMPTY]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_RELOAD]);
+}
 
 static void
 gig_tab_notify_web_view_uri_cb (GigTab *self,
@@ -80,16 +116,6 @@ gig_tab_notify_web_view_is_loading_cb (GigTab *self,
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_RELOAD]);
 }
 
-static void
-gig_tab_notify_web_view_is_empty_cb (GigTab *self,
-                                     GParamSpec *pspec,
-                                     GigWebView *web_view)
-{
-  g_assert (GIG_IS_TAB (self));
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_RELOAD]);
-}
-
 static gboolean
 gig_tab_web_view_enter_fullscreen_cb (GigTab *self,
                                       GigWebView *web_view)
@@ -110,6 +136,17 @@ gig_tab_web_view_leave_fullscreen_cb (GigTab *self,
   gtk_widget_set_visible (GTK_WIDGET (self->find_bar), TRUE);
 
   return FALSE;
+}
+
+static void
+gig_tab_web_view_load_changed_cb (GigTab *self,
+                                  WebKitLoadEvent load_event,
+                                  WebKitWebView *web_view)
+{
+  g_assert (GIG_IS_TAB (self));
+
+  if (load_event == WEBKIT_LOAD_COMMITTED)
+    gig_tab_set_is_empty (self, FALSE);
 }
 
 static void
@@ -186,12 +223,6 @@ gig_tab_constructed (GObject *object)
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
-                           "notify::is-empty",
-                           G_CALLBACK (gig_tab_notify_web_view_is_empty_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  g_signal_connect_object (self->web_view,
                            "enter-fullscreen",
                            G_CALLBACK (gig_tab_web_view_enter_fullscreen_cb),
                            self,
@@ -200,6 +231,12 @@ gig_tab_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "leave-fullscreen",
                            G_CALLBACK (gig_tab_web_view_leave_fullscreen_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "load-changed",
+                           G_CALLBACK (gig_tab_web_view_load_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -281,6 +318,10 @@ gig_tab_get_property (GObject *object,
       g_value_set_object (value, gig_tab_get_icon (self));
       break;
 
+    case PROP_IS_EMPTY:
+      g_value_set_boolean (value, gig_tab_is_empty (self));
+      break;
+
     case PROP_IS_LOADING:
       g_value_set_boolean (value, gig_tab_is_loading (self));
       break;
@@ -344,6 +385,12 @@ gig_tab_class_init (GigTabClass *klass)
                            GDK_TYPE_TEXTURE,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  properties[PROP_IS_EMPTY] =
+      g_param_spec_boolean ("is-empty",
+                            NULL, NULL,
+                            TRUE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
   properties[PROP_IS_LOADING] =
       g_param_spec_boolean ("is-loading",
                             NULL, NULL,
@@ -384,6 +431,8 @@ gig_tab_class_init (GigTabClass *klass)
 static void
 gig_tab_init (GigTab *self)
 {
+  self->is_empty = TRUE;
+
   gtk_widget_init_template (GTK_WIDGET (self));
 }
 
@@ -413,26 +462,6 @@ gig_tab_get_web_view (GigTab *self)
   return self->web_view;
 }
 
-static void
-gig_tab_set_web_view (GigTab *self,
-                      GigWebView *web_view)
-{
-  WebKitFindController *find_controller;
-
-  g_assert (GIG_IS_TAB (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  if (self->web_view == web_view)
-    return;
-
-  self->web_view = web_view;
-
-  find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (web_view));
-  self->find_bar = gig_find_bar_new (find_controller);
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_WEB_VIEW]);
-}
-
 const gchar *
 gig_tab_get_title (GigTab *self)
 {
@@ -460,6 +489,14 @@ gig_tab_get_icon (GigTab *self)
 }
 
 gboolean
+gig_tab_is_empty (GigTab *self)
+{
+  g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+
+  return self->is_empty;
+}
+
+gboolean
 gig_tab_is_loading (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
@@ -470,15 +507,13 @@ gig_tab_is_loading (GigTab *self)
 gboolean
 gig_tab_can_reload (GigTab *self)
 {
-  gboolean is_empty;
   gboolean is_loading;
 
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
 
-  is_empty = gig_web_view_is_empty (self->web_view);
   is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
 
-  return !is_empty || is_loading;
+  return !self->is_empty || is_loading;
 }
 
 gboolean
