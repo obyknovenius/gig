@@ -27,6 +27,7 @@ enum
   PROP_TITLE,
   PROP_ICON,
   PROP_IS_LOADING,
+  PROP_CAN_RELOAD,
   N_PROPS
 };
 
@@ -74,6 +75,17 @@ gig_tab_notify_web_view_is_loading_cb (GigTab *self,
   g_assert (GIG_IS_TAB (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_LOADING]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_RELOAD]);
+}
+
+static void
+gig_tab_notify_web_view_is_empty_cb (GigTab *self,
+                                     GParamSpec *pspec,
+                                     GigWebView *web_view)
+{
+  g_assert (GIG_IS_TAB (self));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_RELOAD]);
 }
 
 static gboolean
@@ -154,6 +166,12 @@ gig_tab_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "notify::is-loading",
                            G_CALLBACK (gig_tab_notify_web_view_is_loading_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "notify::is-empty",
+                           G_CALLBACK (gig_tab_notify_web_view_is_empty_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -243,6 +261,10 @@ gig_tab_get_property (GObject *object,
       g_value_set_boolean (value, gig_tab_is_loading (self));
       break;
 
+    case PROP_CAN_RELOAD:
+      g_value_set_boolean (value, gig_tab_can_reload (self));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -292,6 +314,12 @@ gig_tab_class_init (GigTabClass *klass)
 
   properties[PROP_IS_LOADING] =
       g_param_spec_boolean ("is-loading",
+                            NULL, NULL,
+                            FALSE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_CAN_RELOAD] =
+      g_param_spec_boolean ("can-reload",
                             NULL, NULL,
                             FALSE,
                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
@@ -393,6 +421,20 @@ gig_tab_is_loading (GigTab *self)
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
 
   return webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+gboolean
+gig_tab_can_reload (GigTab *self)
+{
+  gboolean is_empty;
+  gboolean is_loading;
+
+  g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+
+  is_empty = gig_web_view_is_empty (self->web_view);
+  is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
+
+  return !is_empty || is_loading;
 }
 
 void

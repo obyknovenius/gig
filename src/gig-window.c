@@ -21,6 +21,7 @@ struct _GigWindow
   AdwTabPage *menu_page;
 
   GSignalGroup *web_view_signals;
+  GSignalGroup *tab_signals;
 };
 
 G_DEFINE_TYPE (GigWindow, gig_window, ADW_TYPE_APPLICATION_WINDOW)
@@ -116,9 +117,8 @@ gig_window_update_actions (GigWindow *self)
       GigWebView *web_view = gig_tab_get_web_view (tab);
 
       gboolean is_empty = gig_web_view_is_empty (web_view);
-      gboolean is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
 
-      can_reload = !is_empty || is_loading;
+      can_reload = gig_tab_can_reload (tab);
       can_go_back = webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view));
       can_go_forward = webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view));
       can_find = !is_empty;
@@ -159,14 +159,11 @@ gig_window_update_tab_actions (GigWindow *self)
     {
       AdwTabView *tab_view = self->tab_view;
       GigTab *tab = GIG_TAB (adw_tab_page_get_child (page));
-      GigWebView *web_view = gig_tab_get_web_view (tab);
 
       gint n_pages = adw_tab_view_get_n_pages (tab_view);
       gint n_pinned_pages = adw_tab_view_get_n_pinned_pages (tab_view);
       gint position = adw_tab_view_get_page_position (tab_view, page);
       gboolean pinned = adw_tab_page_get_pinned (page);
-      gboolean is_empty = gig_web_view_is_empty (web_view);
-      gboolean is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
 
       can_close_others = n_pages - n_pinned_pages > (pinned ? 0 : 1);
       can_close_before = position > n_pinned_pages;
@@ -174,7 +171,7 @@ gig_window_update_tab_actions (GigWindow *self)
       can_pin = !pinned;
       can_unpin = pinned;
       can_duplicate = TRUE;
-      can_reload = !is_empty || is_loading;
+      can_reload = gig_tab_can_reload (tab);
     }
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.close-others", can_close_others);
@@ -316,44 +313,14 @@ gig_window_notify_web_view_is_empty_cb (GigWindow *self,
                                         GParamSpec *pspec,
                                         GigWebView *web_view)
 {
-  gboolean is_empty;
-  gboolean is_loading;
-  gboolean can_reload;
   gboolean can_find;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  is_empty = gig_web_view_is_empty (web_view);
-  is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
-  can_reload = !is_empty || is_loading;
-  can_find = !is_empty;
+  can_find = !gig_web_view_is_empty (web_view);
 
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_reload);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.reload", can_reload);
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.find", can_find);
-}
-
-static void
-gig_window_notify_web_view_is_loading_cb (GigWindow *self,
-                                          GParamSpec *pspec,
-                                          GigWebView *web_view)
-{
-  gboolean is_empty;
-  gboolean is_loading;
-  gboolean can_reload;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  is_empty = gig_web_view_is_empty (web_view);
-  is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
-  can_reload = !is_empty || is_loading;
-
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_reload);
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.reload", can_reload);
-
-  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button), is_loading ? "process-stop-symbolic" : "view-refresh-symbolic");
 }
 
 static void
@@ -376,6 +343,26 @@ gig_window_notify_web_view_can_go_forward_cb (GigWindow *self,
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)));
+}
+
+static void
+gig_window_notify_tab_can_reload_cb (GigWindow *self,
+                                     GParamSpec *pspec,
+                                     GigTab *tab)
+{
+  gboolean is_loading;
+  gboolean can_reload;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (tab));
+
+  is_loading = gig_tab_is_loading (tab);
+  can_reload = gig_tab_can_reload (tab);
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_reload);
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.reload", can_reload);
+
+  gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button), is_loading ? "process-stop-symbolic" : "view-refresh-symbolic");
 }
 
 static gboolean
@@ -448,8 +435,8 @@ gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
 
   if (tab)
     {
+      is_loading = gig_tab_is_loading (tab);
       web_view = gig_tab_get_web_view (tab);
-      is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view));
     }
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button), is_loading ? "process-stop-symbolic" : "view-refresh-symbolic");
@@ -460,6 +447,7 @@ gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
   gig_window_update_tab_actions (self);
 
   g_signal_group_set_target (self->web_view_signals, web_view);
+  g_signal_group_set_target (self->tab_signals, tab);
 
   if (tab && !gtk_widget_grab_focus (GTK_WIDGET (tab)))
     gtk_widget_grab_focus (GTK_WIDGET (self->address_bar));
@@ -806,6 +794,7 @@ gig_window_dispose (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_signal_group_set_target (self->web_view_signals, NULL);
+  g_signal_group_set_target (self->tab_signals, NULL);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_WINDOW);
 
@@ -820,6 +809,7 @@ gig_window_finalize (GObject *object)
   g_assert (GIG_IS_WINDOW (self));
 
   g_clear_object (&self->web_view_signals);
+  g_clear_object (&self->tab_signals);
 
   G_OBJECT_CLASS (gig_window_parent_class)->finalize (object);
 }
@@ -954,12 +944,6 @@ gig_window_init (GigWindow *self)
                                  G_CONNECT_SWAPPED);
 
   g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::is-loading",
-                                 G_CALLBACK (gig_window_notify_web_view_is_loading_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
                                  "notify::can-go-back",
                                  G_CALLBACK (gig_window_notify_web_view_can_go_back_cb),
                                  self,
@@ -968,6 +952,14 @@ gig_window_init (GigWindow *self)
   g_signal_group_connect_object (self->web_view_signals,
                                  "notify::can-go-forward",
                                  G_CALLBACK (gig_window_notify_web_view_can_go_forward_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  self->tab_signals = g_signal_group_new (GIG_TYPE_TAB);
+
+  g_signal_group_connect_object (self->tab_signals,
+                                 "notify::can-reload",
+                                 G_CALLBACK (gig_window_notify_tab_can_reload_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 }

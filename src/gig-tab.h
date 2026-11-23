@@ -20,6 +20,8 @@ GdkTexture *gig_tab_get_icon (GigTab *self);
 
 gboolean gig_tab_is_loading (GigTab *self);
 
+gboolean gig_tab_can_reload (GigTab *self);
+
 void gig_tab_reveal_find_bar (GigTab *self);
 
 void gig_tab_dismiss_find_bar (GigTab *self);
