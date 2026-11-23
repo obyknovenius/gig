@@ -22,6 +22,10 @@ gboolean gig_tab_is_loading (GigTab *self);
 
 gboolean gig_tab_can_reload (GigTab *self);
 
+gboolean gig_tab_can_go_back (GigTab *self);
+
+gboolean gig_tab_can_go_forward (GigTab *self);
+
 void gig_tab_reveal_find_bar (GigTab *self);
 
 void gig_tab_dismiss_find_bar (GigTab *self);

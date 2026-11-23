@@ -28,6 +28,8 @@ enum
   PROP_ICON,
   PROP_IS_LOADING,
   PROP_CAN_RELOAD,
+  PROP_CAN_GO_BACK,
+  PROP_CAN_GO_FORWARD,
   N_PROPS
 };
 
@@ -123,9 +125,23 @@ gig_tab_web_view_mouse_target_changed_cb (GigTab *self,
 }
 
 static void
+gig_tab_back_forward_list_changed_cb (GigTab *self,
+                                      WebKitBackForwardListItem *item_added,
+                                      gpointer items_removed,
+                                      WebKitBackForwardList *back_forward_list)
+{
+  g_assert (GIG_IS_TAB (self));
+  g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_BACK]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_FORWARD]);
+}
+
+static void
 gig_tab_constructed (GObject *object)
 {
   GigTab *self = (GigTab *) object;
+  WebKitBackForwardList *back_forward_list;
 
   g_assert (GIG_IS_TAB (self));
 
@@ -190,6 +206,14 @@ gig_tab_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "mouse-target-changed",
                            G_CALLBACK (gig_tab_web_view_mouse_target_changed_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  back_forward_list = webkit_web_view_get_back_forward_list (WEBKIT_WEB_VIEW (self->web_view));
+
+  g_signal_connect_object (back_forward_list,
+                           "changed",
+                           G_CALLBACK (gig_tab_back_forward_list_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
@@ -265,6 +289,14 @@ gig_tab_get_property (GObject *object,
       g_value_set_boolean (value, gig_tab_can_reload (self));
       break;
 
+    case PROP_CAN_GO_BACK:
+      g_value_set_boolean (value, gig_tab_can_go_back (self));
+      break;
+
+    case PROP_CAN_GO_FORWARD:
+      g_value_set_boolean (value, gig_tab_can_go_forward (self));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -320,6 +352,18 @@ gig_tab_class_init (GigTabClass *klass)
 
   properties[PROP_CAN_RELOAD] =
       g_param_spec_boolean ("can-reload",
+                            NULL, NULL,
+                            FALSE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_CAN_GO_BACK] =
+      g_param_spec_boolean ("can-go-back",
+                            NULL, NULL,
+                            FALSE,
+                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_CAN_GO_FORWARD] =
+      g_param_spec_boolean ("can-go-forward",
                             NULL, NULL,
                             FALSE,
                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
@@ -435,6 +479,22 @@ gig_tab_can_reload (GigTab *self)
   is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
 
   return !is_empty || is_loading;
+}
+
+gboolean
+gig_tab_can_go_back (GigTab *self)
+{
+  g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+
+  return webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+gboolean
+gig_tab_can_go_forward (GigTab *self)
+{
+  g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+
+  return webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (self->web_view));
 }
 
 void

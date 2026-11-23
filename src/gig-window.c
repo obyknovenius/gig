@@ -116,12 +116,10 @@ gig_window_update_actions (GigWindow *self)
     {
       GigWebView *web_view = gig_tab_get_web_view (tab);
 
-      gboolean is_empty = gig_web_view_is_empty (web_view);
-
       can_reload = gig_tab_can_reload (tab);
-      can_go_back = webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view));
-      can_go_forward = webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view));
-      can_find = !is_empty;
+      can_go_back = gig_tab_can_go_back (tab);
+      can_go_forward = gig_tab_can_go_forward (tab);
+      can_find = !gig_web_view_is_empty (web_view);
     }
 
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.stop-reload", can_reload);
@@ -324,28 +322,6 @@ gig_window_notify_web_view_is_empty_cb (GigWindow *self,
 }
 
 static void
-gig_window_notify_web_view_can_go_back_cb (GigWindow *self,
-                                           GParamSpec *pspec,
-                                           GigWebView *web_view)
-{
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view)));
-}
-
-static void
-gig_window_notify_web_view_can_go_forward_cb (GigWindow *self,
-                                              GParamSpec *pspec,
-                                              GigWebView *web_view)
-{
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)));
-}
-
-static void
 gig_window_notify_tab_can_reload_cb (GigWindow *self,
                                      GParamSpec *pspec,
                                      GigTab *tab)
@@ -363,6 +339,28 @@ gig_window_notify_tab_can_reload_cb (GigWindow *self,
   gtk_widget_action_set_enabled (GTK_WIDGET (self), "tab.reload", can_reload);
 
   gtk_button_set_icon_name (GTK_BUTTON (self->stop_reload_button), is_loading ? "process-stop-symbolic" : "view-refresh-symbolic");
+}
+
+static void
+gig_window_notify_tab_can_go_back_cb (GigWindow *self,
+                                      GParamSpec *pspec,
+                                      GigTab *tab)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (tab));
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-back", gig_tab_can_go_back (tab));
+}
+
+static void
+gig_window_notify_tab_can_go_forward_cb (GigWindow *self,
+                                         GParamSpec *pspec,
+                                         GigTab *tab)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (tab));
+
+  gtk_widget_action_set_enabled (GTK_WIDGET (self), "win.go-forward", gig_tab_can_go_forward (tab));
 }
 
 static gboolean
@@ -461,7 +459,6 @@ gig_window_click_pressed_cb (GigWindow *self,
                              GtkGestureClick *click)
 {
   GigTab *tab;
-  GigWebView *web_view;
   guint button;
   const gchar *action_name = NULL;
 
@@ -471,14 +468,11 @@ gig_window_click_pressed_cb (GigWindow *self,
   tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (tab));
 
-  web_view = gig_tab_get_web_view (tab);
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
   button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (click));
 
-  if (button == 8 && webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (web_view)))
+  if (button == 8 && gig_tab_can_go_back (tab))
     action_name = "win.go-back";
-  else if (button == 9 && webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (web_view)))
+  else if (button == 9 && gig_tab_can_go_forward (tab))
     action_name = "win.go-forward";
 
   if (action_name)
@@ -943,23 +937,23 @@ gig_window_init (GigWindow *self)
                                  self,
                                  G_CONNECT_SWAPPED);
 
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::can-go-back",
-                                 G_CALLBACK (gig_window_notify_web_view_can_go_back_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "notify::can-go-forward",
-                                 G_CALLBACK (gig_window_notify_web_view_can_go_forward_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
   self->tab_signals = g_signal_group_new (GIG_TYPE_TAB);
 
   g_signal_group_connect_object (self->tab_signals,
                                  "notify::can-reload",
                                  G_CALLBACK (gig_window_notify_tab_can_reload_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->tab_signals,
+                                 "notify::can-go-back",
+                                 G_CALLBACK (gig_window_notify_tab_can_go_back_cb),
+                                 self,
+                                 G_CONNECT_SWAPPED);
+
+  g_signal_group_connect_object (self->tab_signals,
+                                 "notify::can-go-forward",
+                                 G_CALLBACK (gig_window_notify_tab_can_go_forward_cb),
                                  self,
                                  G_CONNECT_SWAPPED);
 }

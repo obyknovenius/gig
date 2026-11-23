@@ -38,8 +38,6 @@ enum
   PROP_IS_EMPTY,
   PROP_PENDING_URI,
   PROP_DISPLAY_URI,
-  PROP_CAN_GO_BACK,
-  PROP_CAN_GO_FORWARD,
   PROP_CONNECTION_SECURITY_LEVEL,
   N_PROPS
 };
@@ -328,24 +326,10 @@ gig_web_view_notify_web_view_title_cb (GigWebView *self,
 }
 
 static void
-gig_web_view_back_forward_list_changed_cb (GigWebView *self,
-                                           WebKitBackForwardListItem *item_added,
-                                           gpointer items_removed,
-                                           WebKitBackForwardList *back_forward_list)
-{
-  g_assert (GIG_IS_WEB_VIEW (self));
-  g_assert (WEBKIT_IS_BACK_FORWARD_LIST (back_forward_list));
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_BACK]);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_FORWARD]);
-}
-
-static void
 gig_web_view_constructed (GObject *object)
 {
   GigWebView *self = (GigWebView *) object;
   WebKitWebView *web_view = WEBKIT_WEB_VIEW (self);
-  WebKitBackForwardList *back_forward_list = NULL;
 
   g_assert (GIG_IS_WEB_VIEW (self));
 
@@ -372,14 +356,6 @@ gig_web_view_constructed (GObject *object)
   g_signal_connect_object (web_view,
                            "notify::title",
                            G_CALLBACK (gig_web_view_notify_web_view_title_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  back_forward_list = webkit_web_view_get_back_forward_list (web_view);
-
-  g_signal_connect_object (back_forward_list,
-                           "changed",
-                           G_CALLBACK (gig_web_view_back_forward_list_changed_cb),
                            self,
                            G_CONNECT_SWAPPED);
 }
@@ -426,7 +402,6 @@ gig_web_view_get_property (GObject *object,
                            GParamSpec *pspec)
 {
   GigWebView *self = (GigWebView *) object;
-  WebKitWebView *web_view = WEBKIT_WEB_VIEW (self);
 
   g_assert (GIG_IS_WEB_VIEW (self));
 
@@ -438,14 +413,6 @@ gig_web_view_get_property (GObject *object,
 
     case PROP_DISPLAY_URI:
       g_value_set_string (value, gig_web_view_get_display_uri (self));
-      break;
-
-    case PROP_CAN_GO_BACK:
-      g_value_set_boolean (value, webkit_web_view_can_go_back (web_view));
-      break;
-
-    case PROP_CAN_GO_FORWARD:
-      g_value_set_boolean (value, webkit_web_view_can_go_forward (web_view));
       break;
 
     case PROP_CONNECTION_SECURITY_LEVEL:
@@ -502,18 +469,6 @@ gig_web_view_class_init (GigWebViewClass *klass)
                            NULL, NULL,
                            NULL,
                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
-
-  properties[PROP_CAN_GO_BACK] =
-      g_param_spec_boolean ("can-go-back",
-                            NULL, NULL,
-                            FALSE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
-
-  properties[PROP_CAN_GO_FORWARD] =
-      g_param_spec_boolean ("can-go-forward",
-                            NULL, NULL,
-                            FALSE,
-                            G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_CONNECTION_SECURITY_LEVEL] =
       g_param_spec_enum ("connection-security-level",
