@@ -546,17 +546,13 @@ gig_window_go_back_action (GtkWidget *widget,
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
-  GigWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
 
   tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (tab));
 
-  web_view = gig_tab_get_web_view (tab);
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  webkit_web_view_go_back (WEBKIT_WEB_VIEW (web_view));
+  gig_tab_go_back (tab);
 }
 
 static void
@@ -566,17 +562,13 @@ gig_window_go_forward_action (GtkWidget *widget,
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
-  GigWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
 
   tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (tab));
 
-  web_view = gig_tab_get_web_view (tab);
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  webkit_web_view_go_forward (WEBKIT_WEB_VIEW (web_view));
+  gig_tab_go_forward (tab);
 }
 
 static void

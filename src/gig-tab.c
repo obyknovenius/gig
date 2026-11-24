@@ -558,6 +558,24 @@ gig_tab_stop_loading (GigTab *self)
 }
 
 void
+gig_tab_go_back (GigTab *self)
+{
+  g_return_if_fail (GIG_IS_TAB (self));
+  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
+
+  webkit_web_view_go_back (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+void
+gig_tab_go_forward (GigTab *self)
+{
+  g_return_if_fail (GIG_IS_TAB (self));
+  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
+
+  webkit_web_view_go_forward (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+void
 gig_tab_reveal_find_bar (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
