@@ -31,6 +31,24 @@ static const GActionEntry actions[] = {
 
 G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
 
+GType
+gig_connection_security_level_get_type (void)
+{
+  static GType type_id = 0;
+
+  static const GEnumValue values[] = {
+    { GIG_CONNECTION_SECURITY_LEVEL_TBD, "GIG_CONNECTION_SECURITY_LEVEL_TBD", "tbd" },
+    { GIG_CONNECTION_SECURITY_LEVEL_INSECURE, "GIG_CONNECTION_SECURITY_LEVEL_INSECURE", "insecure" },
+    { GIG_CONNECTION_SECURITY_LEVEL_SECURE, "GIG_CONNECTION_SECURITY_LEVEL_SECURE", "secure" },
+    { 0 }
+  };
+
+  if (G_UNLIKELY (!type_id))
+    type_id = g_enum_register_static ("GigConnectionSecurityLevel", values);
+
+  return type_id;
+}
+
 enum
 {
   PROP_0,
@@ -422,24 +440,6 @@ gig_web_view_get_property (GObject *object,
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
-}
-
-GType
-gig_connection_security_level_get_type (void)
-{
-  static GType type_id = 0;
-
-  static const GEnumValue values[] = {
-    { GIG_CONNECTION_SECURITY_LEVEL_TBD, "GIG_CONNECTION_SECURITY_LEVEL_TBD", "tbd" },
-    { GIG_CONNECTION_SECURITY_LEVEL_INSECURE, "GIG_CONNECTION_SECURITY_LEVEL_INSECURE", "insecure" },
-    { GIG_CONNECTION_SECURITY_LEVEL_SECURE, "GIG_CONNECTION_SECURITY_LEVEL_SECURE", "secure" },
-    { 0 }
-  };
-
-  if (G_UNLIKELY (!type_id))
-    type_id = g_enum_register_static ("GigConnectionSecurityLevel", values);
-
-  return type_id;
 }
 
 static void

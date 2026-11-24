@@ -20,7 +20,6 @@ struct _GigWindow
 
   AdwTabPage *menu_page;
 
-  GSignalGroup *web_view_signals;
   GSignalGroup *tab_signals;
 };
 
@@ -240,71 +239,6 @@ gig_window_tab_overview_create_tab_cb (GigWindow *self,
 }
 
 static void
-gig_window_web_view_open_in_new_tab_cb (GigWindow *self,
-                                        const gchar *uri,
-                                        GigWebView *web_view)
-{
-  GigWebView *new_web_view;
-  GigTab *new_tab, *parent_tab;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  new_web_view = gig_web_view_new ();
-  gig_web_view_load_uri (new_web_view, uri);
-
-  new_tab = gig_tab_new_with_web_view (new_web_view);
-  parent_tab = gig_window_get_selected_tab (self);
-  g_assert (GIG_IS_TAB (parent_tab));
-
-  gig_window_add_tab (self, new_tab, parent_tab, FALSE);
-}
-
-static void
-gig_window_web_view_open_in_new_window_cb (GigWindow *self,
-                                           const gchar *uri,
-                                           GigWebView *web_view)
-{
-  GigWindow *new_window;
-  GigWebView *new_web_view;
-  GigTab *new_tab;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  new_web_view = gig_web_view_new ();
-  gig_web_view_load_uri (new_web_view, uri);
-
-  new_tab = gig_tab_new_with_web_view (new_web_view);
-  new_window = gig_window_new_sibling (self);
-
-  gig_window_add_tab (new_window, new_tab, NULL, FALSE);
-  gtk_window_present (GTK_WINDOW (new_window));
-}
-
-static WebKitWebView *
-gig_window_web_view_create_cb (GigWindow *self,
-                               WebKitNavigationAction *navigation_action,
-                               WebKitWebView *web_view)
-{
-  GigWebView *new_web_view;
-  GigTab *new_tab, *parent_tab;
-
-  g_assert (GIG_IS_WINDOW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  new_web_view = gig_web_view_new_for_navigation_action (navigation_action, web_view);
-  new_tab = gig_tab_new_with_web_view (new_web_view);
-
-  parent_tab = gig_window_get_selected_tab (self);
-  g_assert (GIG_IS_TAB (parent_tab));
-
-  gig_window_add_tab (self, new_tab, parent_tab, TRUE);
-
-  return WEBKIT_WEB_VIEW (new_web_view);
-}
-
-static void
 gig_window_notify_tab_is_empty_cb (GigWindow *self,
                                    GParamSpec *pspec,
                                    GigTab *tab)
@@ -403,13 +337,71 @@ gig_window_tab_view_create_window_cb (GigWindow *self,
 }
 
 static void
+gig_window_tab_place_new_tab_cb (GigWindow *self,
+                                 GigTab *new_tab,
+                                 GigTabDisposition disposition,
+                                 GigTab *tab)
+{
+  GigWindow *new_window;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (new_tab));
+  g_assert (GIG_IS_TAB (tab));
+
+  switch (disposition)
+    {
+    case GIG_TAB_DISPOSITION_BACKGROUND:
+      gig_window_add_tab (self, new_tab, tab, FALSE);
+      break;
+
+    case GIG_TAB_DISPOSITION_FOREGROUND:
+      gig_window_add_tab (self, new_tab, tab, TRUE);
+      break;
+
+    case GIG_TAB_DISPOSITION_NEW_WINDOW:
+      new_window = gig_window_new_sibling (self);
+      gig_window_add_tab (new_window, new_tab, NULL, FALSE);
+      gtk_window_present (GTK_WINDOW (new_window));
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
+gig_window_tab_view_page_attached_cb (GigWindow *self,
+                                      AdwTabPage *page,
+                                      gint position,
+                                      AdwTabView *tab_view)
+{
+  GigTab *tab;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (ADW_IS_TAB_VIEW (tab_view));
+
+  tab = GIG_TAB (adw_tab_page_get_child (page));
+
+  g_signal_connect_object (tab,
+                           "place-new-tab",
+                           G_CALLBACK (gig_window_tab_place_new_tab_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+}
+
+static void
 gig_window_tab_view_page_detached_cb (GigWindow *self,
                                       AdwTabPage *page,
                                       gint position,
                                       AdwTabView *tab_view)
 {
+  GigTab *tab;
+
   g_assert (GIG_IS_WINDOW (self));
   g_assert (ADW_IS_TAB_VIEW (tab_view));
+
+  tab = GIG_TAB (adw_tab_page_get_child (page));
+  g_signal_handlers_disconnect_by_func (tab, gig_window_tab_place_new_tab_cb, self);
 
   if (adw_tab_view_get_n_pages (tab_view) == 0)
     gtk_window_close (GTK_WINDOW (self));
@@ -442,7 +434,6 @@ gig_window_notify_tab_view_selected_page_cb (GigWindow *self,
   gig_window_update_actions (self);
   gig_window_update_tab_actions (self);
 
-  g_signal_group_set_target (self->web_view_signals, web_view);
   g_signal_group_set_target (self->tab_signals, tab);
 
   if (tab && !gtk_widget_grab_focus (GTK_WIDGET (tab)))
@@ -771,7 +762,6 @@ gig_window_dispose (GObject *object)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  g_signal_group_set_target (self->web_view_signals, NULL);
   g_signal_group_set_target (self->tab_signals, NULL);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_WINDOW);
@@ -786,7 +776,6 @@ gig_window_finalize (GObject *object)
 
   g_assert (GIG_IS_WINDOW (self));
 
-  g_clear_object (&self->web_view_signals);
   g_clear_object (&self->tab_signals);
 
   G_OBJECT_CLASS (gig_window_parent_class)->finalize (object);
@@ -842,6 +831,7 @@ gig_window_class_init (GigWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_close_page_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_setup_menu_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_create_window_cb);
+  gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_page_attached_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_tab_view_page_detached_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_notify_tab_view_selected_page_cb);
   gtk_widget_class_bind_template_callback (widget_class, gig_window_click_pressed_cb);
@@ -894,26 +884,6 @@ gig_window_init (GigWindow *self)
                                  gig_application_get_history_service (GIG_APPLICATION_DEFAULT) != NULL);
 
   gig_window_update_actions (self);
-
-  self->web_view_signals = g_signal_group_new (GIG_TYPE_WEB_VIEW);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "open-in-new-tab",
-                                 G_CALLBACK (gig_window_web_view_open_in_new_tab_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "open-in-new-window",
-                                 G_CALLBACK (gig_window_web_view_open_in_new_window_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
-
-  g_signal_group_connect_object (self->web_view_signals,
-                                 "create",
-                                 G_CALLBACK (gig_window_web_view_create_cb),
-                                 self,
-                                 G_CONNECT_SWAPPED);
 
   self->tab_signals = g_signal_group_new (GIG_TYPE_TAB);
 

@@ -74,6 +74,7 @@ template $GigWindow: Adw.ApplicationWindow {
                 close-page => $gig_window_tab_view_close_page_cb() swapped;
                 setup-menu => $gig_window_tab_view_setup_menu_cb() swapped;
                 create-window => $gig_window_tab_view_create_window_cb() swapped;
+                page-attached => $gig_window_tab_view_page_attached_cb() swapped;
                 page-detached => $gig_window_tab_view_page_detached_cb() swapped;
                 notify::selected-page => $gig_window_notify_tab_view_selected_page_cb() swapped;
             }

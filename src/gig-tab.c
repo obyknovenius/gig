@@ -22,6 +22,24 @@ struct _GigTab
 
 G_DEFINE_FINAL_TYPE (GigTab, gig_tab, GTK_TYPE_WIDGET)
 
+GType
+gig_tab_disposition_get_type (void)
+{
+  static GType type_id = 0;
+
+  static const GEnumValue values[] = {
+    { GIG_TAB_DISPOSITION_BACKGROUND, "GIG_TAB_DISPOSITION_BACKGROUND", "background" },
+    { GIG_TAB_DISPOSITION_FOREGROUND, "GIG_TAB_DISPOSITION_FOREGROUND", "foreground" },
+    { GIG_TAB_DISPOSITION_NEW_WINDOW, "GIG_TAB_DISPOSITION_NEW_WINDOW", "new-window" },
+    { 0 }
+  };
+
+  if (G_UNLIKELY (!type_id))
+    type_id = g_enum_register_static ("GigTabDisposition", values);
+
+  return type_id;
+}
+
 enum
 {
   PROP_0,
@@ -36,7 +54,14 @@ enum
   N_PROPS
 };
 
+enum
+{
+  PLACE_NEW_TAB,
+  N_SIGNALS
+};
+
 static GParamSpec *properties[N_PROPS];
+static guint signals[N_SIGNALS];
 
 static void
 gig_tab_set_web_view (GigTab *self,
@@ -159,6 +184,68 @@ gig_tab_web_view_mouse_target_changed_cb (GigTab *self,
                              webkit_hit_test_result_get_link_uri (hit_test_result));
 }
 
+static WebKitWebView *
+gig_tab_web_view_create_cb (GigTab *self,
+                            WebKitNavigationAction *navigation_action,
+                            WebKitWebView *web_view)
+{
+  GigWebView *new_web_view;
+  GigTab *new_tab;
+
+  g_assert (GIG_IS_TAB (self));
+
+  new_web_view = gig_web_view_new_for_navigation_action (navigation_action, web_view);
+  new_tab = gig_tab_new_with_web_view (new_web_view);
+
+  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_FOREGROUND);
+
+  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+
+  return WEBKIT_WEB_VIEW (new_web_view);
+}
+
+static void
+gig_tab_web_view_open_in_new_tab_cb (GigTab *self,
+                                     const gchar *uri,
+                                     GigWebView *web_view)
+{
+  GigWebView *new_web_view;
+  GigTab *new_tab;
+
+  g_assert (GIG_IS_TAB (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
+
+  new_web_view = gig_web_view_new ();
+  new_tab = gig_tab_new_with_web_view (new_web_view);
+
+  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_BACKGROUND);
+
+  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+
+  gig_web_view_load_uri (new_web_view, uri);
+}
+
+static void
+gig_tab_web_view_open_in_new_window_cb (GigTab *self,
+                                        const gchar *uri,
+                                        GigWebView *web_view)
+{
+  GigWebView *new_web_view;
+  GigTab *new_tab;
+
+  g_assert (GIG_IS_TAB (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
+
+  new_web_view = gig_web_view_new ();
+  new_tab = gig_tab_new_with_web_view (new_web_view);
+
+  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_NEW_WINDOW);
+
+  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+
+  gig_web_view_load_uri (new_web_view, uri);
+}
+
 static void
 gig_tab_back_forward_list_changed_cb (GigTab *self,
                                       WebKitBackForwardListItem *item_added,
@@ -241,6 +328,24 @@ gig_tab_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "mouse-target-changed",
                            G_CALLBACK (gig_tab_web_view_mouse_target_changed_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "create",
+                           G_CALLBACK (gig_tab_web_view_create_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "open-in-new-tab",
+                           G_CALLBACK (gig_tab_web_view_open_in_new_tab_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "open-in-new-window",
+                           G_CALLBACK (gig_tab_web_view_open_in_new_window_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -417,6 +522,18 @@ gig_tab_class_init (GigTabClass *klass)
                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  signals[PLACE_NEW_TAB] =
+      g_signal_new ("place-new-tab",
+                    G_TYPE_FROM_CLASS (object_class),
+                    G_SIGNAL_RUN_LAST,
+                    0,
+                    NULL, NULL,
+                    NULL,
+                    G_TYPE_NONE,
+                    2,
+                    GIG_TYPE_TAB,
+                    GIG_TYPE_TAB_DISPOSITION);
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-tab.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
