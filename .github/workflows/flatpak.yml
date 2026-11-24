@@ -17,15 +17,25 @@ jobs:
       options: --privileged
     steps:
       - uses: actions/checkout@v7
+      - name: Import GPG signing key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.FLATPAK_GPG_PRIVATE_KEY }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          key=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ { print $10; exit }')
+          test -n "$key" || { echo "No secret key imported" >&2; exit 1; }
+          echo "GPG_KEY_ID=$key" >> "$GITHUB_ENV"
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           manifest-path: ${{ env.MANIFEST }}
           bundle: ${{ env.BUNDLE }}
           artifact-name: ${{ env.BUNDLE }}
           repo-dir: repo
+          gpg-sign: ${{ env.GPG_KEY_ID }}
       - name: Prepare Flatpak repository
         run: |
           flatpak build-update-repo --generate-static-deltas --prune \
+            --gpg-sign="$GPG_KEY_ID" \
             --title=Gig --default-branch=master repo
           mkdir site
           mv repo site/repo
