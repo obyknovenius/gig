@@ -524,22 +524,18 @@ gig_window_stop_reload_action (GtkWidget *widget,
 {
   GigWindow *self = (GigWindow *) widget;
   GigTab *tab;
-  GigWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
 
   tab = gig_window_get_selected_tab (self);
   g_assert (GIG_IS_TAB (tab));
 
-  web_view = gig_tab_get_web_view (tab);
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  if (webkit_web_view_is_loading (WEBKIT_WEB_VIEW (web_view)))
-    webkit_web_view_stop_loading (WEBKIT_WEB_VIEW (web_view));
+  if (gig_tab_is_loading (tab))
+    gig_tab_stop_loading (tab);
   else
     {
       gig_address_bar_reset (self->address_bar);
-      webkit_web_view_reload (WEBKIT_WEB_VIEW (web_view));
+      gig_tab_reload (tab);
     }
 }
 
@@ -764,7 +760,6 @@ gig_window_reload_tab_action (GtkWidget *widget,
   GigWindow *self = (GigWindow *) widget;
   AdwTabPage *page;
   GigTab *tab;
-  GigWebView *web_view;
 
   g_assert (GIG_IS_WINDOW (self));
 
@@ -772,10 +767,9 @@ gig_window_reload_tab_action (GtkWidget *widget,
   g_assert (ADW_IS_TAB_PAGE (page));
 
   tab = GIG_TAB (adw_tab_page_get_child (page));
-  web_view = gig_tab_get_web_view (tab);
 
   gig_address_bar_reset (self->address_bar);
-  webkit_web_view_reload (WEBKIT_WEB_VIEW (web_view));
+  gig_tab_reload (tab);
 }
 
 static void

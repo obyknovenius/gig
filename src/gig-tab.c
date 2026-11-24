@@ -47,10 +47,8 @@ gig_tab_set_web_view (GigTab *self,
   g_assert (GIG_IS_TAB (self));
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
 
-  if (self->web_view == web_view)
+  if (!g_set_object (&self->web_view, web_view))
     return;
-
-  self->web_view = web_view;
 
   find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (web_view));
   self->find_bar = gig_find_bar_new (find_controller);
@@ -270,6 +268,9 @@ gig_tab_dispose (GObject *object)
 
   gtk_widget_dispose_template (GTK_WIDGET (self), GIG_TYPE_TAB);
 
+  g_clear_object (&self->web_view);
+  self->find_bar = NULL;
+
   G_OBJECT_CLASS (gig_tab_parent_class)->dispose (object);
 }
 
@@ -468,6 +469,7 @@ gig_tab_get_title (GigTab *self)
   const gchar *title = NULL;
 
   g_return_val_if_fail (GIG_IS_TAB (self), NULL);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   title = webkit_web_view_get_title (WEBKIT_WEB_VIEW (self->web_view));
   if (title && title[0] != '\0')
@@ -484,6 +486,7 @@ GdkTexture *
 gig_tab_get_icon (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), NULL);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_get_favicon (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -500,6 +503,7 @@ gboolean
 gig_tab_is_loading (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -510,6 +514,7 @@ gig_tab_can_reload (GigTab *self)
   gboolean is_loading;
 
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
 
@@ -520,6 +525,7 @@ gboolean
 gig_tab_can_go_back (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -528,8 +534,27 @@ gboolean
 gig_tab_can_go_forward (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
+  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+void
+gig_tab_reload (GigTab *self)
+{
+  g_return_if_fail (GIG_IS_TAB (self));
+  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
+
+  webkit_web_view_reload (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+void
+gig_tab_stop_loading (GigTab *self)
+{
+  g_return_if_fail (GIG_IS_TAB (self));
+  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
+
+  webkit_web_view_stop_loading (WEBKIT_WEB_VIEW (self->web_view));
 }
 
 void
