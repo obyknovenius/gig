@@ -553,7 +553,7 @@ gig_web_view_new_for_navigation_action (WebKitNavigationAction *navigation_actio
 }
 
 GigWebView *
-gig_web_view_copy (GigWebView *self)
+gig_web_view_duplicate (GigWebView *self)
 {
   GigWebView *new_view;
   WebKitWebViewSessionState *session_state;

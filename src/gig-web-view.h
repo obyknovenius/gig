@@ -25,7 +25,7 @@ GigWebView *gig_web_view_new (void);
 GigWebView *gig_web_view_new_for_navigation_action (WebKitNavigationAction *navigation_action,
                                                     WebKitWebView *related_view);
 
-GigWebView *gig_web_view_copy (GigWebView *web_view);
+GigWebView *gig_web_view_duplicate (GigWebView *web_view);
 
 const gchar *gig_web_view_get_display_uri (GigWebView *web_view);
 

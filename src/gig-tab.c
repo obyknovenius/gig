@@ -572,6 +572,17 @@ gig_tab_new_with_web_view (GigWebView *web_view)
                        NULL);
 }
 
+GigTab *
+gig_tab_duplicate (GigTab *self)
+{
+  GigWebView *new_web_view;
+
+  g_return_val_if_fail (GIG_IS_TAB (self), NULL);
+
+  new_web_view = gig_web_view_duplicate (self->web_view);
+  return gig_tab_new_with_web_view (new_web_view);
+}
+
 GigWebView *
 gig_tab_get_web_view (GigTab *self)
 {

@@ -687,7 +687,6 @@ gig_window_duplicate_tab_action (GtkWidget *widget,
   GigWindow *self = (GigWindow *) widget;
   AdwTabPage *page;
   GigTab *tab, *new_tab;
-  GigWebView *web_view, *new_view;
   gint position;
 
   g_assert (GIG_IS_WINDOW (self));
@@ -696,10 +695,7 @@ gig_window_duplicate_tab_action (GtkWidget *widget,
   g_assert (ADW_IS_TAB_PAGE (page));
 
   tab = GIG_TAB (adw_tab_page_get_child (page));
-  web_view = gig_tab_get_web_view (tab);
-
-  new_view = gig_web_view_copy (web_view);
-  new_tab = gig_tab_new_with_web_view (new_view);
+  new_tab = gig_tab_duplicate (tab);
 
   position = adw_tab_view_get_page_position (self->tab_view, page) + 1;
   gig_window_insert_tab (self, new_tab, position, TRUE);
