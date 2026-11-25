@@ -20,8 +20,6 @@ GType gig_tab_disposition_get_type (void) G_GNUC_CONST;
 
 GigTab *gig_tab_new (void);
 
-GigTab *gig_tab_new_with_web_view (GigWebView *web_view);
-
 GigTab *gig_tab_duplicate (GigTab *self);
 
 GigWebView *gig_tab_get_web_view (GigTab *self);
@@ -39,6 +37,8 @@ gboolean gig_tab_can_reload (GigTab *self);
 gboolean gig_tab_can_go_back (GigTab *self);
 
 gboolean gig_tab_can_go_forward (GigTab *self);
+
+void gig_tab_load_uri (GigTab *self, const gchar *uri);
 
 void gig_tab_reload (GigTab *self);
 

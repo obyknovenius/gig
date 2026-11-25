@@ -63,6 +63,14 @@ enum
 static GParamSpec *properties[N_PROPS];
 static guint signals[N_SIGNALS];
 
+static GigTab *
+gig_tab_new_with_web_view (GigWebView *web_view)
+{
+  return g_object_new (GIG_TYPE_TAB,
+                       "web-view", web_view,
+                       NULL);
+}
+
 static void
 gig_tab_set_web_view (GigTab *self,
                       GigWebView *web_view)
@@ -209,20 +217,18 @@ gig_tab_web_view_open_in_new_tab_cb (GigTab *self,
                                      const gchar *uri,
                                      GigWebView *web_view)
 {
-  GigWebView *new_web_view;
   GigTab *new_tab;
 
   g_assert (GIG_IS_TAB (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  new_web_view = gig_web_view_new ();
-  new_tab = gig_tab_new_with_web_view (new_web_view);
+  new_tab = gig_tab_new_with_web_view (gig_web_view_new ());
 
   g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_BACKGROUND);
 
   g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
 
-  gig_web_view_load_uri (new_web_view, uri);
+  gig_tab_load_uri (new_tab, uri);
 }
 
 static void
@@ -230,20 +236,18 @@ gig_tab_web_view_open_in_new_window_cb (GigTab *self,
                                         const gchar *uri,
                                         GigWebView *web_view)
 {
-  GigWebView *new_web_view;
   GigTab *new_tab;
 
   g_assert (GIG_IS_TAB (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  new_web_view = gig_web_view_new ();
-  new_tab = gig_tab_new_with_web_view (new_web_view);
+  new_tab = gig_tab_new_with_web_view (gig_web_view_new ());
 
   g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_NEW_WINDOW);
 
   g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
 
-  gig_web_view_load_uri (new_web_view, uri);
+  gig_tab_load_uri (new_tab, uri);
 }
 
 static void
@@ -557,30 +561,15 @@ gig_tab_init (GigTab *self)
 GigTab *
 gig_tab_new (void)
 {
-  GigWebView *web_view = gig_web_view_new ();
-
-  return g_object_new (GIG_TYPE_TAB,
-                       "web-view", web_view,
-                       NULL);
-}
-
-GigTab *
-gig_tab_new_with_web_view (GigWebView *web_view)
-{
-  return g_object_new (GIG_TYPE_TAB,
-                       "web-view", web_view,
-                       NULL);
+  return gig_tab_new_with_web_view (gig_web_view_new ());
 }
 
 GigTab *
 gig_tab_duplicate (GigTab *self)
 {
-  GigWebView *new_web_view;
-
   g_return_val_if_fail (GIG_IS_TAB (self), NULL);
 
-  new_web_view = gig_web_view_duplicate (self->web_view);
-  return gig_tab_new_with_web_view (new_web_view);
+  return gig_tab_new_with_web_view (gig_web_view_duplicate (self->web_view));
 }
 
 GigWebView *
@@ -597,7 +586,6 @@ gig_tab_get_title (GigTab *self)
   const gchar *title = NULL;
 
   g_return_val_if_fail (GIG_IS_TAB (self), NULL);
-  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   title = webkit_web_view_get_title (WEBKIT_WEB_VIEW (self->web_view));
   if (title && title[0] != '\0')
@@ -614,7 +602,6 @@ GdkTexture *
 gig_tab_get_icon (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), NULL);
-  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_get_favicon (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -631,9 +618,18 @@ gboolean
 gig_tab_is_loading (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
-  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
+}
+
+void
+gig_tab_load_uri (GigTab *self,
+                  const gchar *uri)
+{
+  g_return_if_fail (GIG_IS_TAB (self));
+  g_return_if_fail (uri != NULL);
+
+  gig_web_view_load_uri (self->web_view, uri);
 }
 
 gboolean
@@ -642,7 +638,6 @@ gig_tab_can_reload (GigTab *self)
   gboolean is_loading;
 
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
-  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   is_loading = webkit_web_view_is_loading (WEBKIT_WEB_VIEW (self->web_view));
 
@@ -653,7 +648,6 @@ gboolean
 gig_tab_can_go_back (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
-  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_can_go_back (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -662,7 +656,6 @@ gboolean
 gig_tab_can_go_forward (GigTab *self)
 {
   g_return_val_if_fail (GIG_IS_TAB (self), FALSE);
-  g_return_val_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view), FALSE);
 
   return webkit_web_view_can_go_forward (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -671,7 +664,6 @@ void
 gig_tab_reload (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
-  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
 
   webkit_web_view_reload (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -680,7 +672,6 @@ void
 gig_tab_stop_loading (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
-  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
 
   webkit_web_view_stop_loading (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -689,7 +680,6 @@ void
 gig_tab_go_back (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
-  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
 
   webkit_web_view_go_back (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -698,7 +688,6 @@ void
 gig_tab_go_forward (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
-  g_return_if_fail (WEBKIT_IS_WEB_VIEW (self->web_view));
 
   webkit_web_view_go_forward (WEBKIT_WEB_VIEW (self->web_view));
 }
@@ -707,7 +696,6 @@ void
 gig_tab_reveal_find_bar (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
-  g_return_if_fail (GIG_IS_FIND_BAR (self->find_bar));
 
   adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, TRUE);
 
@@ -720,7 +708,6 @@ void
 gig_tab_dismiss_find_bar (GigTab *self)
 {
   g_return_if_fail (GIG_IS_TAB (self));
-  g_return_if_fail (GIG_IS_FIND_BAR (self->find_bar));
 
   adw_toolbar_view_set_reveal_bottom_bars (self->toolbar_view, FALSE);
 
