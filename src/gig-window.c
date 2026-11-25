@@ -4,6 +4,7 @@
 
 #include "gig-address-bar-private.h"
 #include "gig-application.h"
+#include "gig-open-disposition.h"
 #include "gig-settings.h"
 #include "gig-tab.h"
 #include "gig-web-view.h"
@@ -337,28 +338,28 @@ gig_window_tab_view_create_window_cb (GigWindow *self,
 }
 
 static void
-gig_window_tab_place_new_tab_cb (GigWindow *self,
-                                 GigTab *new_tab,
-                                 GigTabDisposition disposition,
-                                 GigTab *tab)
+gig_window_place_new_tab (GigWindow *self,
+                          GigTab *new_tab,
+                          GigTab *opener,
+                          GigOpenDisposition disposition)
 {
   GigWindow *new_window;
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_TAB (new_tab));
-  g_assert (GIG_IS_TAB (tab));
+  g_assert (GIG_IS_TAB (opener));
 
   switch (disposition)
     {
-    case GIG_TAB_DISPOSITION_BACKGROUND:
-      gig_window_add_tab (self, new_tab, tab, FALSE);
+    case GIG_OPEN_DISPOSITION_NEW_BACKGROUND_TAB:
+      gig_window_add_tab (self, new_tab, opener, FALSE);
       break;
 
-    case GIG_TAB_DISPOSITION_FOREGROUND:
-      gig_window_add_tab (self, new_tab, tab, TRUE);
+    case GIG_OPEN_DISPOSITION_NEW_FOREGROUND_TAB:
+      gig_window_add_tab (self, new_tab, opener, TRUE);
       break;
 
-    case GIG_TAB_DISPOSITION_NEW_WINDOW:
+    case GIG_OPEN_DISPOSITION_NEW_WINDOW:
       new_window = gig_window_new_sibling (self);
       gig_window_add_tab (new_window, new_tab, NULL, FALSE);
       gtk_window_present (GTK_WINDOW (new_window));
@@ -367,6 +368,37 @@ gig_window_tab_place_new_tab_cb (GigWindow *self,
     default:
       g_assert_not_reached ();
     }
+}
+
+static void
+gig_window_tab_place_new_tab_cb (GigWindow *self,
+                                 GigTab *new_tab,
+                                 GigOpenDisposition disposition,
+                                 GigTab *tab)
+{
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (new_tab));
+  g_assert (GIG_IS_TAB (tab));
+
+  gig_window_place_new_tab (self, new_tab, tab, disposition);
+}
+
+static void
+gig_window_tab_open_uri_cb (GigWindow *self,
+                            const gchar *uri,
+                            GigOpenDisposition disposition,
+                            GigTab *tab)
+{
+  GigTab *new_tab;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (tab));
+
+  new_tab = gig_tab_new ();
+
+  gig_tab_load_uri (new_tab, uri);
+
+  gig_window_place_new_tab (self, new_tab, tab, disposition);
 }
 
 static void
@@ -387,6 +419,12 @@ gig_window_tab_view_page_attached_cb (GigWindow *self,
                            G_CALLBACK (gig_window_tab_place_new_tab_cb),
                            self,
                            G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (tab,
+                           "open-uri",
+                           G_CALLBACK (gig_window_tab_open_uri_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
 }
 
 static void
@@ -401,7 +439,9 @@ gig_window_tab_view_page_detached_cb (GigWindow *self,
   g_assert (ADW_IS_TAB_VIEW (tab_view));
 
   tab = GIG_TAB (adw_tab_page_get_child (page));
+
   g_signal_handlers_disconnect_by_func (tab, gig_window_tab_place_new_tab_cb, self);
+  g_signal_handlers_disconnect_by_func (tab, gig_window_tab_open_uri_cb, self);
 
   if (adw_tab_view_get_n_pages (tab_view) == 0)
     gtk_window_close (GTK_WINDOW (self));

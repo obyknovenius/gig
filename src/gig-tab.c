@@ -4,6 +4,7 @@
 
 #include "gig-find-bar.h"
 #include "gig-floating-bar.h"
+#include "gig-open-disposition.h"
 #include "gig-web-view.h"
 
 struct _GigTab
@@ -22,24 +23,6 @@ struct _GigTab
 
 G_DEFINE_FINAL_TYPE (GigTab, gig_tab, GTK_TYPE_WIDGET)
 
-GType
-gig_tab_disposition_get_type (void)
-{
-  static GType type_id = 0;
-
-  static const GEnumValue values[] = {
-    { GIG_TAB_DISPOSITION_BACKGROUND, "GIG_TAB_DISPOSITION_BACKGROUND", "background" },
-    { GIG_TAB_DISPOSITION_FOREGROUND, "GIG_TAB_DISPOSITION_FOREGROUND", "foreground" },
-    { GIG_TAB_DISPOSITION_NEW_WINDOW, "GIG_TAB_DISPOSITION_NEW_WINDOW", "new-window" },
-    { 0 }
-  };
-
-  if (G_UNLIKELY (!type_id))
-    type_id = g_enum_register_static ("GigTabDisposition", values);
-
-  return type_id;
-}
-
 enum
 {
   PROP_0,
@@ -57,6 +40,7 @@ enum
 enum
 {
   PLACE_NEW_TAB,
+  OPEN_URI,
   N_SIGNALS
 };
 
@@ -206,7 +190,8 @@ gig_tab_web_view_ready_to_show_cb (GigTab *self,
 
   new_tab = gig_tab_new_with_web_view (web_view);
 
-  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_FOREGROUND);
+  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab,
+                 GIG_OPEN_DISPOSITION_NEW_FOREGROUND_TAB);
 
   g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
 }
@@ -236,17 +221,11 @@ gig_tab_web_view_open_in_new_tab_cb (GigTab *self,
                                      const gchar *uri,
                                      GigWebView *web_view)
 {
-  GigTab *new_tab;
-
   g_assert (GIG_IS_TAB (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  new_tab = gig_tab_new_with_web_view (gig_web_view_new ());
-  gig_tab_load_uri (new_tab, uri);
-
-  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_BACKGROUND);
-
-  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+  g_signal_emit (self, signals[OPEN_URI], 0, uri,
+                 GIG_OPEN_DISPOSITION_NEW_BACKGROUND_TAB);
 }
 
 static void
@@ -254,17 +233,11 @@ gig_tab_web_view_open_in_new_window_cb (GigTab *self,
                                         const gchar *uri,
                                         GigWebView *web_view)
 {
-  GigTab *new_tab;
-
   g_assert (GIG_IS_TAB (self));
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
-  new_tab = gig_tab_new_with_web_view (gig_web_view_new ());
-  gig_tab_load_uri (new_tab, uri);
-
-  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_NEW_WINDOW);
-
-  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+  g_signal_emit (self, signals[OPEN_URI], 0, uri,
+                 GIG_OPEN_DISPOSITION_NEW_WINDOW);
 }
 
 static void
@@ -554,7 +527,19 @@ gig_tab_class_init (GigTabClass *klass)
                     G_TYPE_NONE,
                     2,
                     GIG_TYPE_TAB,
-                    GIG_TYPE_TAB_DISPOSITION);
+                    GIG_TYPE_OPEN_DISPOSITION);
+
+  signals[OPEN_URI] =
+      g_signal_new ("open-uri",
+                    G_TYPE_FROM_CLASS (object_class),
+                    G_SIGNAL_RUN_LAST,
+                    0,
+                    NULL, NULL,
+                    NULL,
+                    G_TYPE_NONE,
+                    2,
+                    G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE,
+                    GIG_TYPE_OPEN_DISPOSITION);
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-tab.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);

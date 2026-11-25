@@ -5,18 +5,8 @@
 G_BEGIN_DECLS
 
 #define GIG_TYPE_TAB (gig_tab_get_type ())
-#define GIG_TYPE_TAB_DISPOSITION (gig_tab_disposition_get_type ())
 
 G_DECLARE_FINAL_TYPE (GigTab, gig_tab, GIG, TAB, GtkWidget)
-
-typedef enum _GigTabDisposition
-{
-  GIG_TAB_DISPOSITION_BACKGROUND,
-  GIG_TAB_DISPOSITION_FOREGROUND,
-  GIG_TAB_DISPOSITION_NEW_WINDOW,
-} GigTabDisposition;
-
-GType gig_tab_disposition_get_type (void) G_GNUC_CONST;
 
 GigTab *gig_tab_new (void);
 
