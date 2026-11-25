@@ -554,6 +554,19 @@ gig_tab_new (void)
 }
 
 GigTab *
+gig_tab_new_for_uri (const gchar *uri)
+{
+  GigTab *self;
+
+  g_return_val_if_fail (uri != NULL, NULL);
+
+  self = gig_tab_new ();
+  gig_tab_load_uri (self, uri);
+
+  return self;
+}
+
+GigTab *
 gig_tab_new_with_web_view (GigWebView *web_view)
 {
   g_return_val_if_fail (GIG_IS_WEB_VIEW (web_view), NULL);

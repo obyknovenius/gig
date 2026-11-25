@@ -213,11 +213,10 @@ gig_application_open (GApplication *application,
 
   for (gint i = 0; i < n_files; i++)
     {
-      GigTab *tab = gig_tab_new ();
       g_autofree gchar *uri = g_file_get_uri (files[i]);
+      GigTab *tab = gig_tab_new_for_uri (uri);
       gboolean set_selected = (i == n_files - 1);
 
-      gig_tab_load_uri (tab, uri);
       gig_window_add_tab (window, tab, NULL, set_selected);
     }
 

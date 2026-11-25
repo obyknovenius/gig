@@ -10,6 +10,8 @@ G_DECLARE_FINAL_TYPE (GigTab, gig_tab, GIG, TAB, GtkWidget)
 
 GigTab *gig_tab_new (void);
 
+GigTab *gig_tab_new_for_uri (const gchar *uri);
+
 GigTab *gig_tab_new_with_web_view (GigWebView *web_view);
 
 GigTab *gig_tab_duplicate (GigTab *self);

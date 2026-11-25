@@ -348,10 +348,9 @@ gig_window_tab_open_uri_cb (GigWindow *self,
 
   g_assert (GIG_IS_WINDOW (self));
   g_assert (GIG_IS_TAB (tab));
+  g_return_if_fail (uri != NULL);
 
-  new_tab = gig_tab_new ();
-
-  gig_tab_load_uri (new_tab, uri);
+  new_tab = gig_tab_new_for_uri (uri);
 
   switch (disposition)
     {
