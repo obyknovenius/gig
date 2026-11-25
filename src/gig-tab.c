@@ -39,21 +39,13 @@ enum
 
 enum
 {
-  PLACE_NEW_TAB,
   OPEN_URI,
+  OPEN_WEB_VIEW,
   N_SIGNALS
 };
 
 static GParamSpec *properties[N_PROPS];
 static guint signals[N_SIGNALS];
-
-static GigTab *
-gig_tab_new_with_web_view (GigWebView *web_view)
-{
-  return g_object_new (GIG_TYPE_TAB,
-                       "web-view", web_view,
-                       NULL);
-}
 
 static void
 gig_tab_set_web_view (GigTab *self,
@@ -180,20 +172,16 @@ static void
 gig_tab_web_view_ready_to_show_cb (GigTab *self,
                                    GigWebView *web_view)
 {
-  GigTab *new_tab;
-
   g_assert (GIG_IS_TAB (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
 
   g_signal_handlers_disconnect_by_func (web_view,
                                         gig_tab_web_view_ready_to_show_cb,
                                         self);
 
-  new_tab = gig_tab_new_with_web_view (web_view);
+  g_signal_emit (self, signals[OPEN_WEB_VIEW], 0, web_view);
 
-  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab,
-                 GIG_OPEN_DISPOSITION_NEW_FOREGROUND_TAB);
-
-  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+  g_assert (gtk_widget_get_parent (GTK_WIDGET (web_view)) != NULL);
 }
 
 static WebKitWebView *
@@ -517,18 +505,6 @@ gig_tab_class_init (GigTabClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
-  signals[PLACE_NEW_TAB] =
-      g_signal_new ("place-new-tab",
-                    G_TYPE_FROM_CLASS (object_class),
-                    G_SIGNAL_RUN_LAST,
-                    0,
-                    NULL, NULL,
-                    NULL,
-                    G_TYPE_NONE,
-                    2,
-                    GIG_TYPE_TAB,
-                    GIG_TYPE_OPEN_DISPOSITION);
-
   signals[OPEN_URI] =
       g_signal_new ("open-uri",
                     G_TYPE_FROM_CLASS (object_class),
@@ -540,6 +516,17 @@ gig_tab_class_init (GigTabClass *klass)
                     2,
                     G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE,
                     GIG_TYPE_OPEN_DISPOSITION);
+
+  signals[OPEN_WEB_VIEW] =
+      g_signal_new ("open-web-view",
+                    G_TYPE_FROM_CLASS (object_class),
+                    G_SIGNAL_RUN_LAST,
+                    0,
+                    NULL, NULL,
+                    NULL,
+                    G_TYPE_NONE,
+                    1,
+                    GIG_TYPE_WEB_VIEW);
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/github/obyknovenius/Gig/gig-tab.ui");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
@@ -564,6 +551,16 @@ GigTab *
 gig_tab_new (void)
 {
   return gig_tab_new_with_web_view (gig_web_view_new ());
+}
+
+GigTab *
+gig_tab_new_with_web_view (GigWebView *web_view)
+{
+  g_return_val_if_fail (GIG_IS_WEB_VIEW (web_view), NULL);
+
+  return g_object_new (GIG_TYPE_TAB,
+                       "web-view", web_view,
+                       NULL);
 }
 
 GigTab *
