@@ -223,12 +223,11 @@ gig_tab_web_view_open_in_new_tab_cb (GigTab *self,
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
   new_tab = gig_tab_new_with_web_view (gig_web_view_new ());
+  gig_tab_load_uri (new_tab, uri);
 
   g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_BACKGROUND);
 
   g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
-
-  gig_tab_load_uri (new_tab, uri);
 }
 
 static void
@@ -242,12 +241,11 @@ gig_tab_web_view_open_in_new_window_cb (GigTab *self,
   g_assert (GIG_IS_WEB_VIEW (web_view));
 
   new_tab = gig_tab_new_with_web_view (gig_web_view_new ());
+  gig_tab_load_uri (new_tab, uri);
 
   g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_NEW_WINDOW);
 
   g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
-
-  gig_tab_load_uri (new_tab, uri);
 }
 
 static void
