@@ -192,22 +192,41 @@ gig_tab_web_view_mouse_target_changed_cb (GigTab *self,
                              webkit_hit_test_result_get_link_uri (hit_test_result));
 }
 
+static void
+gig_tab_web_view_ready_to_show_cb (GigTab *self,
+                                   GigWebView *web_view)
+{
+  GigTab *new_tab;
+
+  g_assert (GIG_IS_TAB (self));
+
+  g_signal_handlers_disconnect_by_func (web_view,
+                                        gig_tab_web_view_ready_to_show_cb,
+                                        self);
+
+  new_tab = gig_tab_new_with_web_view (web_view);
+
+  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_FOREGROUND);
+
+  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+}
+
 static WebKitWebView *
 gig_tab_web_view_create_cb (GigTab *self,
                             WebKitNavigationAction *navigation_action,
                             WebKitWebView *web_view)
 {
   GigWebView *new_web_view;
-  GigTab *new_tab;
 
   g_assert (GIG_IS_TAB (self));
 
   new_web_view = gig_web_view_new_for_navigation_action (navigation_action, web_view);
-  new_tab = gig_tab_new_with_web_view (new_web_view);
 
-  g_signal_emit (self, signals[PLACE_NEW_TAB], 0, new_tab, GIG_TAB_DISPOSITION_FOREGROUND);
-
-  g_assert (gtk_widget_get_parent (GTK_WIDGET (new_tab)) != NULL);
+  g_signal_connect_object (new_web_view,
+                           "ready-to-show",
+                           G_CALLBACK (gig_tab_web_view_ready_to_show_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
 
   return WEBKIT_WEB_VIEW (new_web_view);
 }
