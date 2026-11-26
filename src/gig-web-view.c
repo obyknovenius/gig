@@ -1,7 +1,6 @@
 #include "gig-web-view.h"
 
 #include "gig-application.h"
-#include "gig-uri-utils.h"
 
 #include "history/gig-history-service.h"
 
@@ -604,21 +603,4 @@ gig_web_view_get_connection_security_level (GigWebView *self)
   g_return_val_if_fail (GIG_IS_WEB_VIEW (self), GIG_CONNECTION_SECURITY_LEVEL_TBD);
 
   return self->connection_security_level;
-}
-
-void
-gig_web_view_load_uri (GigWebView *self,
-                       const gchar *uri)
-{
-  g_autofree gchar *effective_uri = NULL;
-
-  g_return_if_fail (GIG_IS_WEB_VIEW (self));
-  g_return_if_fail (uri != NULL);
-
-  effective_uri = gig_fixup_uri (uri);
-
-  if (!effective_uri)
-    effective_uri = gig_build_search_uri (uri);
-
-  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (self), effective_uri);
 }

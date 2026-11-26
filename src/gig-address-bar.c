@@ -260,10 +260,10 @@ gig_address_bar_entry_activate_cb (GigAddressBar *self,
                                    GtkEntry *entry)
 {
   const gchar *text;
+  g_autofree gchar *uri = NULL;
 
   g_assert (GIG_IS_ADDRESS_BAR (self));
   g_assert (GTK_IS_ENTRY (entry));
-  g_assert (GIG_IS_WEB_VIEW (self->web_view));
 
   text = gtk_editable_get_text (GTK_EDITABLE (entry));
   if (!text || text[0] == '\0')
@@ -271,7 +271,11 @@ gig_address_bar_entry_activate_cb (GigAddressBar *self,
 
   gig_address_bar_set_modified (self, FALSE);
 
-  gig_web_view_load_uri (self->web_view, text);
+  uri = gig_fixup_uri (text);
+  if (!uri)
+    uri = gig_build_search_uri (text);
+
+  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (self->web_view), uri);
 
   gtk_widget_grab_focus (GTK_WIDGET (self->web_view));
 }

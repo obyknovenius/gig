@@ -641,7 +641,7 @@ gig_tab_load_uri (GigTab *self,
   g_return_if_fail (GIG_IS_TAB (self));
   g_return_if_fail (uri != NULL);
 
-  gig_web_view_load_uri (self->web_view, uri);
+  webkit_web_view_load_uri (WEBKIT_WEB_VIEW (self->web_view), uri);
 }
 
 gboolean

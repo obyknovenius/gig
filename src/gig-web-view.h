@@ -31,7 +31,4 @@ const gchar *gig_web_view_get_display_uri (GigWebView *web_view);
 
 GigConnectionSecurityLevel gig_web_view_get_connection_security_level (GigWebView *web_view);
 
-void gig_web_view_load_uri (GigWebView *web_view,
-                            const gchar *uri);
-
 G_END_DECLS
