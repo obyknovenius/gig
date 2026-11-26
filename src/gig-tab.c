@@ -6,6 +6,7 @@
 #include "gig-floating-bar.h"
 #include "gig-open-disposition.h"
 #include "gig-web-view.h"
+#include "gig-webkit-context-menu-utils.h"
 
 struct _GigTab
 {
@@ -19,6 +20,8 @@ struct _GigTab
   GigFindBar *find_bar;
 
   gboolean is_empty;
+
+  GSimpleActionGroup *action_group;
 };
 
 G_DEFINE_FINAL_TYPE (GigTab, gig_tab, GTK_TYPE_WIDGET)
@@ -46,6 +49,19 @@ enum
 
 static GParamSpec *properties[N_PROPS];
 static guint signals[N_SIGNALS];
+
+static void gig_tab_open_link_in_new_tab_action (GSimpleAction *action,
+                                                 GVariant *parameter,
+                                                 gpointer user_data);
+
+static void gig_tab_open_link_in_new_window_action (GSimpleAction *action,
+                                                    GVariant *parameter,
+                                                    gpointer user_data);
+
+static const GActionEntry actions[] = {
+  { "open-link-in-new-tab", gig_tab_open_link_in_new_tab_action, "s" },
+  { "open-link-in-new-window", gig_tab_open_link_in_new_window_action, "s" }
+};
 
 static void
 gig_tab_set_web_view (GigTab *self,
@@ -168,6 +184,54 @@ gig_tab_web_view_mouse_target_changed_cb (GigTab *self,
                              webkit_hit_test_result_get_link_uri (hit_test_result));
 }
 
+static gboolean
+gig_tab_web_view_context_menu_cb (GigTab *self,
+                                  WebKitContextMenu *menu,
+                                  WebKitHitTestResult *hit_test_result,
+                                  WebKitWebView *web_view)
+{
+  GAction *action;
+
+  g_assert (GIG_IS_TAB (self));
+  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
+
+  if (webkit_hit_test_result_context_is_link (hit_test_result))
+    {
+      const char *link_uri = webkit_hit_test_result_get_link_uri (hit_test_result);
+
+      gig_webkit_context_menu_remove_stock_action (menu,
+                                                   WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK);
+
+      gig_webkit_context_menu_remove_stock_action (menu,
+                                                   WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW);
+
+      gig_webkit_context_menu_rename_stock_action (menu,
+                                                   WEBKIT_CONTEXT_MENU_ACTION_COPY_LINK_TO_CLIPBOARD,
+                                                   "Copy Link Address");
+
+      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-link-in-new-window");
+      gig_webkit_context_menu_prepend_gaction (menu,
+                                               action,
+                                               "Open Link in New Window",
+                                               g_variant_new_string (link_uri));
+
+      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-link-in-new-tab");
+      gig_webkit_context_menu_prepend_gaction (menu,
+                                               action,
+                                               "Open Link in New Tab",
+                                               g_variant_new_string (link_uri));
+    }
+
+  if (webkit_hit_test_result_context_is_image (hit_test_result))
+    {
+      gig_webkit_context_menu_rename_stock_action (menu,
+                                                   WEBKIT_CONTEXT_MENU_ACTION_OPEN_IMAGE_IN_NEW_WINDOW,
+                                                   "Open Image in New Tab");
+    }
+
+  return FALSE;
+}
+
 static void
 gig_tab_web_view_ready_to_show_cb (GigTab *self,
                                    GigWebView *web_view)
@@ -205,30 +269,6 @@ gig_tab_web_view_create_cb (GigTab *self,
 }
 
 static void
-gig_tab_web_view_open_in_new_tab_cb (GigTab *self,
-                                     const gchar *uri,
-                                     GigWebView *web_view)
-{
-  g_assert (GIG_IS_TAB (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  g_signal_emit (self, signals[OPEN_URI], 0, uri,
-                 GIG_OPEN_DISPOSITION_NEW_BACKGROUND_TAB);
-}
-
-static void
-gig_tab_web_view_open_in_new_window_cb (GigTab *self,
-                                        const gchar *uri,
-                                        GigWebView *web_view)
-{
-  g_assert (GIG_IS_TAB (self));
-  g_assert (GIG_IS_WEB_VIEW (web_view));
-
-  g_signal_emit (self, signals[OPEN_URI], 0, uri,
-                 GIG_OPEN_DISPOSITION_NEW_WINDOW);
-}
-
-static void
 gig_tab_back_forward_list_changed_cb (GigTab *self,
                                       WebKitBackForwardListItem *item_added,
                                       gpointer items_removed,
@@ -239,6 +279,34 @@ gig_tab_back_forward_list_changed_cb (GigTab *self,
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_BACK]);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CAN_GO_FORWARD]);
+}
+
+static void
+gig_tab_open_link_in_new_tab_action (GSimpleAction *action,
+                                     GVariant *parameter,
+                                     gpointer user_data)
+{
+  GigTab *self = user_data;
+
+  g_assert (GIG_IS_TAB (self));
+
+  g_signal_emit (self, signals[OPEN_URI], 0,
+                 g_variant_get_string (parameter, NULL),
+                 GIG_OPEN_DISPOSITION_NEW_BACKGROUND_TAB);
+}
+
+static void
+gig_tab_open_link_in_new_window_action (GSimpleAction *action,
+                                        GVariant *parameter,
+                                        gpointer user_data)
+{
+  GigTab *self = user_data;
+
+  g_assert (GIG_IS_TAB (self));
+
+  g_signal_emit (self, signals[OPEN_URI], 0,
+                 g_variant_get_string (parameter, NULL),
+                 GIG_OPEN_DISPOSITION_NEW_WINDOW);
 }
 
 static void
@@ -314,20 +382,14 @@ gig_tab_constructed (GObject *object)
                            G_CONNECT_SWAPPED);
 
   g_signal_connect_object (self->web_view,
+                           "context-menu",
+                           G_CALLBACK (gig_tab_web_view_context_menu_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
                            "create",
                            G_CALLBACK (gig_tab_web_view_create_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  g_signal_connect_object (self->web_view,
-                           "open-in-new-tab",
-                           G_CALLBACK (gig_tab_web_view_open_in_new_tab_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  g_signal_connect_object (self->web_view,
-                           "open-in-new-window",
-                           G_CALLBACK (gig_tab_web_view_open_in_new_window_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -431,6 +493,18 @@ gig_tab_get_property (GObject *object,
     }
 }
 
+static void
+gig_tab_finalize (GObject *object)
+{
+  GigTab *self = (GigTab *) object;
+
+  g_assert (GIG_IS_TAB (self));
+
+  g_clear_object (&self->action_group);
+
+  G_OBJECT_CLASS (gig_tab_parent_class)->finalize (object);
+}
+
 static gboolean
 gig_tab_grab_focus (GtkWidget *widget)
 {
@@ -454,6 +528,8 @@ gig_tab_class_init (GigTabClass *klass)
   object_class->dispose = gig_tab_dispose;
   object_class->set_property = gig_tab_set_property;
   object_class->get_property = gig_tab_get_property;
+  object_class->finalize = gig_tab_finalize;
+
   widget_class->grab_focus = gig_tab_grab_focus;
 
   properties[PROP_WEB_VIEW] =
@@ -545,6 +621,13 @@ gig_tab_init (GigTab *self)
   self->is_empty = TRUE;
 
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  self->action_group = g_simple_action_group_new ();
+
+  g_action_map_add_action_entries (G_ACTION_MAP (self->action_group),
+                                   actions,
+                                   G_N_ELEMENTS (actions),
+                                   self);
 }
 
 GigTab *

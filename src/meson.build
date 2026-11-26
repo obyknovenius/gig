@@ -9,6 +9,7 @@ gig_sources = [
   'gig-tab.c',
   'gig-uri-utils.c',
   'gig-web-view.c',
+  'gig-webkit-context-menu-utils.c',
   'gig-window.c',
   'history/gig-history-dialog.c',
   'history/gig-history-service.c',

@@ -11,21 +11,6 @@ struct _GigWebView
   gchar *pending_uri;
 
   GigConnectionSecurityLevel connection_security_level;
-
-  GSimpleActionGroup *action_group;
-};
-
-static void gig_web_view_open_link_in_new_tab (GSimpleAction *action,
-                                               GVariant *parameter,
-                                               gpointer user_data);
-
-static void gig_web_view_open_link_in_new_window (GSimpleAction *action,
-                                                  GVariant *parameter,
-                                                  gpointer user_data);
-
-static const GActionEntry actions[] = {
-  { "open-link-in-new-tab", gig_web_view_open_link_in_new_tab, "s" },
-  { "open-link-in-new-window", gig_web_view_open_link_in_new_window, "s" }
 };
 
 G_DEFINE_FINAL_TYPE (GigWebView, gig_web_view, WEBKIT_TYPE_WEB_VIEW)
@@ -57,99 +42,7 @@ enum
   N_PROPS
 };
 
-enum
-{
-  OPEN_IN_NEW_TAB,
-  OPEN_IN_NEW_WINDOW,
-  N_SIGNALS
-};
-
 static GParamSpec *properties[N_PROPS];
-static guint signals[N_SIGNALS];
-
-static WebKitContextMenuItem *
-find_item_in_context_menu (WebKitContextMenu *context_menu,
-                           WebKitContextMenuAction action,
-                           guint *index)
-{
-  GList *items, *iter;
-
-  g_assert (WEBKIT_IS_CONTEXT_MENU (context_menu));
-
-  items = webkit_context_menu_get_items (context_menu);
-  for (iter = items; iter; iter = g_list_next (iter))
-    {
-      WebKitContextMenuItem *item = (WebKitContextMenuItem *) iter->data;
-
-      if (webkit_context_menu_item_get_stock_action (item) == action)
-        {
-          if (index)
-            *index = g_list_index (items, item);
-          return item;
-        }
-    }
-
-  return NULL;
-}
-
-static void
-remove_context_menu_item (WebKitContextMenu *context_menu,
-                          WebKitContextMenuAction action)
-{
-  WebKitContextMenuItem *item;
-
-  g_assert (WEBKIT_IS_CONTEXT_MENU (context_menu));
-
-  item = find_item_in_context_menu (context_menu, action, NULL);
-
-  if (item)
-    webkit_context_menu_remove (context_menu, item);
-}
-
-static void
-rename_context_menu_item (WebKitContextMenu *context_menu,
-                          WebKitContextMenuAction action,
-                          const gchar *new_label)
-{
-  guint index;
-  WebKitContextMenuItem *item;
-
-  g_assert (WEBKIT_IS_CONTEXT_MENU (context_menu));
-
-  item = find_item_in_context_menu (context_menu, action, &index);
-
-  if (item)
-    {
-      webkit_context_menu_remove (context_menu, item);
-
-      item = webkit_context_menu_item_new_from_stock_action_with_label (action,
-                                                                        new_label);
-
-      webkit_context_menu_insert (context_menu, item, index);
-    }
-}
-
-static void
-gig_web_view_prepend_action_to_context_menu (GigWebView *self,
-                                             WebKitContextMenu *context_menu,
-                                             const gchar *action_name,
-                                             const gchar *label,
-                                             GVariant *target)
-{
-  GAction *action;
-  WebKitContextMenuItem *item;
-
-  g_assert (GIG_IS_WEB_VIEW (self));
-  g_assert (WEBKIT_IS_CONTEXT_MENU (context_menu));
-
-  action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group),
-                                       action_name);
-  g_assert (action != NULL);
-
-  item = webkit_context_menu_item_new_from_gaction (action, label, target);
-
-  webkit_context_menu_prepend (context_menu, item);
-}
 
 static void
 gig_web_view_set_connection_security_level (GigWebView *self,
@@ -163,80 +56,6 @@ gig_web_view_set_connection_security_level (GigWebView *self,
   self->connection_security_level = connection_security_level;
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CONNECTION_SECURITY_LEVEL]);
-}
-
-static void
-gig_web_view_open_link_in_new_tab (GSimpleAction *action,
-                                   GVariant *parameter,
-                                   gpointer user_data)
-{
-  GigWebView *self = user_data;
-
-  g_assert (GIG_IS_WEB_VIEW (self));
-
-  g_signal_emit (self,
-                 signals[OPEN_IN_NEW_TAB],
-                 0,
-                 g_variant_get_string (parameter, NULL));
-}
-
-static void
-gig_web_view_open_link_in_new_window (GSimpleAction *action,
-                                      GVariant *parameter,
-                                      gpointer user_data)
-{
-  GigWebView *self = user_data;
-
-  g_assert (GIG_IS_WEB_VIEW (self));
-
-  g_signal_emit (self,
-                 signals[OPEN_IN_NEW_WINDOW],
-                 0,
-                 g_variant_get_string (parameter, NULL));
-}
-
-static gboolean
-gig_web_view_web_view_context_menu_cb (GigWebView *self,
-                                       WebKitContextMenu *context_menu,
-                                       WebKitHitTestResult *hit_test_result,
-                                       WebKitWebView *web_view)
-{
-  g_assert (GIG_IS_WEB_VIEW (self));
-  g_assert (WEBKIT_IS_WEB_VIEW (web_view));
-
-  if (webkit_hit_test_result_context_is_link (hit_test_result))
-    {
-      const char *link_uri = webkit_hit_test_result_get_link_uri (hit_test_result);
-
-      remove_context_menu_item (context_menu,
-                                WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK);
-
-      remove_context_menu_item (context_menu,
-                                WEBKIT_CONTEXT_MENU_ACTION_OPEN_LINK_IN_NEW_WINDOW);
-
-      rename_context_menu_item (context_menu,
-                                WEBKIT_CONTEXT_MENU_ACTION_COPY_LINK_TO_CLIPBOARD,
-                                "Copy Link Address");
-
-      gig_web_view_prepend_action_to_context_menu (self, context_menu,
-                                                   "open-link-in-new-window",
-                                                   "Open Link in New Window",
-                                                   g_variant_new_string (link_uri));
-
-      gig_web_view_prepend_action_to_context_menu (self, context_menu,
-                                                   "open-link-in-new-tab",
-                                                   "Open Link in New Tab",
-                                                   g_variant_new_string (link_uri));
-    }
-
-  if (webkit_hit_test_result_context_is_image (hit_test_result))
-    {
-      rename_context_menu_item (context_menu,
-                                WEBKIT_CONTEXT_MENU_ACTION_OPEN_IMAGE_IN_NEW_WINDOW,
-                                "Open Image in New Tab");
-    }
-
-  return FALSE;
 }
 
 static void
@@ -357,12 +176,6 @@ gig_web_view_constructed (GObject *object)
   G_OBJECT_CLASS (gig_web_view_parent_class)->constructed (object);
 
   g_signal_connect_object (web_view,
-                           "context-menu",
-                           G_CALLBACK (gig_web_view_web_view_context_menu_cb),
-                           self,
-                           G_CONNECT_SWAPPED);
-
-  g_signal_connect_object (web_view,
                            "load-changed",
                            G_CALLBACK (gig_web_view_web_view_load_changed_cb),
                            self,
@@ -389,8 +202,6 @@ gig_web_view_finalize (GObject *object)
   g_assert (GIG_IS_WEB_VIEW (self));
 
   g_clear_pointer (&self->pending_uri, g_free);
-
-  g_clear_object (&self->action_group);
 
   G_OBJECT_CLASS (gig_web_view_parent_class)->finalize (object);
 }
@@ -471,41 +282,12 @@ gig_web_view_class_init (GigWebViewClass *klass)
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
-
-  signals[OPEN_IN_NEW_TAB] =
-      g_signal_new ("open-in-new-tab",
-                    G_TYPE_FROM_CLASS (klass),
-                    G_SIGNAL_RUN_LAST,
-                    0,
-                    NULL, NULL,
-                    NULL,
-                    G_TYPE_NONE,
-                    1,
-                    G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  signals[OPEN_IN_NEW_WINDOW] =
-      g_signal_new ("open-in-new-window",
-                    G_TYPE_FROM_CLASS (klass),
-                    G_SIGNAL_RUN_LAST,
-                    0,
-                    NULL, NULL,
-                    NULL,
-                    G_TYPE_NONE,
-                    1,
-                    G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
 gig_web_view_init (GigWebView *self)
 {
   self->connection_security_level = GIG_CONNECTION_SECURITY_LEVEL_TBD;
-
-  self->action_group = g_simple_action_group_new ();
-
-  g_action_map_add_action_entries (G_ACTION_MAP (self->action_group),
-                                   actions,
-                                   G_N_ELEMENTS (actions),
-                                   self);
 }
 
 WebKitSettings *
