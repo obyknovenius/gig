@@ -50,17 +50,17 @@ enum
 static GParamSpec *properties[N_PROPS];
 static guint signals[N_SIGNALS];
 
-static void gig_tab_open_link_in_new_tab_action (GSimpleAction *action,
-                                                 GVariant *parameter,
-                                                 gpointer user_data);
+static void gig_tab_open_uri_in_new_tab_action (GSimpleAction *action,
+                                                GVariant *parameter,
+                                                gpointer user_data);
 
-static void gig_tab_open_link_in_new_window_action (GSimpleAction *action,
-                                                    GVariant *parameter,
-                                                    gpointer user_data);
+static void gig_tab_open_uri_in_new_window_action (GSimpleAction *action,
+                                                   GVariant *parameter,
+                                                   gpointer user_data);
 
 static const GActionEntry actions[] = {
-  { "open-link-in-new-tab", gig_tab_open_link_in_new_tab_action, "s" },
-  { "open-link-in-new-window", gig_tab_open_link_in_new_window_action, "s" }
+  { "open-uri-in-new-tab", gig_tab_open_uri_in_new_tab_action, "s" },
+  { "open-uri-in-new-window", gig_tab_open_uri_in_new_window_action, "s" }
 };
 
 static void
@@ -209,24 +209,29 @@ gig_tab_web_view_context_menu_cb (GigTab *self,
                                                    WEBKIT_CONTEXT_MENU_ACTION_COPY_LINK_TO_CLIPBOARD,
                                                    "Copy Link Address");
 
-      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-link-in-new-window");
-      gig_webkit_context_menu_prepend_gaction (menu,
-                                               action,
-                                               "Open Link in New Window",
-                                               g_variant_new_string (link_uri));
+      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-uri-in-new-window");
+      gig_webkit_context_menu_prepend_action (menu,
+                                              action,
+                                              "Open Link in New Window",
+                                              g_variant_new_string (link_uri));
 
-      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-link-in-new-tab");
-      gig_webkit_context_menu_prepend_gaction (menu,
-                                               action,
-                                               "Open Link in New Tab",
-                                               g_variant_new_string (link_uri));
+      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-uri-in-new-tab");
+      gig_webkit_context_menu_prepend_action (menu,
+                                              action,
+                                              "Open Link in New Tab",
+                                              g_variant_new_string (link_uri));
     }
 
   if (webkit_hit_test_result_context_is_image (hit_test_result))
     {
-      gig_webkit_context_menu_rename_stock_action (menu,
-                                                   WEBKIT_CONTEXT_MENU_ACTION_OPEN_IMAGE_IN_NEW_WINDOW,
-                                                   "Open Image in New Tab");
+      const char *image_uri = webkit_hit_test_result_get_image_uri (hit_test_result);
+
+      action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "open-uri-in-new-tab");
+      gig_webkit_context_menu_replace_stock_action (menu,
+                                                    WEBKIT_CONTEXT_MENU_ACTION_OPEN_IMAGE_IN_NEW_WINDOW,
+                                                    action,
+                                                    "Open Image in New Tab",
+                                                    g_variant_new_string (image_uri));
     }
 
   return FALSE;
@@ -282,9 +287,9 @@ gig_tab_back_forward_list_changed_cb (GigTab *self,
 }
 
 static void
-gig_tab_open_link_in_new_tab_action (GSimpleAction *action,
-                                     GVariant *parameter,
-                                     gpointer user_data)
+gig_tab_open_uri_in_new_tab_action (GSimpleAction *action,
+                                    GVariant *parameter,
+                                    gpointer user_data)
 {
   GigTab *self = user_data;
 
@@ -296,9 +301,9 @@ gig_tab_open_link_in_new_tab_action (GSimpleAction *action,
 }
 
 static void
-gig_tab_open_link_in_new_window_action (GSimpleAction *action,
-                                        GVariant *parameter,
-                                        gpointer user_data)
+gig_tab_open_uri_in_new_window_action (GSimpleAction *action,
+                                       GVariant *parameter,
+                                       gpointer user_data)
 {
   GigTab *self = user_data;
 
