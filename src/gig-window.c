@@ -390,6 +390,20 @@ gig_window_tab_open_web_view_cb (GigWindow *self,
 }
 
 static void
+gig_window_tab_close_cb (GigWindow *self,
+                         GigTab *tab)
+{
+  AdwTabPage *page;
+
+  g_assert (GIG_IS_WINDOW (self));
+  g_assert (GIG_IS_TAB (tab));
+
+  page = adw_tab_view_get_page (self->tab_view, GTK_WIDGET (tab));
+
+  adw_tab_view_close_page (self->tab_view, page);
+}
+
+static void
 gig_window_tab_view_page_attached_cb (GigWindow *self,
                                       AdwTabPage *page,
                                       gint position,
@@ -413,6 +427,12 @@ gig_window_tab_view_page_attached_cb (GigWindow *self,
                            G_CALLBACK (gig_window_tab_open_web_view_cb),
                            self,
                            G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (tab,
+                           "close",
+                           G_CALLBACK (gig_window_tab_close_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
 }
 
 static void
@@ -430,6 +450,7 @@ gig_window_tab_view_page_detached_cb (GigWindow *self,
 
   g_signal_handlers_disconnect_by_func (tab, gig_window_tab_open_uri_cb, self);
   g_signal_handlers_disconnect_by_func (tab, gig_window_tab_open_web_view_cb, self);
+  g_signal_handlers_disconnect_by_func (tab, gig_window_tab_close_cb, self);
 
   if (adw_tab_view_get_n_pages (tab_view) == 0)
     gtk_window_close (GTK_WINDOW (self));

@@ -44,6 +44,7 @@ enum
 {
   OPEN_URI,
   OPEN_WEB_VIEW,
+  CLOSE,
   N_SIGNALS
 };
 
@@ -238,6 +239,16 @@ gig_tab_web_view_context_menu_cb (GigTab *self,
 }
 
 static void
+gig_tab_web_view_close_cb (GigTab *self,
+                           GigWebView *web_view)
+{
+  g_assert (GIG_IS_TAB (self));
+  g_assert (GIG_IS_WEB_VIEW (web_view));
+
+  g_signal_emit (self, signals[CLOSE], 0);
+}
+
+static void
 gig_tab_web_view_ready_to_show_cb (GigTab *self,
                                    GigWebView *web_view)
 {
@@ -389,6 +400,12 @@ gig_tab_constructed (GObject *object)
   g_signal_connect_object (self->web_view,
                            "context-menu",
                            G_CALLBACK (gig_tab_web_view_context_menu_cb),
+                           self,
+                           G_CONNECT_SWAPPED);
+
+  g_signal_connect_object (self->web_view,
+                           "close",
+                           G_CALLBACK (gig_tab_web_view_close_cb),
                            self,
                            G_CONNECT_SWAPPED);
 
@@ -597,6 +614,16 @@ gig_tab_class_init (GigTabClass *klass)
                     2,
                     G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE,
                     GIG_TYPE_OPEN_DISPOSITION);
+
+  signals[CLOSE] =
+      g_signal_new ("close",
+                    G_TYPE_FROM_CLASS (object_class),
+                    G_SIGNAL_RUN_LAST,
+                    0,
+                    NULL, NULL,
+                    NULL,
+                    G_TYPE_NONE,
+                    0);
 
   signals[OPEN_WEB_VIEW] =
       g_signal_new ("open-web-view",
